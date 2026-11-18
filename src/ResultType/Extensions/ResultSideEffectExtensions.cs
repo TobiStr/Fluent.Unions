@@ -121,6 +121,18 @@ public static class ResultSideEffectExtensions
     }
 
     /// <summary>
+    /// Captures the value for later steps of the chain and returns the same result.
+    /// <paramref name="value"/> is filled only when the result holds a value.
+    /// </summary>
+    public static Result<T> Out<T>(this Result<T> result, out Captured<T> value)
+    {
+        value = new Captured<T>();
+        value.SetFrom(result);
+
+        return result;
+    }
+
+    /// <summary>
     /// Runs <paramref name="action"/> for every result: value, error or empty.
     /// </summary>
     public static Result<T> Finally<T>(this Result<T> result, Action action)

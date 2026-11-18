@@ -48,6 +48,18 @@ public static class OptionSideEffectExtensions
     }
 
     /// <summary>
+    /// Captures the value for later steps of the chain and returns the same option.
+    /// <paramref name="value"/> is filled only when the option holds a value.
+    /// </summary>
+    public static Option<T> Out<T>(this Option<T> option, out Captured<T> value)
+    {
+        value = new Captured<T>();
+        value.SetFrom(option);
+
+        return option.Normalize();
+    }
+
+    /// <summary>
     /// Runs <paramref name="action"/> for every option, with or without a value.
     /// </summary>
     public static Option<T> Finally<T>(this Option<T> option, Action action)

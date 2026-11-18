@@ -214,6 +214,7 @@ result.Catch(e => new DomainException("Lookup failed", e)); // translate the err
 | --- | --- |
 | `Do(v => ...)` | Runs an action with the value and returns the same result. |
 | `Do(v => ..., e => ...)` | Runs one action for the value or another for the error. |
+| `Out(out var value)` | Captures the value for later steps of the chain. See "Using values from earlier steps". |
 | `OnErrorDo(e => ...)` | Runs an action with the error and returns the same result. |
 | `Finally(() => ...)` | Runs an action in every state. |
 
@@ -273,6 +274,42 @@ Result<int> sum =
     from b in Parse("22")
     where a < b
     select a + b;
+```
+
+### Using values from earlier steps
+
+A fluent chain hands each step only the previous value. When a later step needs an earlier one, take it out of the chain with `Out(out var ...)`:
+
+```csharp
+Result<string> order = GetCustomer(id).Out(out var customer)
+    .Chain(GetCart).Out(out var cart)
+    .Chain(_ => Submit(customer, cart))
+    .Select(confirmation => $"{confirmation} for {customer.Value.Name}");
+```
+
+`customer` is a `Captured<Customer>`, which fills when the chain reaches that step with a value. Later steps only run after a success, so inside the chain it always holds a value.
+
+- **As an argument**, it converts implicitly to the value type: `Submit(customer, cart)`.
+- **For members**, use `.Value`: `customer.Value.Name`. Interfaces and `object` need `.Value` as an argument too, because C# has no implicit conversion to them.
+- **Outside the chain**, check `HasValue` first. After a failed or empty chain, `.Value` throws `InvalidOperationException` instead of handing you `null`.
+
+It works the same in asynchronous chains, without awaiting each step first. The holder is assigned immediately and filled when the task completes, before any later step runs:
+
+```csharp
+Result<string> order = await GetCustomerAsync(id).Out(out var customer)
+    .ChainAwait(GetCartAsync).Out(out var cart)
+    .ChainAwait(_ => SubmitAsync(customer, cart));
+```
+
+`Out` exists on `Result<T>`, `Option<T>` and their `Task` versions. For purely sequential steps, query syntax keeps every earlier value in scope without a holder, also across tasks:
+
+```csharp
+Result<string> label =
+    from customer in GetCustomer(id)
+    from cart in GetCart(customer)
+    let total = cart.Items * 10
+    from confirmation in Submit(customer, cart)
+    select $"{confirmation} for {customer.Name}, total {total}";
 ```
 
 ### Async
@@ -352,6 +389,7 @@ The operators mirror the ones on results, named after LINQ and Rx.NET:
 | `Zip(other)` / `Zip(other, (a, b) => ...)` | Combines two options. Holds a value only when both do. |
 | `Do(v => ...)` / `Do(v => ..., () => ...)` | Runs an action with the value, or another one for `None`. |
 | `OnNoneDo(() => ...)` | Runs an action when there is no value. |
+| `Out(out var value)` | Captures the value for later steps of the chain, as on results. |
 | `Finally(() => ...)` | Runs an action in both cases. |
 | `GetValueOrDefault()` / `GetValueOrDefault(fallback)` / `GetValueOrDefault(() => ...)` | Leaves the option with the value, `default`, `fallback` or the factory's result. |
 | `DefaultIfEmpty(fallback)` / `DefaultIfEmpty(() => ...)` | Turns `None` into an option with the fallback. The factory runs only when needed. |

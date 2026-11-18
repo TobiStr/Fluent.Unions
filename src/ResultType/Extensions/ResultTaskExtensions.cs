@@ -172,6 +172,22 @@ public static class ResultTaskExtensions
     public static Task<Result> OnErrorDo(this Task<Result> task, Action<Exception> onError) =>
         Capture.Then(Capture.Settle(task), result => result.OnErrorDo(onError));
 
+    /// <summary>
+    /// Captures the value for later steps of the chain. <paramref name="value"/> is assigned at once
+    /// and filled when the task completes with a value, before any later step runs.
+    /// </summary>
+    public static Task<Result<T>> Out<T>(this Task<Result<T>> task, out Captured<T> value)
+    {
+        var captured = new Captured<T>();
+        value = captured;
+
+        return Capture.Then(Capture.Settle(task), result =>
+        {
+            captured.SetFrom(result);
+            return result;
+        });
+    }
+
     /// <inheritdoc cref="ResultSideEffectExtensions.Finally{T}(Result{T}, Action)"/>
     public static Task<Result<T>> Finally<T>(this Task<Result<T>> task, Action action) =>
         Capture.Then(Capture.Settle(task), result => result.Finally(action));

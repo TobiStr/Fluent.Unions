@@ -87,6 +87,22 @@ public static class OptionTaskExtensions
     public static Task<Option<T>> OnNoneDo<T>(this Task<Option<T>> task, Action onNone) =>
         Then(task, option => option.OnNoneDo(onNone));
 
+    /// <summary>
+    /// Captures the value for later steps of the chain. <paramref name="value"/> is assigned at once
+    /// and filled when the task completes with a value, before any later step runs.
+    /// </summary>
+    public static Task<Option<T>> Out<T>(this Task<Option<T>> task, out Captured<T> value)
+    {
+        var captured = new Captured<T>();
+        value = captured;
+
+        return Then(task, option =>
+        {
+            captured.SetFrom(option);
+            return option.Normalize();
+        });
+    }
+
     /// <inheritdoc cref="OptionSideEffectExtensions.Finally{T}(Option{T}, Action)"/>
     public static Task<Option<T>> Finally<T>(this Task<Option<T>> task, Action action) =>
         Then(task, option => option.Finally(action));
