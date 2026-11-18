@@ -89,6 +89,38 @@ public static class ResultSideEffectExtensions
     }
 
     /// <summary>
+    /// Runs <paramref name="onError"/> with the error.
+    /// </summary>
+    public static Result<T> OnErrorDo<T>(this Result<T> result, Action<Exception> onError)
+    {
+        ArgumentNullException.ThrowIfNull(onError);
+
+        return result.Value is Exception error
+            ? Capture.Run(() =>
+            {
+                onError(error);
+                return result;
+            })
+            : result;
+    }
+
+    /// <summary>
+    /// Runs <paramref name="onError"/> with the error.
+    /// </summary>
+    public static Result OnErrorDo(this Result result, Action<Exception> onError)
+    {
+        ArgumentNullException.ThrowIfNull(onError);
+
+        return result.Value is Exception error
+            ? Capture.Run(() =>
+            {
+                onError(error);
+                return result;
+            })
+            : result;
+    }
+
+    /// <summary>
     /// Runs <paramref name="action"/> for every result: value, error or empty.
     /// </summary>
     public static Result<T> Finally<T>(this Result<T> result, Action action)

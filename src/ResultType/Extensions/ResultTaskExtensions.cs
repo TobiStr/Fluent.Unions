@@ -120,6 +120,14 @@ public static class ResultTaskExtensions
     public static Task<Result> Do(this Task<Result> task, Action onNext, Action<Exception> onError) =>
         Capture.Then(Capture.Settle(task), result => result.Do(onNext, onError));
 
+    /// <inheritdoc cref="ResultSideEffectExtensions.OnErrorDo{T}(Result{T}, Action{Exception})"/>
+    public static Task<Result<T>> OnErrorDo<T>(this Task<Result<T>> task, Action<Exception> onError) =>
+        Capture.Then(Capture.Settle(task), result => result.OnErrorDo(onError));
+
+    /// <inheritdoc cref="ResultSideEffectExtensions.OnErrorDo(Result, Action{Exception})"/>
+    public static Task<Result> OnErrorDo(this Task<Result> task, Action<Exception> onError) =>
+        Capture.Then(Capture.Settle(task), result => result.OnErrorDo(onError));
+
     /// <inheritdoc cref="ResultSideEffectExtensions.Finally{T}(Result{T}, Action)"/>
     public static Task<Result<T>> Finally<T>(this Task<Result<T>> task, Action action) =>
         Capture.Then(Capture.Settle(task), result => result.Finally(action));

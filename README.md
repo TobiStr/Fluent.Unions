@@ -139,7 +139,7 @@ A result is **ok** (holds a value or `Ok`), **error** (holds an exception) or **
 | Operators | ok | error | empty |
 | --- | --- | --- | --- |
 | `Select`, `SelectMany`, `Where`, `Zip`, `Do(onNext)` | runs | passes through | passes through |
-| `Catch`, `Do(onNext, onError)` | passes through | runs | passes through |
+| `Catch`, `Do(onNext, onError)`, `OnErrorDo` | passes through | runs | passes through |
 | `Finally` | runs | runs | runs |
 | `DefaultIfEmpty` | passes through | passes through | becomes ok |
 
@@ -181,6 +181,7 @@ result.Catch(e => new DomainException("Lookup failed", e)); // translate the err
 | --- | --- |
 | `Do(v => ...)` | Runs an action with the value and returns the same result. |
 | `Do(v => ..., e => ...)` | Runs one action for the value or another for the error. |
+| `OnErrorDo(e => ...)` | Runs an action with the error and returns the same result. |
 | `Finally(() => ...)` | Runs an action in every state. |
 
 **Leaving the chain**

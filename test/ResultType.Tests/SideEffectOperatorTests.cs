@@ -80,6 +80,61 @@ public class SideEffectOperatorTests
     }
 
     [Test]
+    public void OnErrorDoRunsOnlyForErrorAndReturnsSameResult()
+    {
+        Result<int> ok = 5;
+        Result<int> error = Failure;
+        var seen = new List<Exception>();
+
+        var okResult = ok.OnErrorDo(seen.Add);
+        var errorResult = error.OnErrorDo(seen.Add);
+        default(Result<int>).OnErrorDo(seen.Add);
+
+        Assert.That(seen, Is.EqualTo(new[] { Failure }));
+        Assert.That(okResult.GetOk(), Is.EqualTo(5));
+        Assert.That(errorResult.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public void OnErrorDoCapturesExceptionFromAction()
+    {
+        Result<int> error = Failure;
+        var replacement = new ArgumentException("Replacement");
+
+        var failed = error.OnErrorDo(_ => throw replacement);
+
+        Assert.That(failed.GetError(), Is.SameAs(replacement));
+    }
+
+    [Test]
+    public void OnErrorDoOnNonGenericResult()
+    {
+        var seen = new List<Exception>();
+
+        var ok = Result.Ok.OnErrorDo(seen.Add);
+        var error = Result.Error(Failure).OnErrorDo(seen.Add);
+
+        Assert.That(seen, Is.EqualTo(new[] { Failure }));
+        Assert.True(ok.Success);
+        Assert.That(error.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public async Task OnErrorDoOnTaskResult()
+    {
+        var seen = new List<Exception>();
+
+        var typed = await Task.FromResult<Result<int>>(Failure).OnErrorDo(seen.Add);
+        var plain = await Task.FromResult(Result.Error(Failure)).OnErrorDo(seen.Add);
+        var faulted = await Task.FromException<Result<int>>(Failure).OnErrorDo(seen.Add);
+
+        Assert.That(seen, Is.EqualTo(new[] { Failure, Failure, Failure }));
+        Assert.That(typed.GetError(), Is.SameAs(Failure));
+        Assert.That(plain.GetError(), Is.SameAs(Failure));
+        Assert.That(faulted.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
     public void FinallyRunsForEveryState()
     {
         Result<int> ok = 5;
