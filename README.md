@@ -279,6 +279,78 @@ Result<string> label = await (
 
 The operators take no `CancellationToken`, because they do no I/O themselves. Capture the token in your lambdas. A cancelled operation becomes an error result holding the `OperationCanceledException`.
 
+## Option
+
+`Option<T>` is for a value that may be missing, where the absence is normal and not an error: a lookup that finds nothing, an optional setting. It holds a `T` or `None`.
+
+```csharp
+static Option<Person> FindPerson(Guid id) => people.TryGetValue(id, out var person) ? person : Option.None;
+
+string? nickname = person.Nickname;
+Option<string> maybeNickname = nickname.ToOption();
+Option<int> firstAdult = ages.FirstOrNone(age => age >= 18);
+```
+
+| Member | Behavior |
+| --- | --- |
+| `HasValue` | `true` when the option holds a value. `0`, `false` and empty strings are values. |
+| `TryGetValue(out value)` | Returns `true` and the value, or `false`. |
+| `GetValue()` | The value. Throws `InvalidOperationException` when there is none. |
+| `Option.None` | No value. Converts to any `Option<T>`. |
+| `Option.Some(value)` | A value. Throws `ArgumentNullException` for `null`. |
+| `value.ToOption()` | From a nullable reference or a nullable value type. `null` gives `None`. |
+
+### Matching an option
+
+```csharp
+static string Describe(Option<Person> option) => option switch
+{
+    Person person => person.Name,
+    None or null => "nobody"
+};
+```
+
+Leaving out the second arm is error CS8509 when you treat it as an error, as the test project does. Write `None or null`, or `_`, rather than just `None`. Every option the library returns holds a real `None`. A `default` option, such as an uninitialized field, holds nothing, though, and a `None` arm alone does not match it. The compiler does not warn about that, and the switch throws at runtime.
+
+### Operators on options
+
+The operators mirror the ones on results, named after LINQ and Rx.NET:
+
+| Operator | What it does |
+| --- | --- |
+| `Select(v => ...)` | Projects the value. A `null` projection gives `None`. |
+| `Chain(v => ...)` / `SelectMany(v => ...)` | Chains a call that returns an option. |
+| `Where(v => ...)` | Keeps the value when the predicate holds, otherwise gives `None`. |
+| `Zip(other)` / `Zip(other, (a, b) => ...)` | Combines two options. Holds a value only when both do. |
+| `Do(v => ...)` / `Do(v => ..., () => ...)` | Runs an action with the value, or another one for `None`. |
+| `OnNoneDo(() => ...)` | Runs an action when there is no value. |
+| `Finally(() => ...)` | Runs an action in both cases. |
+| `GetValueOrDefault()` / `GetValueOrDefault(fallback)` | Leaves the option with the value, `default` or `fallback`. |
+| `DefaultIfEmpty(fallback)` | Turns `None` into an option with `fallback`. |
+| `options.Values()` | The values of all options that hold one. |
+| `source.FirstOrNone()` / `source.LastOrNone()` | Like `FirstOrDefault` and `LastOrDefault`, with an optional predicate. |
+
+Query syntax works, and so do `Task<Option<T>>` overloads and the `SelectAwait`, `ChainAwait`, `SelectManyAwait`, `WhereAwait` and `DoAwait` variants:
+
+```csharp
+Option<string> label = await (
+    from person in FindPersonAsync(id)
+    from address in FindAddressAsync(person.AddressId)
+    where address.Country == "DE"
+    select $"{person.Name}, {address.City}");
+```
+
+Unlike the result operators, the option operators do not catch exceptions, because an option has no error state. An exception thrown in a lambda, or a faulted task, propagates as usual.
+
+### Between options and results
+
+```csharp
+Result<Person> person = FindPerson(id).ToResult(() => new KeyNotFoundException($"No person {id}."));
+Option<Person> maybe = LoadPerson(id).ToOption();
+```
+
+`ToResult` turns `None` into the error from the factory. `ToOption` keeps the value of a successful result and drops errors and empty results.
+
 ## Custom error types
 
 The library's results accept any `Exception`. To restrict errors to your own base class, for example a `DomainException` that you later map to HTTP status codes, declare your own union and implement `IResult<TSelf, T, TError>` from `ResultType.Abstractions`:
