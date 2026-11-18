@@ -559,6 +559,23 @@ By default, `System.Text.Json` writes only a union's value, which cannot be read
 - **Errors:** an unknown or missing `$type` throws `JsonException`.
 - **Case names:** the converter uses the case type's name, so two cases must not share a name across namespaces. It is reflection-based, like the option converter.
 
+### Modeling with unions
+
+Unions shine for states and events, because `switch` makes sure every case is handled. Two runnable samples live in `test/ResultType.Tests/Samples`:
+
+- **State machine** (`OrderStateMachineSample.cs`): `union OrderState(Draft, Submitted, Paid, Shipped)` and `union OrderCommand(AddItem, Submit, Pay, Ship)`. A transition switches on the pair, invalid transitions become errors, and `Chain` runs a list of commands:
+
+  ```csharp
+  static Result<OrderState> Apply(OrderState state, OrderCommand command) => (state, command) switch
+  {
+      (Draft draft, Submit) => new OrderState(new Submitted(draft.Items)),
+      (Submitted submitted, Pay pay) => new OrderState(new Paid(submitted.Items, pay.Amount)),
+      _ => new InvalidOperationException($"{command.Value?.GetType().Name} is not allowed now.")
+  };
+  ```
+
+- **Event sourcing** (`EventSourcingSample.cs`): `union CartEvent(CartOpened, ItemAdded, ItemRemoved, CartCheckedOut)`. The state is rebuilt with `history.Aggregate(Cart.Empty, Evolve)`, where `Evolve` is an exhaustive `switch`. A command returns `Result<CartEvent>`, so a rejected command is an error, not an exception.
+
 ## Custom error types
 
 The library's results accept any `Exception`. To restrict errors to your own base class, for example a `DomainException` that you later map to HTTP status codes, declare your own union and implement `IResult<TSelf, T, TError>` from `ResultType.Abstractions`:
