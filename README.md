@@ -364,6 +364,10 @@ Option<int> firstAdult = ages.FirstOrNone(age => age >= 18);
 | `Option.None` | No value. Converts to any `Option<T>`. |
 | `Option.Some(value)` | A value. Throws `ArgumentNullException` for `null`. |
 | `value.ToOption()` | From a nullable reference or a nullable value type. `null` gives `None`. |
+| `option.ToNullable()` | Back to a nullable value type, for `Option<int>` and other structs. |
+| `Option.TryParse<int>("42")` | Parses any `IParsable<T>` (or `ISpanParsable<T>` from a span), `None` when parsing fails. |
+| `dictionary.GetValueOrNone(key)` | Looks up an `IReadOnlyDictionary<TKey, TValue>`, `None` for a missing key. |
+| `source.SingleOrNone()` / `source.ElementAtOrNone(i)` | Like `SingleOrDefault` and `ElementAtOrDefault`. `SingleOrNone` still throws for several elements, as LINQ does. |
 
 ### Matching an option
 

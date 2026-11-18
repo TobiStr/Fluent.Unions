@@ -18,6 +18,12 @@ public static class OptionConversionExtensions
         value.HasValue ? new Option<T>(value.Value) : Option<T>.NoValue;
 
     /// <summary>
+    /// Returns the value as a nullable value type, <c>null</c> when the option holds none.
+    /// </summary>
+    public static T? ToNullable<T>(this Option<T> option) where T : struct =>
+        option.TryGetValue(out var value) ? value : null;
+
+    /// <summary>
     /// Keeps the value of a successful result. Errors and empty results give an option without a value.
     /// </summary>
     public static Option<T> ToOption<T>(this Result<T> result) => result.Value switch

@@ -69,5 +69,17 @@ public static class Option
     /// <exception cref="ArgumentNullException"><paramref name="value"/> is <c>null</c>.</exception>
     public static Option<T> Some<T>(T value) => new(value ?? throw new ArgumentNullException(nameof(value)));
 
+    /// <summary>
+    /// Parses <paramref name="s"/> into a value, or gives <see cref="None"/> when it cannot be parsed.
+    /// </summary>
+    public static Option<T> TryParse<T>(string? s, IFormatProvider? provider = null) where T : IParsable<T> =>
+        T.TryParse(s, provider, out var value) ? Option<T>.Of(value) : Option<T>.NoValue;
+
+    /// <summary>
+    /// Parses <paramref name="s"/> into a value, or gives <see cref="None"/> when it cannot be parsed.
+    /// </summary>
+    public static Option<T> TryParse<T>(ReadOnlySpan<char> s, IFormatProvider? provider = null) where T : ISpanParsable<T> =>
+        T.TryParse(s, provider, out var value) ? Option<T>.Of(value) : Option<T>.NoValue;
+
     internal static Option<T> Normalize<T>(this Option<T> option) => option.HasValue ? option : Option<T>.NoValue;
 }
