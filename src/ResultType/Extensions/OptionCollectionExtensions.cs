@@ -25,6 +25,26 @@ public static class OptionCollectionExtensions
     }
 
     /// <summary>
+    /// Collects all values into one option. Holds no value if any option holds none.
+    /// </summary>
+    public static Option<IReadOnlyList<T>> Combine<T>(this IEnumerable<Option<T>> options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var values = new List<T>();
+
+        foreach (var option in options)
+        {
+            if (!option.TryGetValue(out var value))
+                return Option<IReadOnlyList<T>>.NoValue;
+
+            values.Add(value);
+        }
+
+        return new Option<IReadOnlyList<T>>(values);
+    }
+
+    /// <summary>
     /// Returns the first element, or an option without a value for an empty sequence.
     /// </summary>
     public static Option<T> FirstOrNone<T>(this IEnumerable<T> source)

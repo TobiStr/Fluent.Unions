@@ -232,10 +232,24 @@ result.Catch(e => new DomainException("Lookup failed", e)); // translate the err
 | Operator | What it does |
 | --- | --- |
 | `Combine()` | Returns `Result<IReadOnlyList<T>>` with all values. The first error wins, and empty results are skipped. |
+| `CombineAll()` | Like `Combine()`, but collects every error in an `AggregateException`. |
+| `Partition()` | Returns `(Values, Errors)` in one pass. Empty results are skipped. |
 | `Values()` | Returns the values of the ok results. |
 | `Errors()` | Returns the exceptions of the error results. |
 
 `Combine()` is deliberately not called `ToList()`: overload resolution would prefer it over `Enumerable.ToList()` and silently change what existing code returns.
+
+### Validation
+
+`Combine` stops at the first error. To report every problem at once, as input validation usually should, use `Validate` for one value or `CombineAll` for many:
+
+```csharp
+Result<Order> order = ParseOrder(dto).Validate(
+    o => o.Quantity > 0 ? Result.Ok : new ValidationException("Quantity must be positive."),
+    o => o.Email.Contains('@') ? Result.Ok : new ValidationException("Email is invalid."));
+```
+
+Every rule runs. If any fail, the error is an `AggregateException` holding all failures, even when only one rule failed, so you always catch the same type: `Catch((AggregateException e) => ...)`. A rule that throws or returns an empty result counts as a failure, nested `AggregateException`s are flattened, and errors and empty results pass through without running the rules. `Validate` works on `Task<Result<T>>` too.
 
 ### Query syntax
 
@@ -332,6 +346,7 @@ The operators mirror the ones on results, named after LINQ and Rx.NET:
 | `Or(() => ...)` | Uses another option when there is no value: `cache.Find(id).Or(() => db.Find(id))`. |
 | `Unwrap()` | Flattens `Option<Option<T>>`. |
 | `options.Values()` | The values of all options that hold one. |
+| `options.Combine()` | All values as `Option<IReadOnlyList<T>>`, or `None` if any option holds none. |
 | `source.FirstOrNone()` / `source.LastOrNone()` | Like `FirstOrDefault` and `LastOrDefault`, with an optional predicate. |
 
 Query syntax works, and so do `Task<Option<T>>` overloads and the `SelectAwait`, `ChainAwait`, `SelectManyAwait`, `WhereAwait` and `DoAwait` variants:
@@ -421,7 +436,7 @@ Things to know:
       (await task).Chain(next);
   ```
 
-- **Not provided:** `Zip`, `Combine`, `Try`, query syntax with several `from` clauses, and the other `...Await` operators.
+- **Not provided:** `Zip`, `Combine`, `CombineAll`, `Partition`, `Validate`, `Unwrap`, `Transpose`, the factory overloads of `GetValueOrDefault` and `DefaultIfEmpty`, `Try`, query syntax with several `from` clauses, and the other `...Await` operators.
 - **Allocations:** the operators take your result through the interface, which boxes it. That is 24 bytes per operator call in a Release build, on top of what the operator allocates anyway. The library's own `Result<T>` is unaffected and still binds to its concrete operators.
 
 ## Differences from v1

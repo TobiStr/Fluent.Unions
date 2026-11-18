@@ -101,6 +101,11 @@ public static class ResultTaskExtensions
     /// <inheritdoc cref="ResultQueryExtensions.GetValueOrDefault{T}(Result{T}, Func{T})"/>
     public static Task<T> GetValueOrDefault<T>(this Task<Result<T>> task, Func<T> defaultValueFactory) =>
         Capture.Then(Capture.Settle(task), result => result.GetValueOrDefault(defaultValueFactory));
+
+    /// <inheritdoc cref="ResultValidationExtensions.Validate{T}(Result{T}, Func{T, Result}[])"/>
+    public static Task<Result<T>> Validate<T>(this Task<Result<T>> task, params Func<T, Result>[] rules) =>
+        Capture.Then(Capture.Settle(task), result => result.Validate(rules));
+
     /// <inheritdoc cref="ResultErrorExtensions.Catch{T}(Result{T}, Func{Exception, Result{T}})"/>
     public static Task<Result<T>> Catch<T>(this Task<Result<T>> task, Func<Exception, Result<T>> handler) =>
         Capture.Then(Capture.Settle(task), result => result.Catch(handler));
