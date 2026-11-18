@@ -1,4 +1,6 @@
-﻿namespace ResultType.Extensions;
+﻿using ResultType.Abstractions;
+
+namespace ResultType.Extensions;
 
 /// <summary>
 /// Runs user code and turns any thrown exception into an error result.
@@ -52,6 +54,41 @@ internal static class Capture
             return ex;
         }
     }
+
+    internal static TResult Run<TResult, TError>(Func<TResult> body)
+        where TResult : struct, IErrorResult<TResult, TError>
+        where TError : Exception
+    {
+        try
+        {
+            return body();
+        }
+        catch (Exception ex)
+        {
+            return TResult.FromError(ToError<TResult, TError>(ex));
+        }
+    }
+
+    internal static async Task<TResult> RunAsync<TResult, TError>(Func<Task<TResult>> body)
+        where TResult : struct, IErrorResult<TResult, TError>
+        where TError : Exception
+    {
+        try
+        {
+            return await body().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            return TResult.FromError(ToError<TResult, TError>(ex));
+        }
+    }
+
+    private static TError ToError<TResult, TError>(Exception exception)
+        where TResult : struct, IErrorResult<TResult, TError>
+        where TError : Exception =>
+        exception as TError
+        ?? TResult.FromException(exception)
+        ?? throw new InvalidOperationException($"{typeof(TResult)}.FromException returned null.", exception);
 
     internal static Task<Result<T>> Settle<T>(Task<Result<T>> task)
     {

@@ -279,6 +279,67 @@ Result<string> label = await (
 
 The operators take no `CancellationToken`, because they do no I/O themselves. Capture the token in your lambdas. A cancelled operation becomes an error result holding the `OperationCanceledException`.
 
+## Custom error types
+
+The library's results accept any `Exception`. To restrict errors to your own base class, for example a `DomainException` that you later map to HTTP status codes, declare your own union and implement `IResult<TSelf, T, TError>` from `ResultType.Abstractions`:
+
+```csharp
+using ResultType.Abstractions;
+
+namespace MyApp;
+
+public union Result<T>(T, DomainException) : IResult<Result<T>, T, DomainException>
+{
+    public static Result<T> FromValue(T value) => value;
+    public static Result<T> FromError(DomainException error) => error;
+    public static DomainException FromException(Exception exception) =>
+        exception as DomainException ?? new UnexpectedDomainException(exception);
+}
+```
+
+Your methods return your own `Result<T>`. You keep `return value;`, `return error;`, exhaustive `switch` matching and `Task<Result<T>>`. Only another `DomainException` can be an error, and the compiler enforces it.
+
+`FromException` is the hook for exceptions thrown inside operators. An exception that already is a `DomainException` is kept as is, and anything else goes through the hook, so chains still do not throw. The hook must not return `null` (the operator throws `InvalidOperationException`) and must not throw (that exception escapes the chain).
+
+### Operators on custom types
+
+`using ResultType.Extensions;` brings in operators that work on any implementation and return your type:
+
+| Operator | Notes |
+| --- | --- |
+| `Chain(next)` / `ChainAwait(next)` | `next` must return a result with the same error type. A lambda needs its return type: `Result<int> (name) => name.Length` or a cast. |
+| `Catch(e => ...)`, `Catch((NotFoundException e) => ...)`, `Catch(fallback)` | The typed form needs the exception type on the lambda parameter. |
+| `Do`, `OnErrorDo`, `Finally`, `Where`, `DefaultIfEmpty` | Same behavior as on the library's `Result<T>`. |
+| `GetValueOrDefault()`, `GetValueOrDefault(fallback)`, `Check()` | `Check()` on an empty result throws `InvalidOperationException`. |
+
+`Select` and `MapError` cannot infer your result type, because C# has no way to express "the same kind of result with another type argument". They exist with explicit type arguments, so you wrap them once in one line each:
+
+```csharp
+public static class ResultExtensions
+{
+    public static Result<TOut> Select<T, TOut>(this Result<T> result, Func<T, TOut> selector) =>
+        result.Select<Result<T>, T, DomainException, Result<TOut>, TOut>(selector);
+
+    public static Result<T> ToDomain<T>(this ResultType.Result<T> result) =>
+        result.MapError<ResultType.Result<T>, T, Exception, Result<T>, DomainException>(Result<T>.FromException);
+}
+```
+
+`Select` also enables query syntax with a single `from`. `ToDomain` turns a library result into yours, which is how you start from code that throws: `ResultType.Result.Try(() => Load(id)).ToDomain()`. A mapping that returns `null` gives an error, not an empty result.
+
+Things to know:
+
+- **Namespaces:** call sites only need `using ResultType.Extensions;`. Importing `ResultType` as well makes `Result<T>` ambiguous (CS0104) wherever your namespace is also imported.
+- **Tasks:** operators on `Task<YourResult<T>>` are not provided, because C# cannot infer them. Await first, `(await LoadAsync(id)).Chain(...)`, or write a one-line wrapper:
+
+  ```csharp
+  public static async Task<Result<TOut>> Chain<T, TOut>(this Task<Result<T>> task, Func<T, Result<TOut>> next) =>
+      (await task).Chain(next);
+  ```
+
+- **Not provided:** `Zip`, `Combine`, `Try`, query syntax with several `from` clauses, and the other `...Await` operators.
+- **Allocations:** the operators take your result through the interface, which boxes it. That is 24 bytes per operator call in a Release build, on top of what the operator allocates anyway. The library's own `Result<T>` is unaffected and still binds to its concrete operators.
+
 ## Differences from v1
 
 - Both types are structs. There is no inheritance and no `null` result. `Result r = null;` does not compile.
@@ -305,4 +366,4 @@ dotnet build ResultType.slnx
 dotnet test ResultType.slnx
 ```
 
-Tests use NUnit. Project layout: `src/ResultType` is the library, `test/ResultType.Tests` holds the tests, and `UseCases.cs` there contains runnable sample flows.
+Tests use NUnit. Project layout: `src/ResultType` is the library, `test/ResultType.Tests` holds the tests, and `UseCases.cs` there contains runnable sample flows. `CustomErrors/` there contains a complete custom error type as a user would write it.

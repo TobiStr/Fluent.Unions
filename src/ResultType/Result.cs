@@ -1,3 +1,4 @@
+﻿using ResultType.Abstractions;
 using ResultType.Extensions;
 
 namespace ResultType;
@@ -135,8 +136,14 @@ public union Result(Ok, Exception)
 /// Return <see cref="Exception"/> (or inherited type) to return a Result with Success set to 'false'.
 /// </summary>
 /// <typeparam name="T">The type of the payload.</typeparam>
-public union Result<T>(T, Exception)
+public union Result<T>(T, Exception) : IResult<Result<T>, T, Exception>
 {
+    static Result<T> IResult<Result<T>, T, Exception>.FromValue(T value) => new(value);
+
+    static Result<T> IErrorResult<Result<T>, Exception>.FromError(Exception error) => error;
+
+    static Exception IErrorResult<Result<T>, Exception>.FromException(Exception exception) => exception;
+
     /// <summary>
     /// Indicates if the operation was successful.
     /// </summary>
