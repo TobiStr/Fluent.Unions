@@ -128,4 +128,15 @@ public static class OptionQueryExtensions
     /// </summary>
     public static Option<T> Unwrap<T>(this Option<Option<T>> option) =>
         option.TryGetValue(out var inner) ? inner.Normalize() : Option<T>.NoValue;
+
+    /// <summary>
+    /// Leaves the option with a value: <paramref name="onNext"/> for the value, <paramref name="onNone"/> otherwise.
+    /// </summary>
+    public static TOut Match<T, TOut>(this Option<T> option, Func<T, TOut> onNext, Func<TOut> onNone)
+    {
+        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onNone);
+
+        return option.TryGetValue(out var value) ? onNext(value) : onNone();
+    }
 }

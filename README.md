@@ -169,7 +169,7 @@ A result is **ok** (holds a value or `Ok`), **error** (holds an exception) or **
 
 Rules that hold for every operator:
 
-- **Chains do not throw.** An exception thrown inside a lambda becomes the result's error, as in Rx. Only `Check()` throws on purpose. A `null` lambda argument still throws `ArgumentNullException`.
+- **Chains do not throw.** An exception thrown inside a lambda becomes the result's error, as in Rx. Only `Check()` throws on purpose. A `null` lambda argument still throws `ArgumentNullException`. Operators that leave the chain, `GetValueOrDefault(() => ...)` and `Match`, let exceptions from their callbacks propagate.
 - **`null` means empty.** A selector that returns `null` gives an empty result, the same as an implicit `null` payload.
 - **`Where` filters into empty.** A value that fails the predicate leaves the result empty, the closest thing to LINQ's "no element". Follow it with `DefaultIfEmpty(fallback)` to supply a value instead.
 
@@ -225,7 +225,19 @@ result.Catch(e => new DomainException("Lookup failed", e)); // translate the err
 | `GetValueOrDefault(fallback)` | Returns the value, or `fallback`. |
 | `GetValueOrDefault(() => ...)` | Returns the value, or the factory's result. The factory runs only when needed. |
 | `DefaultIfEmpty(fallback)` / `DefaultIfEmpty(() => ...)` | Turns an empty result into an ok one. It stays a result, and a throwing factory gives an error. |
+| `Match(v => ..., e => ..., () => ...)` | Returns a value with one callback per state: ok, error and empty. |
 | `Unwrap()` | Flattens `Result<Result<T>>`, or `Result<Result>` from `Select(x => Save(x))`. Like `Task.Unwrap()`. |
+
+`Match` ends a pipeline, including an asynchronous one, without a `switch`:
+
+```csharp
+IResult response = await LoadPersonAsync(id).Match(
+    person => Results.Ok(person),
+    error => Results.Problem(error.Message),
+    () => Results.NotFound());
+```
+
+It takes a callback for the empty state too, so a value filtered out by `Where` cannot slip through as an exception.
 
 **Sequences** (`IEnumerable<Result<T>>`)
 
@@ -344,6 +356,7 @@ The operators mirror the ones on results, named after LINQ and Rx.NET:
 | `GetValueOrDefault()` / `GetValueOrDefault(fallback)` / `GetValueOrDefault(() => ...)` | Leaves the option with the value, `default`, `fallback` or the factory's result. |
 | `DefaultIfEmpty(fallback)` / `DefaultIfEmpty(() => ...)` | Turns `None` into an option with the fallback. The factory runs only when needed. |
 | `Or(() => ...)` | Uses another option when there is no value: `cache.Find(id).Or(() => db.Find(id))`. |
+| `Match(v => ..., () => ...)` | Returns a value with one callback for the value and one for `None`. |
 | `Unwrap()` | Flattens `Option<Option<T>>`. |
 | `options.Values()` | The values of all options that hold one. |
 | `options.Combine()` | All values as `Option<IReadOnlyList<T>>`, or `None` if any option holds none. |
@@ -436,6 +449,7 @@ Things to know:
       (await task).Chain(next);
   ```
 
+- **`Match` works too:** `Match(v => ..., e => ..., () => ...)`, with `e` typed as your error type.
 - **Not provided:** `Zip`, `Combine`, `CombineAll`, `Partition`, `Validate`, `Unwrap`, `Transpose`, the factory overloads of `GetValueOrDefault` and `DefaultIfEmpty`, `Try`, query syntax with several `from` clauses, and the other `...Await` operators.
 - **Allocations:** the operators take your result through the interface, which boxes it. That is 24 bytes per operator call in a Release build, on top of what the operator allocates anyway. The library's own `Result<T>` is unaffected and still binds to its concrete operators.
 

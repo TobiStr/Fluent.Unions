@@ -277,6 +277,30 @@ public static class ResultInterfaceExtensions
     }
 
     /// <summary>
+    /// Leaves the result with a value: one callback for each state, so none of them is forgotten.
+    /// </summary>
+    public static TOut Match<TSelf, T, TError, TOut>(
+        this IResult<TSelf, T, TError> result,
+        Func<T, TOut> onNext,
+        Func<TError, TOut> onError,
+        Func<TOut> onEmpty)
+        where TSelf : struct, IResult<TSelf, T, TError>
+        where TError : Exception
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onError);
+        ArgumentNullException.ThrowIfNull(onEmpty);
+
+        return result.Value switch
+        {
+            TError error => onError(error),
+            T value => onNext(value),
+            _ => onEmpty()
+        };
+    }
+
+    /// <summary>
     /// Projects the value into another result type. Needs explicit type arguments; wrap it once for your own type.
     /// </summary>
     public static TOutResult Select<TSelf, T, TError, TOutResult, TOut>(

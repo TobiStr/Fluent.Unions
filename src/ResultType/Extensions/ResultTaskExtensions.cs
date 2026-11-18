@@ -102,6 +102,22 @@ public static class ResultTaskExtensions
     public static Task<T> GetValueOrDefault<T>(this Task<Result<T>> task, Func<T> defaultValueFactory) =>
         Capture.Then(Capture.Settle(task), result => result.GetValueOrDefault(defaultValueFactory));
 
+    /// <inheritdoc cref="ResultExtensions.Match{T, TOut}(Result{T}, Func{T, TOut}, Func{Exception, TOut}, Func{TOut})"/>
+    public static Task<TOut> Match<T, TOut>(
+        this Task<Result<T>> task,
+        Func<T, TOut> onNext,
+        Func<Exception, TOut> onError,
+        Func<TOut> onEmpty) =>
+        Capture.Then(Capture.Settle(task), result => result.Match(onNext, onError, onEmpty));
+
+    /// <inheritdoc cref="ResultExtensions.Match{TOut}(Result, Func{TOut}, Func{Exception, TOut}, Func{TOut})"/>
+    public static Task<TOut> Match<TOut>(
+        this Task<Result> task,
+        Func<TOut> onNext,
+        Func<Exception, TOut> onError,
+        Func<TOut> onEmpty) =>
+        Capture.Then(Capture.Settle(task), result => result.Match(onNext, onError, onEmpty));
+
     /// <inheritdoc cref="ResultValidationExtensions.Validate{T}(Result{T}, Func{T, Result}[])"/>
     public static Task<Result<T>> Validate<T>(this Task<Result<T>> task, params Func<T, Result>[] rules) =>
         Capture.Then(Capture.Settle(task), result => result.Validate(rules));

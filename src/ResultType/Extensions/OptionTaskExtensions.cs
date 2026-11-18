@@ -70,6 +70,11 @@ public static class OptionTaskExtensions
     /// <inheritdoc cref="OptionQueryExtensions.Or{T}(Option{T}, Func{Option{T}})"/>
     public static Task<Option<T>> Or<T>(this Task<Option<T>> task, Func<Option<T>> alternativeFactory) =>
         Then(task, option => option.Or(alternativeFactory));
+
+    /// <inheritdoc cref="OptionQueryExtensions.Match{T, TOut}(Option{T}, Func{T, TOut}, Func{TOut})"/>
+    public static Task<TOut> Match<T, TOut>(this Task<Option<T>> task, Func<T, TOut> onNext, Func<TOut> onNone) =>
+        Then(task, option => option.Match(onNext, onNone));
+
     /// <inheritdoc cref="OptionSideEffectExtensions.Do{T}(Option{T}, Action{T})"/>
     public static Task<Option<T>> Do<T>(this Task<Option<T>> task, Action<T> onNext) =>
         Then(task, option => option.Do(onNext));

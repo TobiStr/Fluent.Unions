@@ -208,6 +208,14 @@ public class CustomErrorTests
     }
 
     [Test]
+    public void MatchCoversEveryState()
+    {
+        Assert.That(GetName("Ada").Match(n => n, e => e.Message, () => "empty"), Is.EqualTo("Ada"));
+        Assert.That(GetName(null).Match(n => n, e => e.Message, () => "empty"), Is.EqualTo("Not found"));
+        Assert.That(default(Result<string>).Match(n => n, e => e.Message, () => "empty"), Is.EqualTo("empty"));
+    }
+
+    [Test]
     public void NullArgumentsThrow()
     {
         Assert.Throws<ArgumentNullException>(() => GetName("Ada").Chain((Func<string, Result<int>>)null!));
