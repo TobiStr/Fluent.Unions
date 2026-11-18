@@ -194,5 +194,6 @@ public union Result<T>(T, Exception) : IResult<Result<T>, T, Exception>
         _ => default
     };
 
+    /// <inheritdoc />
     public override string ToString() => Value?.ToString() ?? "";
 }

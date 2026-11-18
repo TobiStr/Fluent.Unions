@@ -2,6 +2,9 @@
 
 namespace ResultType.Extensions;
 
+/// <summary>
+/// Leaves a chain by throwing the error.
+/// </summary>
 public static class ResultExtensions
 {
     /// <summary>
