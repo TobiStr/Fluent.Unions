@@ -1,4 +1,6 @@
-﻿namespace ResultType;
+using ResultType.Extensions;
+
+namespace ResultType;
 
 /// <summary>
 /// Marks a successful <see cref="Result"/>.
@@ -37,6 +39,94 @@ public union Result(Ok, Exception)
     /// Returns a negative Result with an Exception as payload.
     /// </summary>
     public static Result Error(Exception error) => error;
+
+    /// <summary>
+    /// Runs <paramref name="body"/> and returns its value, or the thrown exception as an error.
+    /// </summary>
+    public static Result<T> Try<T>(Func<T> body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return Capture.Run(() => new Result<T>(body()));
+    }
+
+    /// <summary>
+    /// Runs <paramref name="body"/> and returns its result, or the thrown exception as an error.
+    /// </summary>
+    public static Result<T> Try<T>(Func<Result<T>> body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return Capture.Run(body);
+    }
+
+    /// <summary>
+    /// Runs <paramref name="body"/> and returns <see cref="Ok"/>, or the thrown exception as an error.
+    /// </summary>
+    public static Result Try(Action body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return Capture.Run(() =>
+        {
+            body();
+            return Ok;
+        });
+    }
+
+    /// <summary>
+    /// Runs <paramref name="body"/> and returns its result, or the thrown exception as an error.
+    /// </summary>
+    public static Result Try(Func<Result> body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return Capture.Run(body);
+    }
+
+    /// <summary>
+    /// Awaits <paramref name="body"/> and returns its value, or the thrown exception as an error.
+    /// </summary>
+    public static Task<Result<T>> TryAsync<T>(Func<Task<T>> body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return Capture.RunAsync(async () => new Result<T>(await body().ConfigureAwait(false)));
+    }
+
+    /// <summary>
+    /// Awaits <paramref name="body"/> and returns its result, or the thrown exception as an error.
+    /// </summary>
+    public static Task<Result<T>> TryAsync<T>(Func<Task<Result<T>>> body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return Capture.RunAsync(body);
+    }
+
+    /// <summary>
+    /// Awaits <paramref name="body"/> and returns <see cref="Ok"/>, or the thrown exception as an error.
+    /// </summary>
+    public static Task<Result> TryAsync(Func<Task> body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return Capture.RunAsync(async () =>
+        {
+            await body().ConfigureAwait(false);
+            return Ok;
+        });
+    }
+
+    /// <summary>
+    /// Awaits <paramref name="body"/> and returns its result, or the thrown exception as an error.
+    /// </summary>
+    public static Task<Result> TryAsync(Func<Task<Result>> body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return Capture.RunAsync(body);
+    }
 }
 
 /// <summary>

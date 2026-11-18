@@ -59,6 +59,7 @@ Members:
 | `Result.Ok` | A successful `Result`. A property. |
 | `Result<T>.Ok(payload)` | A successful `Result<T>`. A method. Throws `ArgumentNullException` for `null`. |
 | `Error(exception)` | A failed result. |
+| `Result.Try(...)` / `Result.TryAsync(...)` | Runs code that may throw and returns a result. See below. |
 
 ## Pattern matching
 
@@ -110,6 +111,29 @@ static Result Copy(Guid id)
 ```
 
 Calling `Check()` on a `default` result throws `InvalidOperationException` (see below).
+
+## Try and TryAsync
+
+`Result.Try` runs code that may throw and turns the outcome into a result. It is the opposite of `Check()`, and the usual way into a chain from code that throws:
+
+```csharp
+Result<int> number = Result.Try(() => int.Parse(input));
+Result saved = Result.Try(() => File.WriteAllText(path, text));
+Result<Person> person = await Result.TryAsync(() => LoadPersonAsync(id));
+
+Result<Order> order = Result.Try(() => LoadCustomer(id))
+    .Chain(GetCart)
+    .Chain(PlaceOrder);
+```
+
+| Body | `Try` returns | `TryAsync` body |
+| --- | --- | --- |
+| returns a `T` | `Result<T>` | `Task<T>` |
+| returns a `Result<T>` | that `Result<T>`, not nested | `Task<Result<T>>` |
+| returns nothing | `Result` (`Ok`) | `Task` |
+| returns a `Result` | that `Result` | `Task<Result>` |
+
+A thrown exception becomes the error, and a `null` value gives an empty result, the same as inside any operator. `TryAsync` also catches an exception the body throws before it returns its task.
 
 ## Converting Result&lt;T&gt; to Result
 
