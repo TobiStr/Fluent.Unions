@@ -391,6 +391,24 @@ Option<Person> maybe = LoadPerson(id).ToOption();
 | `Result<Option<T>>`: ok with `None` / ok with the value / error / empty | `Option<Result<T>>`: `None` / the ok result / the error result / the empty result |
 
 Transposing twice gives back the original state.
+
+### JSON
+
+`System.Text.Json` serializes options without registration: an option writes its value, or `null` when it holds none, and reading `null` gives `None`.
+
+```csharp
+record Person(string Name, Option<string> Nickname);
+
+JsonSerializer.Serialize(new Person("Ada", Option.None)); // {"Name":"Ada","Nickname":null}
+```
+
+- A missing property reads as a `default` option, which holds no value as well.
+- `JsonIgnoreCondition.WhenWritingNull` does not omit `None`, because an option is a struct. `WhenWritingDefault` omits only uninitialized options.
+- `Option<Option<T>>` writes `null` for both levels, so the difference is lost.
+- With a source-generated `JsonSerializerContext`, register `T` as well, because the converter serializes the value through the options.
+
+Results are deliberately not serialized: `JsonSerializer` throws `NotSupportedException` for `Result` and `Result<T>`. Without that, an error would be written with its message, stack trace and target site. Convert a result first, for example with `Match`, `GetValueOrDefault` or `ToOption`.
+
 ## Custom error types
 
 The library's results accept any `Exception`. To restrict errors to your own base class, for example a `DomainException` that you later map to HTTP status codes, declare your own union and implement `IResult<TSelf, T, TError>` from `ResultType.Abstractions`:
@@ -470,7 +488,7 @@ Things to know:
 - `Result<Exception>` declares fine, but implicit conversion from an exception fails with CS0457 (ambiguous user-defined conversions), because both cases take an `Exception`. Wrap the payload in another type.
 - No `null` literal for a result. Use `default` only if you want the empty state.
 - Equality is not payload-based. Two results wrapping distinct class instances are not equal.
-- Not investigated: JSON serialization, AOT and trimming, hand-written class unions.
+- Not investigated: AOT and trimming (the JSON converters use reflection), hand-written class unions.
 
 ## Build and test
 

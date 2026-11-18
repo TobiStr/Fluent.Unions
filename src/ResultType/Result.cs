@@ -1,5 +1,7 @@
-﻿using ResultType.Abstractions;
+﻿using System.Text.Json.Serialization;
+using ResultType.Abstractions;
 using ResultType.Extensions;
+using ResultType.Serialization;
 
 namespace ResultType;
 
@@ -12,6 +14,7 @@ public readonly record struct Ok;
 /// Used to determine, whether a method executes successfully or not. Has implicit cast implemented:
 /// Return <see cref="Exception"/> (or inherited type) to return a Result with Success set to 'false'.
 /// </summary>
+[JsonConverter(typeof(ResultJsonConverter))]
 public union Result(Ok, Exception)
 {
     /// <summary>
@@ -136,6 +139,7 @@ public union Result(Ok, Exception)
 /// Return <see cref="Exception"/> (or inherited type) to return a Result with Success set to 'false'.
 /// </summary>
 /// <typeparam name="T">The type of the payload.</typeparam>
+[JsonConverter(typeof(ResultJsonConverter))]
 public union Result<T>(T, Exception) : IResult<Result<T>, T, Exception>
 {
     static Result<T> IResult<Result<T>, T, Exception>.FromValue(T value) => new(value);

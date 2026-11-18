@@ -1,4 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+using ResultType.Serialization;
 
 namespace ResultType;
 
@@ -12,6 +14,7 @@ public readonly record struct None;
 /// A <c>default</c> option holds no value either.
 /// </summary>
 /// <typeparam name="T">The type of the value.</typeparam>
+[JsonConverter(typeof(OptionJsonConverter))]
 public union Option<T>(T, None)
 {
     /// <summary>
