@@ -10,7 +10,7 @@
     <PackageId>Fluent.Unions</PackageId>
     <Version>0.1.0</Version>
     <Authors>Fluent.Unions contributors</Authors>
-    <Description>Result, Result&lt;T&gt; and Option&lt;T&gt; built on C# unions, with fluent LINQ and Rx style operators, async support, Try, and custom error types.</Description>
+    <Description>Result, Result&lt;T&gt; and Option&lt;T&gt; built on C# unions, with fluent LINQ and Rx style operators, async support, validation, JSON support for options, custom error types, and an analyzer for unused results.</Description>
     <PackageTags>result;option;maybe;union;discriminated-union;fluent;linq;rx;error-handling;railway</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -25,6 +25,11 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ResultType.Analyzers\ResultType.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\ResultType.Analyzers\bin\$(Configuration)\netstandard2.0\ResultType.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
 </Project>

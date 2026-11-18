@@ -471,6 +471,25 @@ Things to know:
 - **Not provided:** `Zip`, `Combine`, `CombineAll`, `Partition`, `Validate`, `Unwrap`, `Transpose`, the factory overloads of `GetValueOrDefault` and `DefaultIfEmpty`, `Try`, query syntax with several `from` clauses, and the other `...Await` operators.
 - **Allocations:** the operators take your result through the interface, which boxes it. That is 24 bytes per operator call in a Release build, on top of what the operator allocates anyway. The library's own `Result<T>` is unaffected and still binds to its concrete operators.
 
+## Unused results analyzer
+
+The package includes an analyzer, like Rust's `#[must_use]`. Calling a method that returns a result and ignoring it gives warning `FLU0001`:
+
+```csharp
+Save(person);      // warning FLU0001: The result of 'Save' is not used
+_ = Save(person);  // fine: discarded on purpose
+Save(person).Check();
+```
+
+It covers `Result`, `Result<T>`, your own types that implement `IResult`, and their `Task` and `ValueTask` versions, including `await SaveAsync();`. It does not report:
+
+- assignments, returns and arguments, and explicit discards with `_ =`;
+- calls ending in `Check()`, `OnErrorDo(...)` or `Do(onNext, onError)`, which already handle the error;
+- an unawaited task inside an `async` method, where the compiler already warns with CS4014;
+- options, because a missing value is not an error.
+
+A chain that ends in `Do(v => ...)` or `Finally(...)` is reported, because its error is still dropped. Change the severity in `.editorconfig` like any other rule: `dotnet_diagnostic.FLU0001.severity = error`.
+
 ## Differences from v1
 
 - Both types are structs. There is no inheritance and no `null` result. `Result r = null;` does not compile.
@@ -497,4 +516,4 @@ dotnet build ResultType.slnx
 dotnet test ResultType.slnx
 ```
 
-Tests use NUnit. Project layout: `src/ResultType` is the library, `test/ResultType.Tests` holds the tests, and `UseCases.cs` there contains runnable sample flows. `CustomErrors/` there contains a complete custom error type as a user would write it.
+Tests use NUnit. Project layout: `src/ResultType` is the library, `test/ResultType.Tests` holds the tests, and `UseCases.cs` there contains runnable sample flows. `CustomErrors/` there contains a complete custom error type as a user would write it. `src/ResultType.Analyzers` is the analyzer packed with the library, tested in `test/ResultType.Analyzers.Tests`.
