@@ -189,6 +189,28 @@ public union Result<T>(T, Exception) : IResult<Result<T>, T, Exception>
     public static Result<T> Error(Exception error) => error;
 
     /// <summary>
+    /// Splits the result Go style: <c>var (value, error) = result;</c>. An empty result gives <c>default</c> and <c>null</c>.
+    /// </summary>
+    public void Deconstruct(out T? value, out Exception? error)
+    {
+        switch (Value)
+        {
+            case Exception exception:
+                value = default;
+                error = exception;
+                break;
+            case T payload:
+                value = payload;
+                error = null;
+                break;
+            default:
+                value = default;
+                error = null;
+                break;
+        }
+    }
+
+    /// <summary>
     /// Implicit cast from Result&lt;T&gt; to <see cref="Result"/>, keeping Success and the error.
     /// </summary>
     public static implicit operator Result(Result<T> result) => result.Value switch

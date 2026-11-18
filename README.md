@@ -301,6 +301,16 @@ Result<string> order = await GetCustomerAsync(id).Out(out var customer)
     .ChainAwait(_ => SubmitAsync(customer, cart));
 ```
 
+In statement code, a result also deconstructs Go style, which allows early returns:
+
+```csharp
+var (customer, error) = GetCustomer(id);
+if (error is not null) return error;
+if (customer is null) return default; // the result was empty
+```
+
+On an error, the value is `default`, so `0` for an `int`. Always check `error` first.
+
 `Out` exists on `Result<T>`, `Option<T>` and their `Task` versions. For purely sequential steps, query syntax keeps every earlier value in scope without a holder, also across tasks:
 
 ```csharp
