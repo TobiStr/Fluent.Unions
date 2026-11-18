@@ -575,6 +575,60 @@ int status = Checkout(id).Match(
 - **Your own types:** they may use any error type, not just exceptions.
 - **Not provided:** `Task` overloads for `Result<T, TError>`, as for other custom types. Await first.
 
+## ASP.NET Core
+
+The package `Fluent.Unions.AspNetCore` turns results and options into HTTP responses:
+
+```csharp
+app.MapGet("/orders/{id}", async (Guid id) => await LoadOrderAsync(id).ToHttpResult());
+```
+
+| Input | Response |
+| --- | --- |
+| `Result<T>` or `Option<T>` with a value | 200 with the value |
+| `Result` that succeeded | 204 |
+| empty result or `None` | 404 |
+| error | ProblemDetails with the mapped status code |
+
+Status codes come from the exception type, and the most specific mapping wins:
+
+| Exception | Status |
+| --- | --- |
+| `ArgumentException` | 400 |
+| `AggregateException` from `Validate` | 400, with every message under `errors` |
+| `KeyNotFoundException` | 404 |
+| `UnauthorizedAccessException` | 403 |
+| `TimeoutException` | 504 |
+| anything else | 500 |
+
+Change or extend the mapping with the options pattern:
+
+```csharp
+builder.Services.Configure<ResultHttpOptions>(o => o
+    .Map<OrderShippedException>(StatusCodes.Status409Conflict)
+    .Map<ValidationException>(StatusCodes.Status422UnprocessableEntity));
+```
+
+The exception message is the ProblemDetails `detail` only for client errors (4xx). Server errors never expose it. With `builder.Services.AddProblemDetails()`, the ProblemDetails go through ASP.NET's `IProblemDetailsService`.
+
+To return results straight from handlers, add the endpoint filter to an endpoint or a whole route group:
+
+```csharp
+var orders = app.MapGroup("/orders").WithResultMapping();
+orders.MapGet("/{id}", (Guid id) => LoadOrderAsync(id)); // returns Task<Result<Order>>
+```
+
+For errors as data, pass the mapping, so the compiler checks every case:
+
+```csharp
+Checkout(cart).ToHttpResult(error => error switch
+{
+    CustomerNotFound => TypedResults.NotFound(),
+    CartEmpty => TypedResults.BadRequest(),
+    Unexpected => TypedResults.StatusCode(500)
+});
+```
+
 ## Unused results analyzer
 
 The package includes an analyzer, like Rust's `#[must_use]`. Calling a method that returns a result and ignoring it gives warning `FLU0001`:
@@ -620,4 +674,4 @@ dotnet build ResultType.slnx
 dotnet test ResultType.slnx
 ```
 
-Tests use NUnit. Project layout: `src/ResultType` is the library, `test/ResultType.Tests` holds the tests, and `UseCases.cs` there contains runnable sample flows. `CustomErrors/` there contains a complete custom error type as a user would write it. `src/ResultType.Analyzers` is the analyzer packed with the library, tested in `test/ResultType.Analyzers.Tests`.
+Tests use NUnit. Project layout: `src/ResultType` is the library, `test/ResultType.Tests` holds the tests, and `UseCases.cs` there contains runnable sample flows. `CustomErrors/` there contains a complete custom error type as a user would write it. `src/ResultType.Analyzers` is the analyzer packed with the library, tested in `test/ResultType.Analyzers.Tests`. `src/ResultType.AspNetCore` is the `Fluent.Unions.AspNetCore` package, tested in `test/ResultType.AspNetCore.Tests`. Shared package settings live in `src/Directory.Build.props`.
