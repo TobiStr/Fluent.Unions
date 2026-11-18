@@ -473,6 +473,35 @@ JsonSerializer.Serialize(new Person("Ada", Option.None)); // {"Name":"Ada","Nick
 
 Results are deliberately not serialized: `JsonSerializer` throws `NotSupportedException` for `Result` and `Result<T>`. Without that, an error would be written with its message, stack trace and target site. Convert a result first, for example with `Match`, `GetValueOrDefault` or `ToOption`.
 
+## Your own unions
+
+Some helpers work on any C# union, including your own, because every union implements .NET's `IUnion`:
+
+```csharp
+public record Circle(double Radius);
+public record Square(double Side);
+
+[JsonConverter(typeof(UnionJsonConverter))]
+public union Shape(Circle, Square);
+
+Shape shape = new Circle(2);
+bool isCircle = shape.Is<Circle>();          // true
+Option<Square> square = shape.As<Square>();  // None
+```
+
+`As<TCase>()` returns the case as an option, so it chains with the option operators. A union value type is boxed for these calls.
+
+By default, `System.Text.Json` writes only a union's value, which cannot be read back when several cases look alike. `UnionJsonConverter` writes the case name as well:
+
+```json
+{ "$type": "Circle", "$value": { "Radius": 2 } }
+```
+
+- **Reading:** the converter accepts the two properties in any order.
+- **Empty union:** written as `null`.
+- **Errors:** an unknown or missing `$type` throws `JsonException`.
+- **Case names:** the converter uses the case type's name, so two cases must not share a name across namespaces. It is reflection-based, like the option converter.
+
 ## Custom error types
 
 The library's results accept any `Exception`. To restrict errors to your own base class, for example a `DomainException` that you later map to HTTP status codes, declare your own union and implement `IResult<TSelf, T, TError>` from `ResultType.Abstractions`:
