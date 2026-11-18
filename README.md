@@ -473,6 +473,37 @@ JsonSerializer.Serialize(new Person("Ada", Option.None)); // {"Name":"Ada","Nick
 
 Results are deliberately not serialized: `JsonSerializer` throws `NotSupportedException` for `Result` and `Result<T>`. Without that, an error would be written with its message, stack trace and target site. Convert a result first, for example with `Match`, `GetValueOrDefault` or `ToOption`.
 
+## Loadable
+
+`Loadable<T>` is the state of data loaded asynchronously, known as "RemoteData" in Elm. It is not loaded yet, loading, loaded, or failed, and the compiler makes a view handle all four:
+
+```razor
+@code {
+    private Loadable<Order> order = Loadable.Loading;
+
+    protected override async Task OnInitializedAsync() =>
+        order = await LoadOrderAsync(Id).ToLoadable();
+}
+
+@(order switch
+{
+    NotLoaded or null => "",
+    Loading => "Loading…",
+    Order o => $"Order {o.Number}",
+    Exception e => $"Could not load the order: {e.Message}"
+})
+```
+
+| Member | Behavior |
+| --- | --- |
+| `IsNotLoaded`, `IsLoading`, `HasValue`, `IsFaulted` | The current state. A `default` value counts as not loaded. |
+| `TryGetValue(out value)` | The loaded value, if there is one. |
+| `Loadable.NotLoaded` / `Loadable.Loading` | The two waiting states. They convert to any `Loadable<T>`. |
+| `Select(v => ...)` | Projects the loaded value. The other states pass through. |
+| `Match(() => ..., () => ..., v => ..., e => ...)` | One callback per state: not loaded, loading, loaded, failed. |
+| `GetValueOrDefault(fallback)` / `ToOption()` | The loaded value, or the fallback or `None`. |
+| `result.ToLoadable()` / `await task.ToLoadable()` | From a `Result<T>`: loaded or failed. A faulted task counts as failed, and an empty result as not loaded. |
+
 ## Your own unions
 
 Some helpers work on any C# union, including your own, because every union implements .NET's `IUnion`:
