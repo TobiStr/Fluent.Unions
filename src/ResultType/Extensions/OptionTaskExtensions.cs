@@ -59,6 +59,17 @@ public static class OptionTaskExtensions
     public static Task<Option<T>> DefaultIfEmpty<T>(this Task<Option<T>> task, T fallback) =>
         Then(task, option => option.DefaultIfEmpty(fallback));
 
+    /// <inheritdoc cref="OptionQueryExtensions.DefaultIfEmpty{T}(Option{T}, Func{T})"/>
+    public static Task<Option<T>> DefaultIfEmpty<T>(this Task<Option<T>> task, Func<T> defaultValueFactory) =>
+        Then(task, option => option.DefaultIfEmpty(defaultValueFactory));
+
+    /// <inheritdoc cref="OptionQueryExtensions.GetValueOrDefault{T}(Option{T}, Func{T})"/>
+    public static Task<T> GetValueOrDefault<T>(this Task<Option<T>> task, Func<T> defaultValueFactory) =>
+        Then(task, option => option.GetValueOrDefault(defaultValueFactory));
+
+    /// <inheritdoc cref="OptionQueryExtensions.Or{T}(Option{T}, Func{Option{T}})"/>
+    public static Task<Option<T>> Or<T>(this Task<Option<T>> task, Func<Option<T>> alternativeFactory) =>
+        Then(task, option => option.Or(alternativeFactory));
     /// <inheritdoc cref="OptionSideEffectExtensions.Do{T}(Option{T}, Action{T})"/>
     public static Task<Option<T>> Do<T>(this Task<Option<T>> task, Action<T> onNext) =>
         Then(task, option => option.Do(onNext));

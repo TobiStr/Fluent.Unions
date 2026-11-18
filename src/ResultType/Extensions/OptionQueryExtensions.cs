@@ -87,8 +87,38 @@ public static class OptionQueryExtensions
         option.TryGetValue(out var value) ? value : fallback;
 
     /// <summary>
+    /// Returns the value, or the result of <paramref name="defaultValueFactory"/> when the option holds none.
+    /// The factory runs only when needed, and its exceptions propagate.
+    /// </summary>
+    public static T GetValueOrDefault<T>(this Option<T> option, Func<T> defaultValueFactory)
+    {
+        ArgumentNullException.ThrowIfNull(defaultValueFactory);
+
+        return option.TryGetValue(out var value) ? value : defaultValueFactory();
+    }
+
+    /// <summary>
     /// Replaces an option without a value with <paramref name="fallback"/>.
     /// </summary>
     public static Option<T> DefaultIfEmpty<T>(this Option<T> option, T fallback) =>
         option.HasValue ? option : Option<T>.Of(fallback);
+
+    /// <summary>
+    /// Replaces an option without a value with the result of <paramref name="defaultValueFactory"/>, which runs only when needed.
+    /// </summary>
+    public static Option<T> DefaultIfEmpty<T>(this Option<T> option, Func<T> defaultValueFactory)
+    {
+        ArgumentNullException.ThrowIfNull(defaultValueFactory);
+
+        return option.HasValue ? option : Option<T>.Of(defaultValueFactory());
+    }
+
+    /// <summary>
+    /// Returns the option if it holds a value, otherwise the option from <paramref name="alternativeFactory"/>.
+    /// </summary>
+    public static Option<T> Or<T>(this Option<T> option, Func<Option<T>> alternativeFactory)
+    {
+        ArgumentNullException.ThrowIfNull(alternativeFactory);
+        return option.HasValue ? option : alternativeFactory().Normalize();
+    }
 }

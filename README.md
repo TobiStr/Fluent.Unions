@@ -223,7 +223,8 @@ result.Catch(e => new DomainException("Lookup failed", e)); // translate the err
 | --- | --- |
 | `GetValueOrDefault()` | Returns the value, or `default` for an error or empty result. |
 | `GetValueOrDefault(fallback)` | Returns the value, or `fallback`. |
-| `DefaultIfEmpty(fallback)` | Turns an empty result into an ok one. It stays a result. |
+| `GetValueOrDefault(() => ...)` | Returns the value, or the factory's result. The factory runs only when needed. |
+| `DefaultIfEmpty(fallback)` / `DefaultIfEmpty(() => ...)` | Turns an empty result into an ok one. It stays a result, and a throwing factory gives an error. |
 
 **Sequences** (`IEnumerable<Result<T>>`)
 
@@ -325,8 +326,9 @@ The operators mirror the ones on results, named after LINQ and Rx.NET:
 | `Do(v => ...)` / `Do(v => ..., () => ...)` | Runs an action with the value, or another one for `None`. |
 | `OnNoneDo(() => ...)` | Runs an action when there is no value. |
 | `Finally(() => ...)` | Runs an action in both cases. |
-| `GetValueOrDefault()` / `GetValueOrDefault(fallback)` | Leaves the option with the value, `default` or `fallback`. |
-| `DefaultIfEmpty(fallback)` | Turns `None` into an option with `fallback`. |
+| `GetValueOrDefault()` / `GetValueOrDefault(fallback)` / `GetValueOrDefault(() => ...)` | Leaves the option with the value, `default`, `fallback` or the factory's result. |
+| `DefaultIfEmpty(fallback)` / `DefaultIfEmpty(() => ...)` | Turns `None` into an option with the fallback. The factory runs only when needed. |
+| `Or(() => ...)` | Uses another option when there is no value: `cache.Find(id).Or(() => db.Find(id))`. |
 | `options.Values()` | The values of all options that hold one. |
 | `source.FirstOrNone()` / `source.LastOrNone()` | Like `FirstOrDefault` and `LastOrDefault`, with an optional predicate. |
 

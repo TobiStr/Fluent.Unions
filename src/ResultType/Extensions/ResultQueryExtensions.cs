@@ -186,8 +186,33 @@ public static class ResultQueryExtensions
     };
 
     /// <summary>
+    /// Returns the value, or the result of <paramref name="defaultValueFactory"/> for an error or empty result.
+    /// The factory runs only when needed, and its exceptions propagate.
+    /// </summary>
+    public static T GetValueOrDefault<T>(this Result<T> result, Func<T> defaultValueFactory)
+    {
+        ArgumentNullException.ThrowIfNull(defaultValueFactory);
+
+        return result.Value switch
+        {
+            Exception => defaultValueFactory(),
+            T value => value,
+            _ => defaultValueFactory()
+        };
+    }
+
+    /// <summary>
     /// Replaces an empty result with <paramref name="fallback"/>. Values and errors pass through.
     /// </summary>
     public static Result<T> DefaultIfEmpty<T>(this Result<T> result, T fallback) =>
         result.Value is null ? new Result<T>(fallback) : result;
+
+    /// <summary>
+    /// Replaces an empty result with the result of <paramref name="defaultValueFactory"/>, which runs only when needed.
+    /// </summary>
+    public static Result<T> DefaultIfEmpty<T>(this Result<T> result, Func<T> defaultValueFactory)
+    {
+        ArgumentNullException.ThrowIfNull(defaultValueFactory);
+        return result.Value is null ? Capture.Run(() => new Result<T>(defaultValueFactory())) : result;
+    }
 }

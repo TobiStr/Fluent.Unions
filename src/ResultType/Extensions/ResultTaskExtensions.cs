@@ -94,6 +94,13 @@ public static class ResultTaskExtensions
     public static Task<Result<T>> DefaultIfEmpty<T>(this Task<Result<T>> task, T fallback) =>
         Capture.Then(Capture.Settle(task), result => result.DefaultIfEmpty(fallback));
 
+    /// <inheritdoc cref="ResultQueryExtensions.DefaultIfEmpty{T}(Result{T}, Func{T})"/>
+    public static Task<Result<T>> DefaultIfEmpty<T>(this Task<Result<T>> task, Func<T> defaultValueFactory) =>
+        Capture.Then(Capture.Settle(task), result => result.DefaultIfEmpty(defaultValueFactory));
+
+    /// <inheritdoc cref="ResultQueryExtensions.GetValueOrDefault{T}(Result{T}, Func{T})"/>
+    public static Task<T> GetValueOrDefault<T>(this Task<Result<T>> task, Func<T> defaultValueFactory) =>
+        Capture.Then(Capture.Settle(task), result => result.GetValueOrDefault(defaultValueFactory));
     /// <inheritdoc cref="ResultErrorExtensions.Catch{T}(Result{T}, Func{Exception, Result{T}})"/>
     public static Task<Result<T>> Catch<T>(this Task<Result<T>> task, Func<Exception, Result<T>> handler) =>
         Capture.Then(Capture.Settle(task), result => result.Catch(handler));
