@@ -105,6 +105,30 @@ public class AsyncOperatorTests
     }
 
     [Test]
+    public async Task ChainOnTaskResult()
+    {
+        var length = await GetNameAsync("Ada").Chain(name => (Result<int>)name.Length);
+        var failed = await GetNameAsync(null).Chain(name => (Result<int>)name.Length);
+
+        Assert.That(length.GetOk(), Is.EqualTo(3));
+        Assert.That(failed.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public async Task ChainAwaitChainsAsyncFunctions()
+    {
+        Result<string> name = "Ada";
+
+        var age = await name.ChainAwait(GetAgeAsync);
+        var saved = await GetNameAsync("Ada").ChainAwait(SaveAsync);
+        var failed = await GetNameAsync(null).ChainAwait(GetAgeAsync);
+
+        Assert.That(age.GetOk(), Is.EqualTo(36));
+        Assert.True(saved.Success);
+        Assert.That(failed.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
     public async Task WhereAwaitFiltersValue()
     {
         Result<int> result = 5;

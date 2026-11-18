@@ -109,6 +109,22 @@ public static class ResultQueryExtensions
         };
     }
 
+    /// <inheritdoc cref="SelectMany{T, TOut}(Result{T}, Func{T, Result{TOut}})"/>
+    public static Result<TOut> Chain<T, TOut>(this Result<T> result, Func<T, Result<TOut>> selector) =>
+        result.SelectMany(selector);
+
+    /// <inheritdoc cref="SelectMany{T}(Result{T}, Func{T, Result})"/>
+    public static Result Chain<T>(this Result<T> result, Func<T, Result> selector) =>
+        result.SelectMany(selector);
+
+    /// <inheritdoc cref="SelectMany(Result, Func{Result})"/>
+    public static Result Chain(this Result result, Func<Result> selector) =>
+        result.SelectMany(selector);
+
+    /// <inheritdoc cref="SelectMany{TOut}(Result, Func{Result{TOut}})"/>
+    public static Result<TOut> Chain<TOut>(this Result result, Func<Result<TOut>> selector) =>
+        result.SelectMany(selector);
+
     /// <summary>
     /// Keeps the value if it satisfies the predicate, otherwise the result becomes empty.
     /// </summary>

@@ -138,7 +138,7 @@ A result is **ok** (holds a value or `Ok`), **error** (holds an exception) or **
 
 | Operators | ok | error | empty |
 | --- | --- | --- | --- |
-| `Select`, `SelectMany`, `Where`, `Zip`, `Do(onNext)` | runs | passes through | passes through |
+| `Select`, `Chain`, `SelectMany`, `Where`, `Zip`, `Do(onNext)` | runs | passes through | passes through |
 | `Catch`, `Do(onNext, onError)`, `OnErrorDo` | passes through | runs | passes through |
 | `Finally` | runs | runs | runs |
 | `DefaultIfEmpty` | passes through | passes through | becomes ok |
@@ -156,9 +156,18 @@ Rules that hold for every operator:
 | Operator | What it does |
 | --- | --- |
 | `Select(v => ...)` | Projects the value. On `Result` it takes `() => ...` and produces a `Result<T>`. |
-| `SelectMany(v => ...)` | Chains a call that returns `Result<T>` or `Result`. |
+| `Chain(v => ...)` | Chains a call that returns `Result<T>` or `Result`. |
+| `SelectMany(v => ...)` | The LINQ name for `Chain`. It exists so query syntax works. |
 | `Where(v => ...)` | Keeps the value when the predicate holds, otherwise the result becomes empty. |
 | `Zip(other)` / `Zip(other, (a, b) => ...)` | Combines two results. The first error wins, then an empty side makes the result empty. |
+
+`Chain` links result-returning functions (bind or flatMap in other libraries). Pass a method group, and the next call runs only if the previous one succeeded:
+
+```csharp
+Result<Order> order = GetCustomer(id)
+    .Chain(GetCart)
+    .Chain(PlaceOrder);
+```
 
 **On the error**
 
@@ -225,11 +234,11 @@ Result<string> name = await GetPersonAsync(id)
     .Catch(e => "unknown");
 ```
 
-For asynchronous lambdas, use the `...Await` variants, named after System.Linq.Async: `SelectAwait`, `SelectManyAwait`, `WhereAwait`, `DoAwait`, `CatchAwait` and `FinallyAwait`.
+For asynchronous lambdas, use the `...Await` variants, named after System.Linq.Async: `SelectAwait`, `ChainAwait`, `SelectManyAwait`, `WhereAwait`, `DoAwait`, `CatchAwait` and `FinallyAwait`.
 
 ```csharp
 Result<Address> address = await GetPersonAsync(id)
-    .SelectManyAwait(person => GetAddressAsync(person.AddressId))
+    .ChainAwait(person => GetAddressAsync(person.AddressId))
     .DoAwait(address => cache.StoreAsync(address));
 ```
 

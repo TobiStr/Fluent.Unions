@@ -95,6 +95,22 @@ public static class ResultAwaitExtensions
         };
     }
 
+    /// <inheritdoc cref="SelectManyAwait{T, TOut}(Result{T}, Func{T, Task{Result{TOut}}})"/>
+    public static Task<Result<TOut>> ChainAwait<T, TOut>(this Result<T> result, Func<T, Task<Result<TOut>>> selector) =>
+        result.SelectManyAwait(selector);
+
+    /// <inheritdoc cref="SelectManyAwait{T}(Result{T}, Func{T, Task{Result}})"/>
+    public static Task<Result> ChainAwait<T>(this Result<T> result, Func<T, Task<Result>> selector) =>
+        result.SelectManyAwait(selector);
+
+    /// <inheritdoc cref="SelectManyAwait(Result, Func{Task{Result}})"/>
+    public static Task<Result> ChainAwait(this Result result, Func<Task<Result>> selector) =>
+        result.SelectManyAwait(selector);
+
+    /// <inheritdoc cref="SelectManyAwait{TOut}(Result, Func{Task{Result{TOut}}})"/>
+    public static Task<Result<TOut>> ChainAwait<TOut>(this Result result, Func<Task<Result<TOut>>> selector) =>
+        result.SelectManyAwait(selector);
+
     /// <summary>
     /// Keeps the value if the asynchronous predicate is satisfied, otherwise the result becomes empty.
     /// </summary>
@@ -238,6 +254,22 @@ public static class ResultAwaitExtensions
     /// <inheritdoc cref="SelectManyAwait{TOut}(Result, Func{Task{Result{TOut}}})"/>
     public static Task<Result<TOut>> SelectManyAwait<TOut>(this Task<Result> task, Func<Task<Result<TOut>>> selector) =>
         Capture.ThenAwait(Capture.Settle(task), result => result.SelectManyAwait(selector));
+
+    /// <inheritdoc cref="SelectManyAwait{T, TOut}(Result{T}, Func{T, Task{Result{TOut}}})"/>
+    public static Task<Result<TOut>> ChainAwait<T, TOut>(this Task<Result<T>> task, Func<T, Task<Result<TOut>>> selector) =>
+        task.SelectManyAwait(selector);
+
+    /// <inheritdoc cref="SelectManyAwait{T}(Result{T}, Func{T, Task{Result}})"/>
+    public static Task<Result> ChainAwait<T>(this Task<Result<T>> task, Func<T, Task<Result>> selector) =>
+        task.SelectManyAwait(selector);
+
+    /// <inheritdoc cref="SelectManyAwait(Result, Func{Task{Result}})"/>
+    public static Task<Result> ChainAwait(this Task<Result> task, Func<Task<Result>> selector) =>
+        task.SelectManyAwait(selector);
+
+    /// <inheritdoc cref="SelectManyAwait{TOut}(Result, Func{Task{Result{TOut}}})"/>
+    public static Task<Result<TOut>> ChainAwait<TOut>(this Task<Result> task, Func<Task<Result<TOut>>> selector) =>
+        task.SelectManyAwait(selector);
 
     /// <inheritdoc cref="WhereAwait{T}(Result{T}, Func{T, Task{bool}})"/>
     public static Task<Result<T>> WhereAwait<T>(this Task<Result<T>> task, Func<T, Task<bool>> predicate) =>

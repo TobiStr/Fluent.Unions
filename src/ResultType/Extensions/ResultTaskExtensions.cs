@@ -51,6 +51,22 @@ public static class ResultTaskExtensions
     public static Task<Result<TOut>> SelectMany<TOut>(this Task<Result> task, Func<Result<TOut>> selector) =>
         Capture.Then(Capture.Settle(task), result => result.SelectMany(selector));
 
+    /// <inheritdoc cref="ResultQueryExtensions.Chain{T, TOut}(Result{T}, Func{T, Result{TOut}})"/>
+    public static Task<Result<TOut>> Chain<T, TOut>(this Task<Result<T>> task, Func<T, Result<TOut>> selector) =>
+        task.SelectMany(selector);
+
+    /// <inheritdoc cref="ResultQueryExtensions.Chain{T}(Result{T}, Func{T, Result})"/>
+    public static Task<Result> Chain<T>(this Task<Result<T>> task, Func<T, Result> selector) =>
+        task.SelectMany(selector);
+
+    /// <inheritdoc cref="ResultQueryExtensions.Chain(Result, Func{Result})"/>
+    public static Task<Result> Chain(this Task<Result> task, Func<Result> selector) =>
+        task.SelectMany(selector);
+
+    /// <inheritdoc cref="ResultQueryExtensions.Chain{TOut}(Result, Func{Result{TOut}})"/>
+    public static Task<Result<TOut>> Chain<TOut>(this Task<Result> task, Func<Result<TOut>> selector) =>
+        task.SelectMany(selector);
+
     /// <inheritdoc cref="ResultQueryExtensions.Where{T}(Result{T}, Func{T, bool})"/>
     public static Task<Result<T>> Where<T>(this Task<Result<T>> task, Func<T, bool> predicate) =>
         Capture.Then(Capture.Settle(task), result => result.Where(predicate));

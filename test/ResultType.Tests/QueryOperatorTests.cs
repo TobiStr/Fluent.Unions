@@ -122,6 +122,43 @@ public class QueryOperatorTests
     }
 
     [Test]
+    public void ChainRunsNextOnlyAfterSuccess()
+    {
+        Result<string> ok = "42";
+        Result<string> failed = Failure;
+        var calls = 0;
+
+        var parsed = ok.Chain(Parse);
+        var skipped = failed.Chain(value =>
+        {
+            calls++;
+            return Parse(value);
+        });
+        var empty = default(Result<string>).Chain(Parse);
+
+        Assert.That(parsed.GetOk(), Is.EqualTo(42));
+        Assert.That(skipped.GetError(), Is.SameAs(Failure));
+        Assert.That(empty.Value, Is.Null);
+        Assert.That(calls, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void ChainBetweenGenericAndNonGenericResults()
+    {
+        Result<string> result = "7";
+
+        Result saved = result.Chain(_ => Result.Ok);
+        var chained = Result.Ok.Chain(() => Result.Ok);
+        var withValue = Result.Ok.Chain(() => Parse("7"));
+        var skipped = Result.Error(Failure).Chain(() => Parse("7"));
+
+        Assert.True(saved.Success);
+        Assert.True(chained.Success);
+        Assert.That(withValue.GetOk(), Is.EqualTo(7));
+        Assert.That(skipped.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
     public void QuerySyntaxCombinesResults()
     {
         var sum =
