@@ -1,4 +1,4 @@
-# result-v2
+# Result.Net with Union Types
 
 A small Result type for .NET, rebuilt on the C# 15 `union` keyword. A method returns either its value or an `Exception`, and the compiler checks that callers handle both.
 
