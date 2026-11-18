@@ -535,6 +535,46 @@ Things to know:
 - **Not provided:** `Zip`, `Combine`, `CombineAll`, `Partition`, `Validate`, `Unwrap`, `Transpose`, the factory overloads of `GetValueOrDefault` and `DefaultIfEmpty`, `Try`, query syntax with several `from` clauses, and the other `...Await` operators.
 - **Allocations:** the operators take your result through the interface, which boxes it. That is 24 bytes per operator call in a Release build, on top of what the operator allocates anyway. The library's own `Result<T>` is unaffected and still binds to its concrete operators.
 
+### Errors as data
+
+Errors do not have to be exceptions. As in Rust or TypeScript, an error can be a union of plain records, and the compiler checks that every case is handled. The library ships `Result<T, TError>` for that. Your error type only needs to say how an unexpected exception is represented:
+
+```csharp
+public record CustomerNotFound(int Id);
+public record CartEmpty;
+public record Unexpected(Exception Exception);
+
+public union CheckoutError(CustomerNotFound, CartEmpty, Unexpected) : IFromException<CheckoutError>
+{
+    public static CheckoutError FromException(Exception exception) => new Unexpected(exception);
+}
+
+static Result<Customer, CheckoutError> GetCustomer(int id) =>
+    id > 0 ? new Customer(id) : (CheckoutError)new CustomerNotFound(id);
+```
+
+A case needs the cast to the error union, because C# applies only one implicit conversion. Then handle every case:
+
+```csharp
+int status = Checkout(id).Match(
+    order => 200,
+    error => error switch
+    {
+        CustomerNotFound => 404,
+        CartEmpty => 400,
+        Unexpected => 500
+    },
+    () => 204);
+```
+
+- **Inferable operators:** `Select`, `SelectMany` (so query syntax works) and `MapError(e => ...)`, which changes the error type.
+- **Everything else:** the custom-type operators apply too: `Chain`, `Catch`, `Do`, `Where`, `Match` and the rest.
+- **Typed `Catch`:** it matches a case inside the error union: `Catch((CartEmpty _) => fallbackOrder)`.
+- **Thrown exceptions:** an exception thrown inside an operator becomes the error through `FromException`, so chains still do not throw.
+- **`Check()`:** throws a `ResultErrorException` holding the error, because only exceptions can be rethrown.
+- **Your own types:** they may use any error type, not just exceptions.
+- **Not provided:** `Task` overloads for `Result<T, TError>`, as for other custom types. Await first.
+
 ## Unused results analyzer
 
 The package includes an analyzer, like Rust's `#[must_use]`. Calling a method that returns a result and ignoring it gives warning `FLU0001`:

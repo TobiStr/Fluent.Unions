@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using ResultType.Abstractions;
 
@@ -16,7 +18,7 @@ public static class ResultInterfaceExtensions
         this IResult<TSelf, T, TError> result,
         Func<T, TOutResult> next)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
         where TOutResult : struct, IErrorResult<TOutResult, TError>
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -37,7 +39,7 @@ public static class ResultInterfaceExtensions
         this IResult<TSelf, T, TError> result,
         Func<T, Task<TOutResult>> next)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
         where TOutResult : struct, IErrorResult<TOutResult, TError>
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -56,7 +58,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static TSelf Catch<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Func<TError, TSelf> handler)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(handler);
@@ -65,19 +67,36 @@ public static class ResultInterfaceExtensions
     }
 
     /// <summary>
-    /// Handles errors of type <typeparamref name="TException"/> only. Other errors pass through.
+    /// Handles errors of type <typeparamref name="TCase"/> only, also when it is a case of an error union. Other errors pass through.
     /// </summary>
-    public static TSelf Catch<TSelf, T, TError, TException>(
+    public static TSelf Catch<TSelf, T, TError, TCase>(
         this IResult<TSelf, T, TError> result,
-        Func<TException, TSelf> handler)
+        Func<TCase, TSelf> handler)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
-        where TException : TError
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is TException error ? Capture.Run<TSelf, TError>(() => handler(error)) : (TSelf)result;
+        return result.Value is TError error && TryGetCase<TError, TCase>(error, out var match)
+            ? Capture.Run<TSelf, TError>(() => handler(match))
+            : (TSelf)result;
+    }
+
+    private static bool TryGetCase<TError, TCase>(TError error, [MaybeNullWhen(false)] out TCase match)
+    {
+        switch (error)
+        {
+            case TCase direct:
+                match = direct;
+                return true;
+            case IUnion { Value: TCase inner }:
+                match = inner;
+                return true;
+            default:
+                match = default;
+                return false;
+        }
     }
 
     /// <summary>
@@ -85,7 +104,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static TSelf Catch<TSelf, T, TError>(this IResult<TSelf, T, TError> result, TSelf fallback)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -97,7 +116,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static TSelf Do<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Action<T> onNext)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(onNext);
@@ -124,7 +143,7 @@ public static class ResultInterfaceExtensions
         Action<T> onNext,
         Action<TError> onError)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(onNext);
@@ -153,7 +172,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static TSelf OnErrorDo<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Action<TError> onError)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(onError);
@@ -174,7 +193,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static TSelf Finally<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Action action)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(action);
@@ -193,7 +212,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static TSelf Where<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Func<T, bool> predicate)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(predicate);
@@ -213,7 +232,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static TSelf DefaultIfEmpty<TSelf, T, TError>(this IResult<TSelf, T, TError> result, T fallback)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -225,7 +244,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static T? GetValueOrDefault<TSelf, T, TError>(this IResult<TSelf, T, TError> result)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -242,7 +261,7 @@ public static class ResultInterfaceExtensions
     /// </summary>
     public static T GetValueOrDefault<TSelf, T, TError>(this IResult<TSelf, T, TError> result, T fallback)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -255,20 +274,23 @@ public static class ResultInterfaceExtensions
     }
 
     /// <summary>
-    /// Throws the error, preserving its stack trace, and returns the result if it holds a value.
+    /// Throws the error and returns the result if it holds a value. An exception is rethrown with its stack trace;
+    /// any other error is thrown inside a <see cref="ResultErrorException"/>.
     /// </summary>
     /// <exception cref="InvalidOperationException">The result is empty.</exception>
     public static TSelf Check<TSelf, T, TError>(this IResult<TSelf, T, TError> result)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
 
         switch (result.Value)
         {
-            case TError error:
-                ExceptionDispatchInfo.Capture(error).Throw();
+            case TError error when error is Exception exception:
+                ExceptionDispatchInfo.Capture(exception).Throw();
                 break;
+            case TError error:
+                throw new ResultErrorException(error);
             case T:
                 return (TSelf)result;
         }
@@ -285,7 +307,7 @@ public static class ResultInterfaceExtensions
         Func<TError, TOut> onError,
         Func<TOut> onEmpty)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(onNext);
@@ -307,7 +329,7 @@ public static class ResultInterfaceExtensions
         this IResult<TSelf, T, TError> result,
         Func<T, TOut> selector)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
         where TOutResult : struct, IResult<TOutResult, TOut, TError>
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -328,9 +350,9 @@ public static class ResultInterfaceExtensions
         this IResult<TSelf, T, TError> result,
         Func<TError, TOutError> map)
         where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : Exception
+        where TError : notnull
         where TOutResult : struct, IResult<TOutResult, T, TOutError>
-        where TOutError : Exception
+        where TOutError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(map);
@@ -338,7 +360,7 @@ public static class ResultInterfaceExtensions
         return result.Value switch
         {
             TError error => Capture.Run<TOutResult, TOutError>(() => TOutResult.FromError(
-                map(error) ?? throw new InvalidOperationException("The error mapping returned null.", error))),
+                map(error) ?? throw new InvalidOperationException("The error mapping returned null.", error as Exception))),
             T value => TOutResult.FromValue(value),
             _ => default
         };

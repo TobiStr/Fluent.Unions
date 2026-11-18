@@ -12,7 +12,8 @@ public sealed class ResultJsonConverter : JsonConverterFactory
     /// <inheritdoc />
     public override bool CanConvert(Type typeToConvert) =>
         typeToConvert == typeof(Result)
-        || typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(Result<>);
+        || typeToConvert.IsGenericType
+        && (typeToConvert.GetGenericTypeDefinition() == typeof(Result<>) || typeToConvert.GetGenericTypeDefinition() == typeof(Result<,>));
 
     /// <inheritdoc />
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>

@@ -57,7 +57,7 @@ internal static class Capture
 
     internal static TResult Run<TResult, TError>(Func<TResult> body)
         where TResult : struct, IErrorResult<TResult, TError>
-        where TError : Exception
+        where TError : notnull
     {
         try
         {
@@ -71,7 +71,7 @@ internal static class Capture
 
     internal static async Task<TResult> RunAsync<TResult, TError>(Func<Task<TResult>> body)
         where TResult : struct, IErrorResult<TResult, TError>
-        where TError : Exception
+        where TError : notnull
     {
         try
         {
@@ -85,10 +85,17 @@ internal static class Capture
 
     private static TError ToError<TResult, TError>(Exception exception)
         where TResult : struct, IErrorResult<TResult, TError>
-        where TError : Exception =>
-        exception as TError
-        ?? TResult.FromException(exception)
-        ?? throw new InvalidOperationException($"{typeof(TResult)}.FromException returned null.", exception);
+        where TError : notnull
+    {
+        if (exception is TError error)
+            return error;
+
+        var mapped = TResult.FromException(exception);
+
+        return mapped is null
+            ? throw new InvalidOperationException($"{typeof(TResult)}.FromException returned null.", exception)
+            : mapped;
+    }
 
     internal static Task<Result<T>> Settle<T>(Task<Result<T>> task)
     {
