@@ -28,6 +28,36 @@ public static class OptionConversionExtensions
     };
 
     /// <summary>
+    /// Swaps an optional result into a result of an option: no value gives ok with <see cref="None"/>,
+    /// an error stays an error, and an empty inner result stays empty.
+    /// </summary>
+    public static Result<Option<T>> Transpose<T>(this Option<Result<T>> option)
+    {
+        if (!option.TryGetValue(out var inner))
+            return new Result<Option<T>>(Option<T>.NoValue);
+
+        return inner.Value switch
+        {
+            Exception error => error,
+            T value => new Result<Option<T>>(Option<T>.Of(value)),
+            _ => default
+        };
+    }
+
+    /// <summary>
+    /// Swaps a result of an option into an optional result: ok with <see cref="None"/> gives no value,
+    /// and errors and empty results are kept inside the option. Reverses the other <c>Transpose</c>.
+    /// </summary>
+    public static Option<Result<T>> Transpose<T>(this Result<Option<T>> result) => result.Value switch
+    {
+        Exception error => new Option<Result<T>>(new Result<T>(error)),
+        Option<T> inner => inner.TryGetValue(out var value)
+            ? new Option<Result<T>>(new Result<T>(value))
+            : Option<Result<T>>.NoValue,
+        _ => new Option<Result<T>>(default(Result<T>))
+    };
+
+    /// <summary>
     /// Turns the option into a result, using <paramref name="error"/> when it holds no value.
     /// </summary>
     public static Result<T> ToResult<T>(this Option<T> option, Func<Exception> error)

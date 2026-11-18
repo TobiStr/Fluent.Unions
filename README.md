@@ -225,6 +225,7 @@ result.Catch(e => new DomainException("Lookup failed", e)); // translate the err
 | `GetValueOrDefault(fallback)` | Returns the value, or `fallback`. |
 | `GetValueOrDefault(() => ...)` | Returns the value, or the factory's result. The factory runs only when needed. |
 | `DefaultIfEmpty(fallback)` / `DefaultIfEmpty(() => ...)` | Turns an empty result into an ok one. It stays a result, and a throwing factory gives an error. |
+| `Unwrap()` | Flattens `Result<Result<T>>`, or `Result<Result>` from `Select(x => Save(x))`. Like `Task.Unwrap()`. |
 
 **Sequences** (`IEnumerable<Result<T>>`)
 
@@ -329,6 +330,7 @@ The operators mirror the ones on results, named after LINQ and Rx.NET:
 | `GetValueOrDefault()` / `GetValueOrDefault(fallback)` / `GetValueOrDefault(() => ...)` | Leaves the option with the value, `default`, `fallback` or the factory's result. |
 | `DefaultIfEmpty(fallback)` / `DefaultIfEmpty(() => ...)` | Turns `None` into an option with the fallback. The factory runs only when needed. |
 | `Or(() => ...)` | Uses another option when there is no value: `cache.Find(id).Or(() => db.Find(id))`. |
+| `Unwrap()` | Flattens `Option<Option<T>>`. |
 | `options.Values()` | The values of all options that hold one. |
 | `source.FirstOrNone()` / `source.LastOrNone()` | Like `FirstOrDefault` and `LastOrDefault`, with an optional predicate. |
 
@@ -353,6 +355,14 @@ Option<Person> maybe = LoadPerson(id).ToOption();
 
 `ToResult` turns `None` into the error from the factory. `ToOption` keeps the value of a successful result and drops errors and empty results.
 
+`Transpose()` swaps the nesting of an optional value that may be invalid, like Rust's `transpose`:
+
+| From | To |
+| --- | --- |
+| `Option<Result<T>>`: `None` / ok / error / empty | `Result<Option<T>>`: ok with `None` / ok with the value / error / empty |
+| `Result<Option<T>>`: ok with `None` / ok with the value / error / empty | `Option<Result<T>>`: `None` / the ok result / the error result / the empty result |
+
+Transposing twice gives back the original state.
 ## Custom error types
 
 The library's results accept any `Exception`. To restrict errors to your own base class, for example a `DomainException` that you later map to HTTP status codes, declare your own union and implement `IResult<TSelf, T, TError>` from `ResultType.Abstractions`:

@@ -213,6 +213,27 @@ public static class ResultQueryExtensions
     public static Result<T> DefaultIfEmpty<T>(this Result<T> result, Func<T> defaultValueFactory)
     {
         ArgumentNullException.ThrowIfNull(defaultValueFactory);
+
         return result.Value is null ? Capture.Run(() => new Result<T>(defaultValueFactory())) : result;
     }
+
+    /// <summary>
+    /// Flattens a result of a result. Like <see cref="TaskExtensions.Unwrap{TResult}(Task{Task{TResult}})"/>.
+    /// </summary>
+    public static Result<T> Unwrap<T>(this Result<Result<T>> result) => result.Value switch
+    {
+        Exception error => error,
+        Result<T> inner => inner,
+        _ => default
+    };
+
+    /// <summary>
+    /// Flattens a result of a <see cref="Result"/>.
+    /// </summary>
+    public static Result Unwrap(this Result<Result> result) => result.Value switch
+    {
+        Exception error => error,
+        Result inner => inner,
+        _ => default
+    };
 }

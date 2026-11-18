@@ -119,6 +119,13 @@ public static class OptionQueryExtensions
     public static Option<T> Or<T>(this Option<T> option, Func<Option<T>> alternativeFactory)
     {
         ArgumentNullException.ThrowIfNull(alternativeFactory);
+
         return option.HasValue ? option : alternativeFactory().Normalize();
     }
+
+    /// <summary>
+    /// Flattens an option of an option. Like <see cref="TaskExtensions.Unwrap{TResult}(Task{Task{TResult}})"/>.
+    /// </summary>
+    public static Option<T> Unwrap<T>(this Option<Option<T>> option) =>
+        option.TryGetValue(out var inner) ? inner.Normalize() : Option<T>.NoValue;
 }
