@@ -354,6 +354,18 @@ Result<string> label = await (
 
 The operators take no `CancellationToken`, because they do no I/O themselves. Capture the token in your lambdas. A cancelled operation becomes an error result holding the `OperationCanceledException`.
 
+More helpers for asynchronous code:
+
+| Helper | What it does |
+| --- | --- |
+| `await Result.WhenAll(tasks)` | Like `Task.WhenAll`, then `Combine()`: all values, or the first error in sequence order. A faulted task counts as an error. Also for `Task<Result>`. |
+| `Result.RetryAsync(ct => CallAsync(ct), maxAttempts: 3, delay: TimeSpan.FromSeconds(1))` | Runs the operation again while it fails, as Rx's `Retry` does. `shouldRetry` limits which errors are retried, and cancellation stops retrying. `Result.Retry` is the synchronous version. |
+| `task.Timeout(TimeSpan.FromSeconds(5))` | Gives an error holding a `TimeoutException` when the task takes longer. The operation keeps running, so also pass it a cancellation token. |
+| `stream.Values()` / `stream.Errors()` | Streams the values or errors of an `IAsyncEnumerable<Result<T>>`. `Values()` works on `IAsyncEnumerable<Option<T>>` too. |
+| `await stream.CombineAsync()` | Collects an `IAsyncEnumerable<Result<T>>` like `Combine()`. An exception thrown by the stream becomes the error. |
+
+For all errors instead of the first one, use `(await Task.WhenAll(tasks)).CombineAll()`. A faulted task throws there, though, as `Task.WhenAll` always does.
+
 ## Option
 
 `Option<T>` is for a value that may be missing, where the absence is normal and not an error: a lookup that finds nothing, an optional setting. It holds a `T` or `None`.

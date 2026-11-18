@@ -131,6 +131,85 @@ public union Result(Ok, Exception)
 
         return Capture.RunAsync(body);
     }
+
+    /// <summary>
+    /// Awaits all tasks and combines their values like <c>Combine()</c>: the first error in sequence order wins,
+    /// a faulted task counts as an error, and empty results are skipped.
+    /// </summary>
+    public static Task<Result<IReadOnlyList<T>>> WhenAll<T>(IEnumerable<Task<Result<T>>> tasks)
+    {
+        ArgumentNullException.ThrowIfNull(tasks);
+
+        return Capture.Then(Task.WhenAll(tasks.Select(Capture.Settle)), results => results.Combine());
+    }
+
+    /// <summary>
+    /// Awaits all tasks and returns <see cref="Ok"/>, or the first error in sequence order. A faulted task counts as an error.
+    /// </summary>
+    public static Task<Result> WhenAll(IEnumerable<Task<Result>> tasks)
+    {
+        ArgumentNullException.ThrowIfNull(tasks);
+
+        return Capture.Then(
+            Task.WhenAll(tasks.Select(Capture.Settle)),
+            results => results.FirstOrDefault(result => result.Value is Exception) is { Value: Exception error }
+                ? Error(error)
+                : Ok);
+    }
+
+    /// <summary>
+    /// Runs <paramref name="operation"/> until it does not fail, at most <paramref name="maxAttempts"/> times, and returns the last result.
+    /// Thrown exceptions count as failures. <paramref name="shouldRetry"/> can limit which errors are retried.
+    /// </summary>
+    public static Result<T> Retry<T>(Func<Result<T>> operation, int maxAttempts, Func<Exception, bool>? shouldRetry = null)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxAttempts, 1);
+
+        return Capture.Run(() =>
+        {
+            for (var attempt = 1; ; attempt++)
+            {
+                var result = Capture.Run(operation);
+
+                if (result.Value is not Exception error || attempt == maxAttempts || !(shouldRetry?.Invoke(error) ?? true))
+                    return result;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Runs <paramref name="operation"/> until it does not fail, at most <paramref name="maxAttempts"/> times, waiting
+    /// <paramref name="delay"/> between attempts, and returns the last result. Thrown exceptions count as failures.
+    /// Cancellation stops retrying and gives an error holding the <see cref="OperationCanceledException"/>.
+    /// </summary>
+    public static Task<Result<T>> RetryAsync<T>(
+        Func<CancellationToken, Task<Result<T>>> operation,
+        int maxAttempts,
+        TimeSpan delay = default,
+        Func<Exception, bool>? shouldRetry = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxAttempts, 1);
+
+        return Capture.RunAsync(async () =>
+        {
+            for (var attempt = 1; ; attempt++)
+            {
+                var result = await Capture.RunAsync(() => operation(cancellationToken)).ConfigureAwait(false);
+
+                if (result.Value is not Exception error
+                    || attempt == maxAttempts
+                    || cancellationToken.IsCancellationRequested
+                    || !(shouldRetry?.Invoke(error) ?? true))
+                    return result;
+
+                if (delay > TimeSpan.Zero)
+                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            }
+        });
+    }
 }
 
 /// <summary>
