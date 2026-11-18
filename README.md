@@ -473,6 +473,32 @@ JsonSerializer.Serialize(new Person("Ada", Option.None)); // {"Name":"Ada","Nick
 
 Results are deliberately not serialized: `JsonSerializer` throws `NotSupportedException` for `Result` and `Result<T>`. Without that, an error would be written with its message, stack trace and target site. Convert a result first, for example with `Match`, `GetValueOrDefault` or `ToOption`.
 
+### Entity Framework Core
+
+EF Core cannot map an `Option<T>` property to a nullable column with a value converter. EF decides a column's nullability from the property type, `Option<T>` is a non-nullable struct, and EF refuses to make such a property optional. The column would be `NOT NULL`, and saving `None` fails.
+
+Map a nullable backing field instead, and keep the option as the public property:
+
+```csharp
+public class Person
+{
+    private string? nickname;
+    private int? age;
+
+    public Option<string> Nickname { get => nickname.ToOption(); set => nickname = value.GetValueOrDefault(); }
+    public Option<int> Age { get => age.ToOption(); set => age = value.ToNullable(); }
+}
+
+modelBuilder.Entity<Person>(person =>
+{
+    person.Ignore(p => p.Nickname).Ignore(p => p.Age);
+    person.Property<string?>("nickname").HasColumnName("Nickname");
+    person.Property<int?>("age").HasColumnName("Age");
+});
+```
+
+The columns are nullable, and `None` is stored as `NULL`. In LINQ queries, filter on the field, because EF cannot translate the option property: `db.People.Where(p => EF.Property<string?>(p, "nickname") != null)`.
+
 ## Loadable
 
 `Loadable<T>` is the state of data loaded asynchronously, known as "RemoteData" in Elm. It is not loaded yet, loading, loaded, or failed, and the compiler makes a view handle all four:
