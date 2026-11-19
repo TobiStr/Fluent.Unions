@@ -1,0 +1,50 @@
+![Fluent.Unions](https://raw.githubusercontent.com/TobiStr/Fluent.Unions/main/assets/icon.png)
+
+# Fluent.Unions.AwesomeAssertions
+
+Adds `Should()` for `Result`, `Result<T>` and `Option<T>` to AwesomeAssertions. It builds on Fluent.Unions, and a failure message names the actual state.
+
+## Installation
+
+```
+dotnet add package Fluent.Unions.AwesomeAssertions
+```
+
+## Usage
+
+Assert on an Ok result and its value.
+
+```csharp
+using AwesomeAssertions;
+using Fluent.Unions.AwesomeAssertions;
+
+Result<Order> placed = await orders.PlaceAsync(request);
+placed.Should().BeOk().Which.Total.Should().Be(49.90m);
+```
+
+Assert on the exception inside an error. `*` and `?` are wildcards in the message pattern.
+
+```csharp
+Result<Order> missing = await orders.FindAsync(unknownId);
+missing.Should().BeError<NotFoundException>().WithMessage("Order * was not found");
+```
+
+Assert on an option.
+
+```csharp
+Option<string> nickname = customer.Nickname;
+nickname.Should().BeSomeWithValue("ada");
+```
+
+Assert on the inner exceptions of an aggregate error, such as the output of `Validate`.
+
+```csharp
+registered.Should().BeAggregateError().WithInnerCount(2);
+```
+
+An empty `Result<T>` fails every Ok and error assertion. Only `BeEmpty()` passes for it.
+
+## Documentation
+
+- [AwesomeAssertions documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/awesome-assertions/README.md)
+- [Fluent.Unions on GitHub](https://github.com/TobiStr/Fluent.Unions)
