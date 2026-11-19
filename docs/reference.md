@@ -173,6 +173,16 @@ Package `Fluent.Unions.FluentValidation`, namespace `Fluent.Unions.FluentValidat
 | `ValidateToResult(instance)`, `ValidateToResultAsync(instance, cancellationToken)` | `IValidator<T>` | [FluentValidation](fluent-validation/README.md) |
 | `Validate(validator)`, `ValidateAsync(validator, cancellationToken)` | `Result<T>` | [FluentValidation](fluent-validation/README.md) |
 
+## Polly
+
+Package `Fluent.Unions.Polly`, namespace `Fluent.Unions.Polly`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `HandleError()`, `HandleError(predicate)` | `PredicateBuilder<Result<T>>` | [Polly](polly/README.md) |
+| `ExecuteResultAsync(operation, cancellationToken)` | `ResiliencePipeline<Result<T>>`, `ResiliencePipeline` | [Polly](polly/README.md) |
+| `ToResult()` | `Outcome<Result<T>>` | [Polly](polly/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |
