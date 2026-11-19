@@ -2,6 +2,8 @@
 
 # Fluent.Unions.Polly
 
+[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.Polly.svg)](https://www.nuget.org/packages/Fluent.Unions.Polly) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.Polly.svg)](https://www.nuget.org/packages/Fluent.Unions.Polly) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml)
+
 Connects `Result<T>` to Polly resilience strategies, so a retry can react to the error inside a result. It builds on Fluent.Unions and adds no retry logic of its own.
 
 ## Installation

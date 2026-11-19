@@ -2,6 +2,8 @@
 
 # Fluent.Unions.FluentValidation
 
+[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.FluentValidation.svg)](https://www.nuget.org/packages/Fluent.Unions.FluentValidation) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.FluentValidation.svg)](https://www.nuget.org/packages/Fluent.Unions.FluentValidation) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml)
+
 Runs a FluentValidation validator and returns the outcome as a `Result<T>`, so an existing validator plugs into a result pipeline. It builds on Fluent.Unions.
 
 ## Installation
