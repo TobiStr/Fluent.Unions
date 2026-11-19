@@ -427,3 +427,6 @@ FodyWeavers.xsd
 
 # Agent framework workflow artifacts
 .claude/work/
+
+# Local planning notes
+TODO.md
