@@ -1,4 +1,6 @@
-﻿namespace Fluent.Unions.Extensions;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Fluent.Unions.Extensions;
 
 /// <summary>
 /// Fluent operators that take asynchronous lambdas, named after System.Linq.Async (<c>SelectAwait</c>, ...).
@@ -124,6 +126,76 @@ public static class ResultAwaitExtensions
             T value => Capture.RunAsync(async () => await predicate(value).ConfigureAwait(false) ? result : default),
             _ => Task.FromResult(result)
         };
+    }
+
+    /// <summary>
+    /// Keeps the value if the asynchronous predicate is satisfied, otherwise the result becomes the error from <paramref name="error"/>.
+    /// </summary>
+    public static Task<Result<T>> EnsureAwait<T>(
+        this Result<T> result,
+        Func<T, Task<bool>> predicate,
+        Func<T, Exception> error)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        ArgumentNullException.ThrowIfNull(error);
+
+        return result.Value switch
+        {
+            Exception => Task.FromResult(result),
+            T value => Capture.RunAsync(async () => await predicate(value).ConfigureAwait(false) ? result : error(value)),
+            _ => Task.FromResult(result)
+        };
+    }
+
+    /// <summary>
+    /// Keeps the value if the asynchronous predicate is satisfied, otherwise the result becomes a
+    /// <see cref="ValidationException"/> with <paramref name="message"/>.
+    /// </summary>
+    public static Task<Result<T>> EnsureAwait<T>(this Result<T> result, Func<T, Task<bool>> predicate, string message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        return result.EnsureAwait(predicate, _ => new ValidationException(message));
+    }
+
+    /// <summary>
+    /// Runs an asynchronous dependent step and keeps both values as a tuple.
+    /// </summary>
+    public static Task<Result<(T, TNext)>> BindAppendAwait<T, TNext>(
+        this Result<T> result,
+        Func<T, Task<Result<TNext>>> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        return result.SelectManyAwait(value => selector(value).Select(next => (value, next)));
+    }
+
+    /// <summary>
+    /// Runs an asynchronous dependent step with the tuple elements and appends its value to the tuple.
+    /// </summary>
+    public static Task<Result<(T1, T2, TNext)>> BindAppendAwait<T1, T2, TNext>(
+        this Result<(T1, T2)> result,
+        Func<T1, T2, Task<Result<TNext>>> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        return result
+            .BindAppendAwait(value => selector(value.Item1, value.Item2))
+            .Select(pair => (pair.Item1.Item1, pair.Item1.Item2, pair.Item2));
+    }
+
+    /// <summary>
+    /// Runs an asynchronous dependent step with the tuple elements and appends its value to the tuple.
+    /// </summary>
+    public static Task<Result<(T1, T2, T3, TNext)>> BindAppendAwait<T1, T2, T3, TNext>(
+        this Result<(T1, T2, T3)> result,
+        Func<T1, T2, T3, Task<Result<TNext>>> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        return result
+            .BindAppendAwait(value => selector(value.Item1, value.Item2, value.Item3))
+            .Select(pair => (pair.Item1.Item1, pair.Item1.Item2, pair.Item1.Item3, pair.Item2));
     }
 
     /// <summary>
@@ -274,6 +346,35 @@ public static class ResultAwaitExtensions
     /// <inheritdoc cref="WhereAwait{T}(Result{T}, Func{T, Task{bool}})"/>
     public static Task<Result<T>> WhereAwait<T>(this Task<Result<T>> task, Func<T, Task<bool>> predicate) =>
         Capture.ThenAwait(Capture.Settle(task), result => result.WhereAwait(predicate));
+
+    /// <inheritdoc cref="EnsureAwait{T}(Result{T}, Func{T, Task{bool}}, Func{T, Exception})"/>
+    public static Task<Result<T>> EnsureAwait<T>(
+        this Task<Result<T>> task,
+        Func<T, Task<bool>> predicate,
+        Func<T, Exception> error) =>
+        Capture.ThenAwait(Capture.Settle(task), result => result.EnsureAwait(predicate, error));
+
+    /// <inheritdoc cref="EnsureAwait{T}(Result{T}, Func{T, Task{bool}}, string)"/>
+    public static Task<Result<T>> EnsureAwait<T>(this Task<Result<T>> task, Func<T, Task<bool>> predicate, string message) =>
+        Capture.ThenAwait(Capture.Settle(task), result => result.EnsureAwait(predicate, message));
+
+    /// <inheritdoc cref="BindAppendAwait{T, TNext}(Result{T}, Func{T, Task{Result{TNext}}})"/>
+    public static Task<Result<(T, TNext)>> BindAppendAwait<T, TNext>(
+        this Task<Result<T>> task,
+        Func<T, Task<Result<TNext>>> selector) =>
+        Capture.ThenAwait(Capture.Settle(task), result => result.BindAppendAwait(selector));
+
+    /// <inheritdoc cref="BindAppendAwait{T1, T2, TNext}(Result{ValueTuple{T1, T2}}, Func{T1, T2, Task{Result{TNext}}})"/>
+    public static Task<Result<(T1, T2, TNext)>> BindAppendAwait<T1, T2, TNext>(
+        this Task<Result<(T1, T2)>> task,
+        Func<T1, T2, Task<Result<TNext>>> selector) =>
+        Capture.ThenAwait(Capture.Settle(task), result => result.BindAppendAwait(selector));
+
+    /// <inheritdoc cref="BindAppendAwait{T1, T2, T3, TNext}(Result{ValueTuple{T1, T2, T3}}, Func{T1, T2, T3, Task{Result{TNext}}})"/>
+    public static Task<Result<(T1, T2, T3, TNext)>> BindAppendAwait<T1, T2, T3, TNext>(
+        this Task<Result<(T1, T2, T3)>> task,
+        Func<T1, T2, T3, Task<Result<TNext>>> selector) =>
+        Capture.ThenAwait(Capture.Settle(task), result => result.BindAppendAwait(selector));
 
     /// <inheritdoc cref="DoAwait{T}(Result{T}, Func{T, Task})"/>
     public static Task<Result<T>> DoAwait<T>(this Task<Result<T>> task, Func<T, Task> onNext) =>

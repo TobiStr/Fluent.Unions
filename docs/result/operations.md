@@ -9,7 +9,7 @@ using Fluent.Unions.Extensions;
 
 | Operators | ok | error | empty |
 | --- | --- | --- | --- |
-| `Select`, `Chain`, `SelectMany`, `Where`, `Zip`, `Do(onNext)` | runs | passes through | passes through |
+| `Select`, `Chain`, `SelectMany`, `Where`, `Ensure`, `Zip`, `BindAppend`, `Do(onNext)` | runs | passes through | passes through |
 | `Finally` | runs | runs | runs |
 | `DefaultIfEmpty` | passes through | passes through | becomes ok |
 
@@ -103,6 +103,77 @@ Result<decimal> total = GetCustomer(id).Chain(GetCart).Zip(
 ```
 
 `Zip` is the right tool for independent inputs. For steps that depend on each other, use `Chain`.
+
+## Ensure
+
+Checks the value and turns a failed check into an error. Where `Where` leaves the result empty, `Ensure` produces an error. An error or an empty result passes through, and the predicate does not run. You always supply the message or the exception.
+
+```csharp
+Result<Cart> checkedCart = GetCustomer(id)
+    .Chain(GetCart)
+    .Ensure(c => c.Items.Count > 0, "The cart is empty.");
+```
+
+With a message the error is a `ValidationException`. To produce your own exception, pass a function:
+
+```csharp
+Result<Cart> stocked = GetCustomer(id)
+    .Chain(GetCart)
+    .Ensure(c => c.Items.Count > 0, c => new EmptyCartException(c.Id));
+```
+
+A predicate that throws becomes the error. Use `EnsureAwait` for an asynchronous predicate. Both forms also exist on `Task<Result<T>>`.
+
+```csharp
+Result<Cart> available = await GetCustomer(id)
+    .Chain(GetCart)
+    .EnsureAwait(c => stock.HasAllAsync(c), "Some items are out of stock.");
+```
+
+## CombineAll
+
+Combines two to four independent results into a tuple. Unlike `Zip`, it collects every error in one flat `AggregateException`. When nothing failed but one side is empty, the result is empty.
+
+```csharp
+Result<(Customer, Cart)> both = Result.CombineAll(GetCustomer(id), GetCustomer(id).Chain(GetCart));
+```
+
+`Result.CombineAllAsync` takes tasks, awaits all of them and turns a faulted task into a collected error:
+
+```csharp
+Result<(Customer, Cart, Shipping)> all = await Result.CombineAllAsync(
+    LoadCustomerAsync(id),
+    LoadCartAsync(id),
+    LoadShippingAsync(id));
+```
+
+## BindAppend
+
+Runs a step that depends on the value and keeps both in a tuple. Later steps take the tuple elements as separate parameters, so a pipeline can collect values without nesting.
+
+```csharp
+Result<(Customer, Cart, Shipping)> context = GetCustomer(id)
+    .BindAppend(GetCart)
+    .BindAppend((customer, cart) => Shipping(cart));
+```
+
+It stops at the first error. An error or an empty result passes through and the lambda does not run, and an empty result from the lambda makes the result empty. `BindAppendAwait` takes an asynchronous step. Both forms exist on `Task<Result<T>>` and work up to a four-element tuple.
+
+## WithValue and DiscardValue
+
+`WithValue` gives a successful `Result` a value. An error passes through, and an empty result becomes an empty `Result<T>`. A `null` value throws `ArgumentNullException`.
+
+```csharp
+Result<Order> placed = Save(known).WithValue(order);
+```
+
+`DiscardValue` goes the other way and drops the value. An empty result stays empty.
+
+```csharp
+Result saved = GetCustomer(id).Chain(GetCart).DiscardValue();
+```
+
+Both also exist on `Task` of a result.
 
 ## Do
 

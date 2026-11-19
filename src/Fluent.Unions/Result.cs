@@ -210,6 +210,114 @@ public union Result(Ok, Exception)
             }
         });
     }
+
+    /// <summary>Combines two results into a tuple, or collects every error. An empty side makes it empty.</summary>
+    public static Result<(T1, T2)> CombineAll<T1, T2>(Result<T1> first, Result<T2> second)
+    {
+        if (CollectErrors(first.Value, second.Value) is { } error)
+            return error;
+
+        return (first.Value, second.Value) is (T1 a, T2 b) ? new Result<(T1, T2)>((a, b)) : default;
+    }
+
+    /// <summary>Combines three results into a tuple, or collects every error. An empty side makes it empty.</summary>
+    public static Result<(T1, T2, T3)> CombineAll<T1, T2, T3>(Result<T1> first, Result<T2> second, Result<T3> third)
+    {
+        if (CollectErrors(first.Value, second.Value, third.Value) is { } error)
+            return error;
+
+        return (first.Value, second.Value, third.Value) is (T1 a, T2 b, T3 c)
+            ? new Result<(T1, T2, T3)>((a, b, c))
+            : default;
+    }
+
+    /// <summary>Combines four results into a tuple, or collects every error. An empty side makes it empty.</summary>
+    public static Result<(T1, T2, T3, T4)> CombineAll<T1, T2, T3, T4>(
+        Result<T1> first,
+        Result<T2> second,
+        Result<T3> third,
+        Result<T4> fourth)
+    {
+        if (CollectErrors(first.Value, second.Value, third.Value, fourth.Value) is { } error)
+            return error;
+
+        return (first.Value, second.Value, third.Value, fourth.Value) is (T1 a, T2 b, T3 c, T4 d)
+            ? new Result<(T1, T2, T3, T4)>((a, b, c, d))
+            : default;
+    }
+
+    /// <summary>
+    /// Awaits both tasks and combines them like <see cref="CombineAll{T1, T2}"/>. A faulted task counts as an error.
+    /// </summary>
+    public static Task<Result<(T1, T2)>> CombineAllAsync<T1, T2>(Task<Result<T1>> first, Task<Result<T2>> second)
+    {
+        return Run(Capture.Settle(first), Capture.Settle(second));
+
+        static async Task<Result<(T1, T2)>> Run(Task<Result<T1>> first, Task<Result<T2>> second)
+        {
+            await Task.WhenAll(first, second).ConfigureAwait(false);
+
+            return CombineAll(await first.ConfigureAwait(false), await second.ConfigureAwait(false));
+        }
+    }
+
+    /// <summary>
+    /// Awaits all three tasks and combines them like <see cref="CombineAll{T1, T2, T3}"/>. A faulted task counts as an error.
+    /// </summary>
+    public static Task<Result<(T1, T2, T3)>> CombineAllAsync<T1, T2, T3>(
+        Task<Result<T1>> first,
+        Task<Result<T2>> second,
+        Task<Result<T3>> third)
+    {
+        return Run(Capture.Settle(first), Capture.Settle(second), Capture.Settle(third));
+
+        static async Task<Result<(T1, T2, T3)>> Run(
+            Task<Result<T1>> first,
+            Task<Result<T2>> second,
+            Task<Result<T3>> third)
+        {
+            await Task.WhenAll(first, second, third).ConfigureAwait(false);
+
+            return CombineAll(
+                await first.ConfigureAwait(false),
+                await second.ConfigureAwait(false),
+                await third.ConfigureAwait(false));
+        }
+    }
+
+    /// <summary>
+    /// Awaits all four tasks and combines them like <see cref="CombineAll{T1, T2, T3, T4}"/>. A faulted task counts as an error.
+    /// </summary>
+    public static Task<Result<(T1, T2, T3, T4)>> CombineAllAsync<T1, T2, T3, T4>(
+        Task<Result<T1>> first,
+        Task<Result<T2>> second,
+        Task<Result<T3>> third,
+        Task<Result<T4>> fourth)
+    {
+        return Run(Capture.Settle(first), Capture.Settle(second), Capture.Settle(third), Capture.Settle(fourth));
+
+        static async Task<Result<(T1, T2, T3, T4)>> Run(
+            Task<Result<T1>> first,
+            Task<Result<T2>> second,
+            Task<Result<T3>> third,
+            Task<Result<T4>> fourth)
+        {
+            await Task.WhenAll(first, second, third, fourth).ConfigureAwait(false);
+
+            return CombineAll(
+                await first.ConfigureAwait(false),
+                await second.ConfigureAwait(false),
+                await third.ConfigureAwait(false),
+                await fourth.ConfigureAwait(false));
+        }
+    }
+
+    private static AggregateException? CollectErrors(params object?[] values)
+    {
+        var errors = values.OfType<Exception>().ToList();
+
+        return errors.Count == 0 ? null : new AggregateException(errors).Flatten();
+    }
 }
 
 /// <summary>

@@ -53,6 +53,10 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `Chain` / `SelectMany` | yes | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Where` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Zip` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
+| `Ensure(predicate, message)`, `Ensure(predicate, v => exception)`, `EnsureAwait(...)` | `Result<T>` | | yes | [Result](result/operations.md) |
+| `Result.CombineAll(a, b[, c[, d]])`, `Result.CombineAllAsync(...)` | `Result<T>` | | tasks | [Result](result/operations.md) |
+| `BindAppend(v => ...)`, `BindAppend((a, b) => ...)`, `BindAppendAwait(...)` | `Result<T>`, tuples up to three elements | | yes | [Result](result/operations.md) |
+| `WithValue(value)`, `DiscardValue()` | `Result`, `Result<T>` | | yes | [Result](result/operations.md) |
 | `Out(out var value)` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Unwrap` | nested results | nested options | | [Result](result/operations.md), [Option](option/operations.md) |
 | `Or(() => ...)` | | yes | yes | [Option operations](option/operations.md) |
@@ -65,6 +69,31 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `OnErrorDo(e => ...)`, `Do(v => ..., e => ...)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `MapError(e => ...)` | `Result<T, TError>`, custom types (explicit type arguments) | [Errors as data](errors/errors-as-data.md) |
 | `Validate(rules...)` | `Result<T>`, `Task<Result<T>>` | [Validation](validation/README.md) |
+
+| `value.Ensure(predicate, message)`, `value.Ensure(predicate, v => exception)` | any `T`, returns `Result<T>` | [Rule catalogue](validation/README.md#rule-catalogue) |
+| `Is.Positive`, `Is.Negative`, `Is.NonPositive`, `Is.NonNegative`, `Is.Zero`, `Is.NonZero` | `T : INumberBase<T>`, used as method groups | [Number rules](validation/README.md#number-rules) |
+| `Is.Even`, `Is.Odd`, `Is.DivisibleBy(divisor)` | `T : IBinaryInteger<T>` | [Number rules](validation/README.md#number-rules) |
+| `Is.GreaterThan(bound)`, `Is.GreaterThanOrEqual(bound)`, `Is.LessThan(bound)`, `Is.LessThanOrEqual(bound)`, `Is.InRange(min, max)` | factories for `T : IComparable<T>` | [Number rules](validation/README.md#number-rules) |
+| `EnsurePositive()`, `EnsureNegative()`, `EnsureNonPositive()`, `EnsureNonNegative()`, `EnsureZero()`, `EnsureNonZero()` | `T : INumberBase<T>`, `Result<T>` | [Number rules](validation/README.md#number-rules) |
+| `EnsureEven()`, `EnsureOdd()`, `EnsureDivisibleBy(divisor)` | `T : IBinaryInteger<T>`, `Result<T>` | [Number rules](validation/README.md#number-rules) |
+| `EnsureGreaterThan(bound)`, `EnsureGreaterThanOrEqual(bound)`, `EnsureLessThan(bound)`, `EnsureLessThanOrEqual(bound)`, `EnsureInRange(min, max)` | `T : IComparable<T>`, `Result<T>` | [Number rules](validation/README.md#number-rules) |
+| `Is.Null`, `Is.NotNull`, `Is.Some`, `Is.None` | any `T` and `Option<T>`, used as method groups | [General rules](validation/README.md#general-rules) |
+| `Is.EqualTo(expected)`, `Is.NotEqualTo(other)`, `Is.In(...)`, `Is.NotIn(...)` | factories for any `T` | [General rules](validation/README.md#general-rules) |
+| `EnsureEqualTo(expected)`, `EnsureNotEqualTo(other)`, `EnsureIn([...])`, `EnsureNotIn([...])` | any `T`, `Result<T>` | [General rules](validation/README.md#general-rules) |
+| `EnsureNotNull()` | any `T`, value only | [General rules](validation/README.md#general-rules) |
+| `EnsureSome()`, `EnsureNone()` | `Option<T>`, `Result<Option<T>>` | [General rules](validation/README.md#general-rules) |
+| `Is.NotEmpty`, `Is.Empty`, `Is.Unique` | `IEnumerable<TItem>?`, used as method groups | [Collection rules](validation/README.md#collection-rules) |
+| `Is.Unique(comparer)`, `Is.HasCount(n)`, `Is.HasMinCount(n)`, `Is.HasMaxCount(n)` | factories for collections | [Collection rules](validation/README.md#collection-rules) |
+| `Is.ContainsItem(item)`, `Is.NotContainsItem(item)`, `Is.AllMatch(predicate)`, `Is.AnyMatch(predicate)`, `Is.NoneMatch(predicate)` | factories for `IEnumerable<TItem>?` | [Collection rules](validation/README.md#collection-rules) |
+| `EnsureNotEmpty()`, `EnsureEmpty()`, `EnsureUnique()`, `EnsureUnique(comparer)`, `EnsureHasCount(n)`, `EnsureHasMinCount(n)`, `EnsureHasMaxCount(n)` | any collection, `Result<TCollection>` | [Collection rules](validation/README.md#collection-rules) |
+| `EnsureContainsItem(item)`, `EnsureNotContainsItem(item)`, `EnsureAllMatch(predicate)`, `EnsureAnyMatch(predicate)`, `EnsureNoneMatch(predicate)` | any collection, `Result<TCollection>` | [Collection rules](validation/README.md#collection-rules) |
+| `Is.InPast(timeProvider)`, `Is.InPastOrPresent(...)`, `Is.InFuture(...)`, `Is.InFutureOrPresent(...)`, also taking a `DateTimeOffset` or `DateTime` as `now` | factories for `DateTimeOffset` and `DateTime` | [Date, time and other value rules](validation/README.md#date-time-and-other-value-rules) |
+| `EnsureInPast(timeProvider)`, `EnsureInPastOrPresent(...)`, `EnsureInFuture(...)`, `EnsureInFutureOrPresent(...)`, also taking `now` | `DateTimeOffset`, `Result<DateTimeOffset>`; with a `DateTime` `now`: `DateTime`, `Result<DateTime>` | [Date, time and other value rules](validation/README.md#date-time-and-other-value-rules) |
+| `Is.Positive`, `Is.Negative`, `Is.NonPositive`, `Is.NonNegative`, `Is.Zero`, `Is.NonZero` and the matching `Ensure*` rules | `TimeSpan`, `Result<TimeSpan>` | [Date, time and other value rules](validation/README.md#date-time-and-other-value-rules) |
+| `Is.Digit`, `Is.Letter`, `Is.LetterOrDigit`, `Is.Lower`, `Is.Upper`, `Is.Punctuation`, `Is.Special`, `Is.Symbol`, `Is.WhiteSpace` and the matching `Ensure*` rules | `char`, `Result<char>` | [Date, time and other value rules](validation/README.md#date-time-and-other-value-rules) |
+| `Is.NotEmpty`, `Is.Empty` and `EnsureNotEmpty()`, `EnsureEmpty()` | `Guid`, `Result<Guid>` | [Date, time and other value rules](validation/README.md#date-time-and-other-value-rules) |
+| `Is.True`, `Is.False` and `EnsureTrue()`, `EnsureFalse()` | `bool`, `Result<bool>` | [Date, time and other value rules](validation/README.md#date-time-and-other-value-rules) |
+| `Is.Defined`, `EnsureDefined()` | `TEnum : struct, Enum`, `Result<TEnum>` | [Date, time and other value rules](validation/README.md#date-time-and-other-value-rules) |
 
 ## Side effects
 

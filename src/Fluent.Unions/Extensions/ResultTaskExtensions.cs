@@ -71,6 +71,42 @@ public static class ResultTaskExtensions
     public static Task<Result<T>> Where<T>(this Task<Result<T>> task, Func<T, bool> predicate) =>
         Capture.Then(Capture.Settle(task), result => result.Where(predicate));
 
+    /// <inheritdoc cref="ResultEnsureExtensions.Ensure{T}(Result{T}, Func{T, bool}, Func{T, Exception})"/>
+    public static Task<Result<T>> Ensure<T>(this Task<Result<T>> task, Func<T, bool> predicate, Func<T, Exception> error) =>
+        Capture.Then(Capture.Settle(task), result => result.Ensure(predicate, error));
+
+    /// <inheritdoc cref="ResultEnsureExtensions.Ensure{T}(Result{T}, Func{T, bool}, string)"/>
+    public static Task<Result<T>> Ensure<T>(this Task<Result<T>> task, Func<T, bool> predicate, string message) =>
+        Capture.Then(Capture.Settle(task), result => result.Ensure(predicate, message));
+
+    /// <inheritdoc cref="ResultTupleExtensions.BindAppend{T, TNext}(Result{T}, Func{T, Result{TNext}})"/>
+    public static Task<Result<(T, TNext)>> BindAppend<T, TNext>(this Task<Result<T>> task, Func<T, Result<TNext>> selector) =>
+        Capture.Then(Capture.Settle(task), result => result.BindAppend(selector));
+
+    /// <inheritdoc cref="ResultTupleExtensions.BindAppend{T1, T2, TNext}(Result{ValueTuple{T1, T2}}, Func{T1, T2, Result{TNext}})"/>
+    public static Task<Result<(T1, T2, TNext)>> BindAppend<T1, T2, TNext>(
+        this Task<Result<(T1, T2)>> task,
+        Func<T1, T2, Result<TNext>> selector) =>
+        Capture.Then(Capture.Settle(task), result => result.BindAppend(selector));
+
+    /// <inheritdoc cref="ResultTupleExtensions.BindAppend{T1, T2, T3, TNext}(Result{ValueTuple{T1, T2, T3}}, Func{T1, T2, T3, Result{TNext}})"/>
+    public static Task<Result<(T1, T2, T3, TNext)>> BindAppend<T1, T2, T3, TNext>(
+        this Task<Result<(T1, T2, T3)>> task,
+        Func<T1, T2, T3, Result<TNext>> selector) =>
+        Capture.Then(Capture.Settle(task), result => result.BindAppend(selector));
+
+    /// <inheritdoc cref="ResultTupleExtensions.WithValue{T}(Result, T)"/>
+    public static Task<Result<T>> WithValue<T>(this Task<Result> task, T value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        return Capture.Then(Capture.Settle(task), result => result.WithValue(value));
+    }
+
+    /// <inheritdoc cref="ResultTupleExtensions.DiscardValue{T}(Result{T})"/>
+    public static Task<Result> DiscardValue<T>(this Task<Result<T>> task) =>
+        Capture.Then(Capture.Settle(task), result => result.DiscardValue());
+
     /// <inheritdoc cref="ResultQueryExtensions.Zip{T1, T2}(Result{T1}, Result{T2})"/>
     public static Task<Result<(T1 First, T2 Second)>> Zip<T1, T2>(this Task<Result<T1>> first, Result<T2> second) =>
         Capture.Then(Capture.Settle(first), result => result.Zip(second));
