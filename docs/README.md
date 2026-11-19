@@ -24,6 +24,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | Folder | What it covers |
 | --- | --- |
 | [ASP.NET Core](aspnetcore/README.md) | The `Fluent.Unions.AspNetCore` package: HTTP responses, ProblemDetails, the endpoint filter, error mapping. |
+| [AwesomeAssertions](awesome-assertions/README.md) | The `Fluent.Unions.AwesomeAssertions` package: assert on a `Result`, `Result<T>` or `Option<T>` and on the exception inside an error. |
 | [Entity Framework Core](entity-framework-core/README.md) | Storing options in EF Core with nullable backing fields. |
 | [FluentValidation](fluent-validation/README.md) | The `Fluent.Unions.FluentValidation` package: run a validator and get every failure as a `Result<T>`. |
 | [OpenAPI](openapi/README.md) | The `Fluent.Unions.OpenApi` package: describe `Option<T>` as a nullable `T` in the generated OpenAPI document. |

@@ -6,6 +6,7 @@
     <Project Path="src/Fluent.Unions.FluentValidation/Fluent.Unions.FluentValidation.csproj" />
     <Project Path="src/Fluent.Unions.Polly/Fluent.Unions.Polly.csproj" />
     <Project Path="src/Fluent.Unions.OpenApi/Fluent.Unions.OpenApi.csproj" />
+    <Project Path="src/Fluent.Unions.AwesomeAssertions/Fluent.Unions.AwesomeAssertions.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -14,5 +15,6 @@
     <Project Path="test/Fluent.Unions.FluentValidation.Tests/Fluent.Unions.FluentValidation.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Polly.Tests/Fluent.Unions.Polly.Tests.csproj" />
     <Project Path="test/Fluent.Unions.OpenApi.Tests/Fluent.Unions.OpenApi.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.AwesomeAssertions.Tests/Fluent.Unions.AwesomeAssertions.Tests.csproj" />
   </Folder>
 </Solution>

@@ -192,6 +192,19 @@ Package `Fluent.Unions.OpenApi`, namespace `Fluent.Unions.OpenApi`.
 | `AddFluentUnions()` | `OpenApiOptions` | [OpenAPI](openapi/README.md) |
 | `OptionSchemaTransformer` | `IOpenApiSchemaTransformer` for `Option<T>` | [OpenAPI](openapi/README.md) |
 
+## AwesomeAssertions
+
+Package `Fluent.Unions.AwesomeAssertions`, namespace `Fluent.Unions.AwesomeAssertions`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `Should()` | `Result`, `Result<T>`, `Option<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
+| `BeOk()`, `BeError()`, `BeError<TException>()`, `BeError<TException>(predicate)`, `BeAggregateError()` | `ResultAssertions`, `ResultAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
+| `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeOkSatisfying(assertion)`, `BeEmpty()` | `ResultAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
+| `BeSome()` (with `Which`), `BeSomeWithValue(value)`, `NotBeSomeWithValue(value)`, `BeSomeMatching(predicate)`, `BeSomeSatisfying(assertion)`, `BeNone()` | `OptionAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
+| `WithMessage(pattern)`, `WithMessageContaining(text)` | `ErrorAssertions<TException>` | [AwesomeAssertions](awesome-assertions/README.md) |
+| `WithInnerCount(count)`, `WithInner<TException>()`, `WithInnerMessage(pattern)` | `AggregateErrorAssertions` | [AwesomeAssertions](awesome-assertions/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |
