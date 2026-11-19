@@ -44,7 +44,7 @@ Result<Customer> customer = repository.Find(id).ToResult(() => new KeyNotFoundEx
 Result<int> quantity = Result.Try(() => int.Parse(input));
 ```
 
-**Validate input and get every error at once.** Ready-made rules name the property in their message:
+**Validate input and get every error at once.** The ready-made rules in `Fluent.Unions.Validation` are part of the core package and name the property in their message:
 
 ```csharp
 Result<SignUp> signUp = Result.From(form).Validate(
@@ -66,12 +66,6 @@ string name = cached.Select(c => c.Name).GetValueOrDefault("Guest");
 Result<decimal> total = await LoadCustomerAsync(id)
     .ChainAwait(customer => LoadCartAsync(customer.CartId))
     .Select(cart => cart.Total);
-```
-
-**Answer HTTP requests in one line** with [Fluent.Unions.AspNetCore](https://www.nuget.org/packages/Fluent.Unions.AspNetCore):
-
-```csharp
-app.MapGet("/orders/{id}", (Guid id) => LoadOrderAsync(id).ToHttpResult());   // 200, 404, or ProblemDetails
 ```
 
 ## Integrations

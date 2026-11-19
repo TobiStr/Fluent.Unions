@@ -51,7 +51,7 @@ Result<Customer> customer = repository.Find(id).ToResult(() => new KeyNotFoundEx
 Result<int> quantity = Result.Try(() => int.Parse(input));
 ```
 
-**Validate input and get every error at once.** Ready-made rules name the property in their message:
+**Validate input and get every error at once.** The ready-made rules in `Fluent.Unions.Validation` are part of the core package and name the property in their message:
 
 ```csharp
 Result<SignUp> signUp = Result.From(form).Validate(
@@ -73,12 +73,6 @@ string name = cached.Select(c => c.Name).GetValueOrDefault("Guest");
 Result<decimal> total = await LoadCustomerAsync(id)
     .ChainAwait(customer => LoadCartAsync(customer.CartId))
     .Select(cart => cart.Total);
-```
-
-**Answer HTTP requests in one line** with [Fluent.Unions.AspNetCore](https://www.nuget.org/packages/Fluent.Unions.AspNetCore):
-
-```csharp
-app.MapGet("/orders/{id}", (Guid id) => LoadOrderAsync(id).ToHttpResult());   // 200, 404, or ProblemDetails
 ```
 
 ## A real-world example: checkout
@@ -120,7 +114,8 @@ public static Result<Receipt> PlaceOrder(Shop shop, CheckoutRequest request) =>
         .Validate(
             r => r.Sku.EnsureNotWhiteSpace(),
             r => r.Quantity.EnsureInRange(1, 10))
-        .Chain(r => FindCustomer(shop, r.CustomerId)).Out(out var customer)
+        .Chain(r => FindCustomer(shop, r.CustomerId))
+            .Out(out var customer)
         .Chain(_ => FindProduct(shop, request.Sku))
         .Ensure(p => p.Stock >= request.Quantity, p => new InvalidOperationException($"Only {p.Stock} left of {p.Sku}."))
         .Select(p => (Product: p, Total: p.Price * request.Quantity))
@@ -156,7 +151,7 @@ What the union gives you:
 - **No `try`/`catch`, no `null`.** The declined card's exception and the repository's `null` become errors inside the chain, so the order is not saved.
 - **Every validation error at once**, instead of stopping at the first.
 
-Both versions are tested side by side in [`CheckoutSample.cs`](https://github.com/TobiStr/Fluent.Unions/blob/main/test/Fluent.Unions.Tests/Samples/CheckoutSample.cs). For many endpoints, map errors to HTTP once instead of per call: [Fluent.Unions.AspNetCore](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/README.md) does that with `ToHttpResult()` and `ResultHttpOptions`.
+Both versions are tested side by side in [`CheckoutSample.cs`](https://github.com/TobiStr/Fluent.Unions/blob/main/test/Fluent.Unions.Tests/Samples/CheckoutSample.cs).
 
 ## Features
 
