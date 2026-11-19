@@ -2,7 +2,7 @@
 
 # Fluent.Unions.AwesomeAssertions
 
-[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.AwesomeAssertions.svg)](https://www.nuget.org/packages/Fluent.Unions.AwesomeAssertions) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.AwesomeAssertions.svg)](https://www.nuget.org/packages/Fluent.Unions.AwesomeAssertions) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml)
+[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.AwesomeAssertions.svg)](https://www.nuget.org/packages/Fluent.Unions.AwesomeAssertions) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.AwesomeAssertions.svg)](https://www.nuget.org/packages/Fluent.Unions.AwesomeAssertions) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2)](https://tobistr.github.io/Fluent.Unions/awesome-assertions/)
 
 Adds `Should()` for `Result`, `Result<T>` and `Option<T>` to AwesomeAssertions. It builds on Fluent.Unions, and a failure message names the actual state.
 

@@ -2,7 +2,7 @@
 
 # Fluent.Unions.AspNetCore
 
-[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.AspNetCore.svg)](https://www.nuget.org/packages/Fluent.Unions.AspNetCore) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.AspNetCore.svg)](https://www.nuget.org/packages/Fluent.Unions.AspNetCore) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml)
+[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.AspNetCore.svg)](https://www.nuget.org/packages/Fluent.Unions.AspNetCore) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.AspNetCore.svg)](https://www.nuget.org/packages/Fluent.Unions.AspNetCore) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2)](https://tobistr.github.io/Fluent.Unions/aspnetcore/)
 
 Turns `Result`, `Result<T>` and `Option<T>` into HTTP responses, so an endpoint returns the outcome of an operation and the status code follows from it. It builds on Fluent.Unions.
 

@@ -6,6 +6,7 @@
   <a href="https://www.nuget.org/packages/Fluent.Unions"><img src="https://img.shields.io/nuget/v/Fluent.Unions.svg" alt="NuGet" /></a>
   <a href="https://www.nuget.org/packages/Fluent.Unions"><img src="https://img.shields.io/nuget/dt/Fluent.Unions.svg" alt="Downloads" /></a>
   <a href="https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml"><img src="https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg" alt="Publish" /></a>
+  <a href="https://tobistr.github.io/Fluent.Unions/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2" alt="Documentation" /></a>
 </p>
 
 > The Result pattern has shaped how I write .NET code for over 10 years. It started with the simple [ResultType](https://github.com/TobiStr/ResultType) and continued with [PartialResult](https://github.com/TobiStr/PartialResult). Fluent.Unions is the next big step: with C# 15 unions, the compiler now enforces what those libraries could only encourage.

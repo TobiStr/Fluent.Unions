@@ -2,7 +2,7 @@
 
 # Fluent.Unions.OpenApi
 
-[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.OpenApi.svg)](https://www.nuget.org/packages/Fluent.Unions.OpenApi) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.OpenApi.svg)](https://www.nuget.org/packages/Fluent.Unions.OpenApi) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml)
+[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.OpenApi.svg)](https://www.nuget.org/packages/Fluent.Unions.OpenApi) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.OpenApi.svg)](https://www.nuget.org/packages/Fluent.Unions.OpenApi) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2)](https://tobistr.github.io/Fluent.Unions/openapi/)
 
 Describes `Option<T>` as a nullable `T` in the documents that Microsoft.AspNetCore.OpenApi generates. It builds on Fluent.Unions and matches the JSON shape of an option: the value, or `null` for none.
 

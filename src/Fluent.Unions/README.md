@@ -2,7 +2,7 @@
 
 # Fluent.Unions
 
-[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.svg)](https://www.nuget.org/packages/Fluent.Unions) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.svg)](https://www.nuget.org/packages/Fluent.Unions) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml)
+[![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.svg)](https://www.nuget.org/packages/Fluent.Unions) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.svg)](https://www.nuget.org/packages/Fluent.Unions) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2)](https://tobistr.github.io/Fluent.Unions/)
 
 `Result`, `Result<T>` and `Option<T>` for .NET, built on the C# 15 `union` keyword. A method returns either its value or an error, and the compiler checks that callers handle both. Fluent operators are named after LINQ and Rx.NET, so a whole flow reads as one expression.
 
