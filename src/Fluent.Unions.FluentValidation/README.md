@@ -31,6 +31,14 @@ Result<PlaceOrder> parsed = ParseCommand(request);
 Result<PlaceOrder> checkedCommand = await parsed.ValidateAsync(validator, cancellationToken);
 ```
 
+Validate a custom result type that implements `IResult<TSelf, T, TError>`. Without `map`, a failure goes through `FromException`. With `map`, an error type that is data gets every failure.
+
+```csharp
+CheckoutResult<PlaceOrder> validated = command.Validate(
+    validator,
+    failures => new InvalidOrder(failures.Select(f => f.ErrorMessage).ToList()));
+```
+
 An endpoint that returns the error through Fluent.Unions.AspNetCore answers 400 with every message in `errors`.
 
 Failures with `Severity.Warning` or `Severity.Info` also make the result an error.

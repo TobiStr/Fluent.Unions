@@ -174,6 +174,7 @@ Package `Fluent.Unions.FluentValidation`, namespace `Fluent.Unions.FluentValidat
 | --- | --- | --- |
 | `ValidateToResult(instance)`, `ValidateToResultAsync(instance, cancellationToken)` | `IValidator<T>` | [FluentValidation](fluent-validation/README.md) |
 | `Validate(validator)`, `ValidateAsync(validator, cancellationToken)` | `Result<T>` | [FluentValidation](fluent-validation/README.md) |
+| `Validate(validator)`, `Validate(validator, map)`, `ValidateAsync(validator, cancellationToken)`, `ValidateAsync(validator, map, cancellationToken)` | custom types | [FluentValidation](fluent-validation/README.md#custom-result-types) |
 
 ## Polly
 
