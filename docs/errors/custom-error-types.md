@@ -176,6 +176,17 @@ Without the wrapper, await first: `(await GetCustomerAsync(id)).Chain(GetCart)`.
 Result<Cart> cart = await GetCustomer(id).ChainAwait(LoadCartAsync);
 ```
 
+## Extension packages
+
+The extension packages also accept a custom type that implements `IResult<TSelf, T, TError>`, including `Result<T, TError>`. The concrete overloads for `Result<T>` keep binding first.
+
+| Package | What works on your type | Details |
+| --- | --- | --- |
+| `Fluent.Unions.AwesomeAssertions` | `Should()` with `BeOk`, `BeOkWithValue`, `BeOkMatching`, `BeError`, `BeError<TCase>` and `BeEmpty` | [AwesomeAssertions](../awesome-assertions/README.md#custom-result-types) |
+| `Fluent.Unions.FluentValidation` | `Validate(validator)` and `Validate(validator, map)`, with async forms | [FluentValidation](../fluent-validation/README.md#custom-result-types) |
+| `Fluent.Unions.AspNetCore` | `ToHttpResult(onError)`, and `WithResultMapping()` for handlers that return your type | [HTTP results](../aspnetcore/http-results.md#custom-result-types), [Endpoint filter](../aspnetcore/endpoint-filter.md#custom-result-types) |
+| `Fluent.Unions.Polly` | `HandleError`, `ExecuteResultAsync` and `ToResult`, with explicit type arguments | [Polly](../polly/README.md#custom-result-types) |
+
 ## Namespaces
 
 Import `Fluent.Unions.Extensions` at call sites, and do not import `Fluent.Unions` next to your own namespace. Both declare `Result<T>`, and the compiler stops with CS0104 (ambiguous reference) wherever both are imported:
@@ -214,6 +225,7 @@ These are not provided for custom types:
 
 - [Errors as data](errors-as-data.md): when the error is not an exception at all.
 - [Error mapping](../aspnetcore/error-mapping.md): map a `DomainException` hierarchy to HTTP status codes.
+- [Endpoint filter](../aspnetcore/endpoint-filter.md#custom-result-types): return your result type straight from a handler.
 - `test/Fluent.Unions.Tests/CustomErrors` in the repo: a complete custom type with tests for every operator.
 
 ---
