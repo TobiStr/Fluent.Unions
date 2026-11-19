@@ -9,6 +9,10 @@
 ```
 dotnet add package Fluent.Unions
 dotnet add package Fluent.Unions.AspNetCore   # optional: HTTP responses for ASP.NET Core
+dotnet add package Fluent.Unions.FluentValidation   # optional: FluentValidation validators as results
+dotnet add package Fluent.Unions.Polly   # optional: Polly strategies that handle results
+dotnet add package Fluent.Unions.OpenApi   # optional: Option<T> as nullable T in OpenAPI documents
+dotnet add package Fluent.Unions.AwesomeAssertions   # optional: AwesomeAssertions for results and options
 ```
 
 Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed.
@@ -62,19 +66,24 @@ app.MapGet("/orders/{id}", (Guid id) => LoadOrderAsync(id)
   - **Matching:** `switch` over a result or option warns when a case is missing.
   - **Analyzer:** `FLU0001` warns when a result is ignored.
 - **LINQ and Rx operators:**
-  - **On the value:** `Select`, `Chain`, `Where`, `Zip`.
+  - **On the value:** `Select`, `Chain`, `Where`, `Zip`, `Ensure`, `BindAppend`.
   - **On the error and side effects:** `Catch`, `Do`, `OnErrorDo`, `Finally`.
   - **Leaving the chain:** `Match`, `GetValueOrDefault`, `DefaultIfEmpty`.
   - **Query syntax** works too.
 - **`Option<T>`** for missing values: `TryParse`, `FirstOrNone`, `GetValueOrNone`, `Or`, and conversions to and from results.
 - **Async everywhere:** `Task` overloads, `...Await` operators, `Result.WhenAll`, `RetryAsync`, `Timeout`, async streams.
-- **Validation** that collects every error: `Validate` and `CombineAll`.
+- **Validation** that collects every error: `Validate`, `CombineAll`, and a catalogue of ready-made rules such as `EnsureNotEmpty` and `EnsureInRange`.
 - **Custom error types:** restrict errors to your own base exception, or model errors as data with `Result<T, TError>` and a union of error records.
 - **More unions:** `Loadable<T>` for UI state, plus `Is`/`As` and a JSON converter for your own unions.
 - **Integrations:**
   - **ASP.NET Core:** HTTP responses with ProblemDetails.
   - **System.Text.Json:** support for options; results refuse to serialize, so exception details cannot leak.
   - **EF Core:** a documented mapping pattern.
+  - **FluentValidation:** run a validator and get every failure as a `Result<T>`.
+  - **Polly:** handle a result error in a resilience strategy.
+  - **OpenAPI:** `Option<T>` is published as a nullable `T`.
+  - **AwesomeAssertions:** `Should().BeOk()`, `BeNone()` and assertions on the error.
+  - **OpenTelemetry:** `Activity.RecordResult` sets the status and records the exception.
 
 ## Documentation
 
@@ -88,7 +97,7 @@ The [docs](docs/README.md) explain every concern with several examples. The [ref
 | | [Limitations](docs/getting-started/limitations.md) | What the library cannot do |
 | Result | [Overview](docs/result/README.md) | `Result` and `Result<T>` in short |
 | | [Core concepts](docs/result/core-concepts.md) | The three states, creating results, members, matching, deconstruction, `Check()` |
-| | [Operations](docs/result/operations.md) | `Select`, `Chain`, `Where`, `Zip`, `Do`, `Out`, `Finally`, `Unwrap`, `Match` and more |
+| | [Operations](docs/result/operations.md) | `Select`, `Chain`, `Where`, `Zip`, `Ensure`, `CombineAll`, `BindAppend`, `Do`, `Out`, `Finally`, `Unwrap`, `Match` and more |
 | | [Error handling](docs/result/error-handling.md) | `Catch`, `OnErrorDo`, `Try`, `Retry`, and what still throws |
 | | [Collections](docs/result/collections.md) | `Combine`, `CombineAll`, `Partition`, `Values`, `Errors` |
 | | [Patterns](docs/result/patterns.md) | Pipelines, query syntax, using earlier values, early returns, service layers |
@@ -102,7 +111,7 @@ The [docs](docs/README.md) explain every concern with several examples. The [ref
 | | [Task pipelines](docs/async/task-pipelines.md) | `Task` overloads, `...Await` operators, async query syntax |
 | | [Concurrency and resilience](docs/async/concurrency-and-resilience.md) | `WhenAll`, `Retry`, `RetryAsync`, `Timeout` |
 | | [Streams](docs/async/streams.md) | `IAsyncEnumerable` of results and options |
-| Validation | [Validation](docs/validation/README.md) | `Validate`, `CombineAll`, and validation errors over HTTP |
+| Validation | [Validation](docs/validation/README.md) | `Validate`, `CombineAll`, the rule catalogue, and validation errors over HTTP |
 | Errors | [Overview](docs/errors/README.md) | Choosing between exceptions, custom types and errors as data |
 | | [Custom error types](docs/errors/custom-error-types.md) | Your own result type with `IResult` |
 | | [Errors as data](docs/errors/errors-as-data.md) | `Result<T, TError>` with a union of error records |
@@ -116,6 +125,11 @@ The [docs](docs/README.md) explain every concern with several examples. The [ref
 | | [Endpoint filter](docs/aspnetcore/endpoint-filter.md) | Returning results straight from handlers with `WithResultMapping` |
 | | [Error mapping](docs/aspnetcore/error-mapping.md) | Status codes, ProblemDetails, and what is exposed |
 | Entity Framework Core | [Entity Framework Core](docs/entity-framework-core/README.md) | Storing options with nullable backing fields |
+| FluentValidation | [FluentValidation](docs/fluent-validation/README.md) | `ValidateToResult` and `Validate(validator)` with every failure collected |
+| Polly | [Polly](docs/polly/README.md) | `HandleError`, `ExecuteResultAsync` and `ToResult` for resilience pipelines |
+| OpenAPI | [OpenAPI](docs/openapi/README.md) | `AddFluentUnions()` describes `Option<T>` as a nullable `T` |
+| AwesomeAssertions | [AwesomeAssertions](docs/awesome-assertions/README.md) | Assertions for `Result`, `Result<T>`, `Option<T>` and the error inside |
+| Tracing | [Tracing](docs/tracing/README.md) | `Activity.RecordResult` for status and exception events |
 | Analyzer | [Analyzer](docs/analyzer/README.md) | Warning `FLU0001` for ignored results, and how to configure it |
 
 ## Build and test
@@ -130,6 +144,10 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions` | The `Fluent.Unions` package |
 | `src/Fluent.Unions.Analyzers` | The analyzer packed into `Fluent.Unions` |
 | `src/Fluent.Unions.AspNetCore` | The `Fluent.Unions.AspNetCore` package |
+| `src/Fluent.Unions.FluentValidation` | The `Fluent.Unions.FluentValidation` package |
+| `src/Fluent.Unions.Polly` | The `Fluent.Unions.Polly` package |
+| `src/Fluent.Unions.OpenApi` | The `Fluent.Unions.OpenApi` package |
+| `src/Fluent.Unions.AwesomeAssertions` | The `Fluent.Unions.AwesomeAssertions` package |
 | `test/` | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/` | The documentation |
 

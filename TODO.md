@@ -4,17 +4,18 @@ Packages that `Fluent.Unions` should ship extensions for, ranked by value. Downl
 
 ## Priority 1
 
-- [ ] **AwesomeAssertions** (Apache-2.0, ~30M downloads). Optionally also **FluentAssertions** (~821M downloads, but **commercial** since v8: Xceed license, free only for non-commercial use).
+- [x] **AwesomeAssertions** (Apache-2.0, ~30M downloads): delivered as [docs/awesome-assertions](docs/awesome-assertions/README.md).
+  - [ ] Open: optionally also **FluentAssertions** (~821M downloads, but **commercial** since v8: Xceed license, free only for non-commercial use).
   - Sketch: `result.Should().BeOk().Which.Should().Be(5)`, `option.Should().BeNone()`, `result.Should().BeError<NotFoundException>()`.
-  - Extension point: a `ReferenceTypeAssertions` subclass plus a `Should()` extension.
   - Effort: M. FluentAssertions v8 changed the assertion API, so it would be a second package.
   - Demand: the FluentAssertions add-on of the rival FluentResults has about 2.6M downloads.
-- [ ] **FluentValidation** (Apache-2.0, ~1.15B downloads).
-  - Sketch: `validator.ValidateToResult(command)` returns a `Result<T>` with a `ValidationException` holding the failures; `RuleFor(x => x.Nickname).WhenSome(...)` for options.
+- [x] **FluentValidation** (Apache-2.0, ~1.15B downloads): delivered as [docs/fluent-validation](docs/fluent-validation/README.md).
+  - [ ] Open: `RuleFor(x => x.Nickname).WhenSome(...)` for options.
+  - Sketch: `validator.ValidateToResult(command)` returns a `Result<T>` with a `ValidationException` holding the failures.
   - Extension points: `ValidationResult`, `IValidator<T>`, `IRuleBuilder`.
   - Effort: S. Align with `Validate`, which collects every error.
   - Demand: the equivalent from Ardalis.Result has about 2.0M downloads.
-- [ ] **Polly** (Polly.Core, BSD-3-Clause, ~787M downloads).
+- [x] **Polly** (Polly.Core, BSD-3-Clause, ~787M downloads): delivered as [docs/polly](docs/polly/README.md).
   - Sketch: `new PredicateBuilder<Result<T>>().HandleError<HttpRequestException>()`; `pipeline.ExecuteOutcomeAsync(...)` mapped to `Result<T>`.
   - Extension points: `ShouldHandle` and `PredicateBuilder<T>`.
   - Effort: S. Also covers Microsoft.Extensions.Http.Resilience (~200M), which builds on Polly.
@@ -22,7 +23,8 @@ Packages that `Fluent.Unions` should ship extensions for, ranked by value. Downl
   - Sketch: pipeline behaviors `ExceptionToResultBehavior` and `ValidationToResultBehavior` that return a failed response instead of throwing.
   - Extension point: `IPipelineBehavior<TRequest, TResponse>`.
   - Effort: M. A generic failed `TResponse` needs a static-abstract factory on `Result` and `Result<T>`. Ship the MIT Mediator package first.
-- [ ] **OpenAPI**: Microsoft.AspNetCore.OpenApi (MIT, ~295M), Swashbuckle (MIT, ~1.31B), NSwag (MIT, ~230M).
+- [x] **OpenAPI**: Microsoft.AspNetCore.OpenApi (MIT, ~295M) is delivered as [docs/openapi](docs/openapi/README.md).
+  - [ ] Open: Swashbuckle (MIT, ~1.31B) and NSwag (MIT, ~230M).
   - Sketch: describe `Option<T>` as nullable `T`, matching its JSON.
   - Extension points: `IOpenApiSchemaTransformer`; Swashbuckle `ISchemaFilter` / `MapType`; NJsonSchema `ITypeMapper`.
   - Effort: M. Without it, APIs that expose options publish a misleading schema. Could live in `Fluent.Unions.AspNetCore` instead of a separate package.
@@ -45,6 +47,8 @@ Packages that `Fluent.Unions` should ship extensions for, ranked by value. Downl
   - Sketch: `OptionHandlers.Register<int>()` maps `Option<int>` to and from `NULL`.
   - Extension point: `SqlMapper.TypeHandler<T>`, registered per closed type. Dapper.AOT works differently.
 - [ ] **Serilog** (Apache-2.0, ~3.6B) and **OpenTelemetry** (Apache-2.0, ~812M).
+  - [x] Done: `activity.RecordResult(result)` in the core package, see [docs/tracing](docs/tracing/README.md).
+  - [ ] Open: Serilog `.Destructure.WithFluentUnions()`.
   - Sketch: `.Destructure.WithFluentUnions()`; `activity.RecordResult(result)` sets the status and records the exception.
   - Extension points: `IDestructuringPolicy`; `System.Diagnostics.Activity`. The OpenTelemetry part needs no dependency and could live in the core package.
 
