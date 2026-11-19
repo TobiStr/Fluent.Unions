@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Fluent.Unions/Fluent.Unions.csproj" />
+    <Project Path="src/Fluent.Unions.Analyzers/Fluent.Unions.Analyzers.csproj" />
+    <Project Path="src/Fluent.Unions.AspNetCore/Fluent.Unions.AspNetCore.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Analyzers.Tests/Fluent.Unions.Analyzers.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.AspNetCore.Tests/Fluent.Unions.AspNetCore.Tests.csproj" />
+  </Folder>
+</Solution>

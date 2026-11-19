@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Fluent.Unions</PackageId>
+    <Description>Result, Result&lt;T&gt; and Option&lt;T&gt; built on C# unions, with fluent LINQ and Rx style operators, async support, validation, JSON support for options, custom error types, and an analyzer for unused results.</Description>
+    <PackageTags>result;option;maybe;union;discriminated-union;fluent;linq;rx;error-handling;railway</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\Fluent.Unions.Analyzers\bin\$(Configuration)\netstandard2.0\Fluent.Unions.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+</Project>
