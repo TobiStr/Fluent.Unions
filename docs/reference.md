@@ -70,6 +70,23 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `MapError(e => ...)` | `Result<T, TError>`, custom types (explicit type arguments) | [Errors as data](errors/errors-as-data.md) |
 | `Validate(rules...)` | `Result<T>`, `Task<Result<T>>` | [Validation](validation/README.md) |
 
+## Validation rules
+
+Namespace `Fluent.Unions.Validation`.
+
+| API | On | Docs |
+| --- | --- | --- |
+| `Is.NotEmpty`, `Is.Empty`, `Is.NotWhiteSpace`, `Is.WhiteSpace` and the format, character class and `Includes*` predicates (`Is.MatchesEmail`, `Is.Alpha`, `Is.IncludesDigit`, ...) | `string?`, used as method groups | [Rule catalogue](validation/README.md#rule-catalogue) |
+| `Is.HasLength(n)`, `Is.LongerThan(n)`, `Is.ShorterThan(n)` and the `OrEqual` forms | factories for `string?` | [String rules](validation/README.md#string-rules) |
+| `Is.Contains(text)`, `Is.StartsWith(text)`, `Is.EndsWith(text)` and the `Not` forms, with a `StringComparison` | factories for `string?` | [String rules](validation/README.md#string-rules) |
+| `Is.Matches(regex)`, `Is.Matches(pattern, options)`, `Is.NotMatches(...)` | factories for `string?` | [String rules](validation/README.md#string-rules) |
+| `EnsureNotEmpty()`, `EnsureEmpty()`, `EnsureNotWhiteSpace()`, `EnsureWhiteSpace()` | `string?`, `Result<string>` | [String rules](validation/README.md#string-rules) |
+| `EnsureMatchesEmail()`, `EnsureMatchesUrl()`, `EnsureMatchesGuid()`, `EnsureMatchesIpAddress()`, `EnsureMatchesPhoneNumber()`, `EnsureBase64()` | `string?`, `Result<string>` | [String rules](validation/README.md#string-rules) |
+| `EnsureAlpha()`, `EnsureAlphanumeric()`, `EnsureNumeric()` | `string?`, `Result<string>` | [String rules](validation/README.md#string-rules) |
+| `EnsureIncludesDigit()`, `EnsureIncludesLetter()`, `EnsureIncludesLetterOrDigit()`, `EnsureIncludesLower()`, `EnsureIncludesUpper()`, `EnsureIncludesPunctuation()`, `EnsureIncludesSpecial()`, `EnsureIncludesSymbol()`, `EnsureIncludesWhiteSpace()` | `string?`, `Result<string>` | [String rules](validation/README.md#string-rules) |
+| `EnsureHasLength(n)`, `EnsureLongerThan(n)`, `EnsureLongerThanOrEqual(n)`, `EnsureShorterThan(n)`, `EnsureShorterThanOrEqual(n)` | `string?`, `Result<string>` | [String rules](validation/README.md#string-rules) |
+| `EnsureContains(text)`, `EnsureNotContains(text)`, `EnsureStartsWith(text)`, `EnsureNotStartsWith(text)`, `EnsureEndsWith(text)`, `EnsureNotEndsWith(text)` | `string?`, `Result<string>` | [String rules](validation/README.md#string-rules) |
+| `EnsureMatches(regex)`, `EnsureMatches(pattern, options)`, `EnsureNotMatches(...)` | `string?`, `Result<string>` | [String rules](validation/README.md#string-rules) |
 | `value.Ensure(predicate, message)`, `value.Ensure(predicate, v => exception)` | any `T`, returns `Result<T>` | [Rule catalogue](validation/README.md#rule-catalogue) |
 | `Is.Positive`, `Is.Negative`, `Is.NonPositive`, `Is.NonNegative`, `Is.Zero`, `Is.NonZero` | `T : INumberBase<T>`, used as method groups | [Number rules](validation/README.md#number-rules) |
 | `Is.Even`, `Is.Odd`, `Is.DivisibleBy(divisor)` | `T : IBinaryInteger<T>` | [Number rules](validation/README.md#number-rules) |
