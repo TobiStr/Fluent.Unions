@@ -31,53 +31,24 @@ public static class TraditionalCheckout
 {
     public static Receipt? PlaceOrder(Shop shop, CheckoutRequest request, out string? error)
     {
-        if (string.IsNullOrWhiteSpace(request.Sku))
-        {
-            error = "Sku must not be empty or white space.";
-            return null;
-        }
-
-        if (request.Quantity is < 1 or > 10)
-        {
-            error = "Quantity must be between 1 and 10.";
-            return null;
-        }
+        error = null;
+        if (string.IsNullOrWhiteSpace(request.Sku)) { error = "Sku must not be empty or white space."; return null; }
+        if (request.Quantity is < 1 or > 10) { error = "Quantity must be between 1 and 10."; return null; }
 
         var customer = shop.FindCustomer(request.CustomerId);
-        if (customer is null)
-        {
-            error = $"No customer {request.CustomerId}.";
-            return null;
-        }
+        if (customer is null) { error = $"No customer {request.CustomerId}."; return null; }
 
         var product = shop.FindProduct(request.Sku);
-        if (product is null)
-        {
-            error = $"No product {request.Sku}.";
-            return null;
-        }
-
-        if (product.Stock < request.Quantity)
-        {
-            error = $"Only {product.Stock} left of {product.Sku}.";
-            return null;
-        }
+        if (product is null) { error = $"No product {request.Sku}."; return null; }
+        if (product.Stock < request.Quantity) { error = $"Only {product.Stock} left of {product.Sku}."; return null; }
 
         var total = product.Price * request.Quantity;
         string paymentId;
-        try
-        {
-            paymentId = shop.Charge(customer, total);
-        }
-        catch (PaymentDeclinedException exception)
-        {
-            error = exception.Message;
-            return null;
-        }
+        try { paymentId = shop.Charge(customer, total); }
+        catch (PaymentDeclinedException exception) { error = exception.Message; return null; }
 
         var receipt = new Receipt(customer.Name, product.Sku, total, paymentId);
         shop.Save(receipt);
-        error = null;
         return receipt;
     }
 
@@ -95,7 +66,7 @@ public static class TraditionalCheckout
 public static class ResultCheckout
 {
     public static Result<Receipt> PlaceOrder(Shop shop, CheckoutRequest request) =>
-        Result<CheckoutRequest>.Ok(request)
+        Result.From(request)
             .Validate(
                 r => r.Sku.EnsureNotWhiteSpace(),
                 r => r.Quantity.EnsureInRange(1, 10))
