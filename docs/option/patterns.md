@@ -117,7 +117,7 @@ Rules of thumb:
 
 - If the caller would ask "why is it missing?", use a result.
 - If every caller treats missing the same way, an option is enough.
-- Options are a poor fit for `T?` fields of entities that EF Core maps. Keep a nullable backing field and expose the option as a property. The [repository README](../../README.md#entity-framework-core) shows the mapping.
+- Options are a poor fit for `T?` fields of entities that EF Core maps. Keep a nullable backing field and expose the option as a property. [Entity Framework Core](../entity-framework-core/README.md) shows the mapping.
 - The unused-result analyzer does not report ignored options, because a missing value is not an error.
 
 ## Pitfalls

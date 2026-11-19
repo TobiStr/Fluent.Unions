@@ -82,7 +82,7 @@ Option<string> receipt = FindCustomer(id).Out(out var customer)
     .Select(cart => $"{customer.Value.Name}: {cart.Items} items");
 ```
 
-Inside the chain, later steps run only after a value, so `customer.Value` is safe there. Outside the chain, check `customer.HasValue` first, because `.Value` throws `InvalidOperationException` when nothing was captured. The [repository README](../../README.md#using-values-from-earlier-steps) describes `Captured<T>` in detail.
+Inside the chain, later steps run only after a value, so `customer.Value` is safe there. Outside the chain, check `customer.HasValue` first, because `.Value` throws `InvalidOperationException` when nothing was captured. [Using earlier values](../result/patterns.md#using-earlier-values) describes `Captured<T>` in detail.
 
 ## GetValueOrDefault
 

@@ -430,3 +430,6 @@ FodyWeavers.xsd
 
 # Local planning notes
 TODO.md
+
+# MkDocs build output
+site/

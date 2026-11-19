@@ -1,0 +1,97 @@
+site_name: Fluent.Unions
+site_description: Result, Result<T> and Option<T> for .NET, built on C# unions.
+site_url: https://tobistr.github.io/Fluent.Unions/
+repo_url: https://github.com/TobiStr/Fluent.Unions
+repo_name: TobiStr/Fluent.Unions
+edit_uri: edit/main/docs/
+docs_dir: docs
+
+theme:
+  name: material
+  logo: assets/icon.png
+  favicon: assets/icon.png
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+nav:
+  - Home: README.md
+  - Getting started:
+      - getting-started/README.md
+      - Installation: getting-started/installation.md
+      - Quick start: getting-started/quick-start.md
+      - Limitations: getting-started/limitations.md
+  - Result:
+      - result/README.md
+      - Core concepts: result/core-concepts.md
+      - Operations: result/operations.md
+      - Error handling: result/error-handling.md
+      - Collections: result/collections.md
+      - Patterns: result/patterns.md
+  - Option:
+      - option/README.md
+      - Core concepts: option/core-concepts.md
+      - Operations: option/operations.md
+      - Collections: option/collections.md
+      - Conversions: option/conversions.md
+      - Patterns: option/patterns.md
+  - Async:
+      - async/README.md
+      - Task pipelines: async/task-pipelines.md
+      - Concurrency and resilience: async/concurrency-and-resilience.md
+      - Streams: async/streams.md
+  - Validation: validation/README.md
+  - Errors:
+      - errors/README.md
+      - Custom error types: errors/custom-error-types.md
+      - Errors as data: errors/errors-as-data.md
+  - Unions:
+      - unions/README.md
+      - Your own unions: unions/your-own-unions.md
+      - Loadable: unions/loadable.md
+      - Modeling: unions/modeling.md
+  - Serialization: serialization/README.md
+  - Tracing: tracing/README.md
+  - Analyzer: analyzer/README.md
+  - Integrations:
+      - ASP.NET Core:
+          - aspnetcore/README.md
+          - HTTP results: aspnetcore/http-results.md
+          - Endpoint filter: aspnetcore/endpoint-filter.md
+          - Error mapping: aspnetcore/error-mapping.md
+      - Entity Framework Core: entity-framework-core/README.md
+      - FluentValidation: fluent-validation/README.md
+      - Polly: polly/README.md
+      - OpenAPI: openapi/README.md
+      - AwesomeAssertions: awesome-assertions/README.md
+  - Reference: reference.md
