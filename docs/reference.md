@@ -164,6 +164,15 @@ Namespace `Fluent.Unions.Validation`.
 | `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>` | [Custom error types](errors/custom-error-types.md) |
 | `IFromException<TSelf>`, `Result<T, TError>` | [Errors as data](errors/errors-as-data.md) |
 
+## FluentValidation
+
+Package `Fluent.Unions.FluentValidation`, namespace `Fluent.Unions.FluentValidation`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `ValidateToResult(instance)`, `ValidateToResultAsync(instance, cancellationToken)` | `IValidator<T>` | [FluentValidation](fluent-validation/README.md) |
+| `Validate(validator)`, `ValidateAsync(validator, cancellationToken)` | `Result<T>` | [FluentValidation](fluent-validation/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |
