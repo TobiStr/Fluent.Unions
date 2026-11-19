@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: nuget
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -53,3 +53,8 @@ jobs:
         run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+
+      - name: Create GitHub release
+        run: gh release create "$GITHUB_REF_NAME" artifacts/*.nupkg artifacts/*.snupkg --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
