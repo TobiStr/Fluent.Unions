@@ -36,6 +36,16 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 // an Ok payment after the last attempt, or the last HttpRequestException as the error
 ```
 
+Use a custom result type that implements `IResult<TSelf, T, TError>` with explicit type arguments, because Polly's builders carry only the result type.
+
+```csharp
+ShouldHandle = new PredicateBuilder<CallResult<Payment>>()
+    .HandleError<CallResult<Payment>, CallError>(error => error.Value is Transient),
+
+CallResult<Payment> payment = await pipeline
+    .ExecuteResultAsync<CallResult<Payment>, CallError>(ct => ChargeAsync(order, ct), cancellationToken);
+```
+
 Convert the outcome that Polly passes to callbacks such as `OnRetry`.
 
 ```csharp

@@ -185,6 +185,9 @@ Package `Fluent.Unions.Polly`, namespace `Fluent.Unions.Polly`.
 | `HandleError()`, `HandleError(predicate)` | `PredicateBuilder<Result<T>>` | [Polly](polly/README.md) |
 | `ExecuteResultAsync(operation, cancellationToken)` | `ResiliencePipeline<Result<T>>`, `ResiliencePipeline` | [Polly](polly/README.md) |
 | `ToResult()` | `Outcome<Result<T>>` | [Polly](polly/README.md) |
+| `HandleError<TResult, TError>()`, `HandleError<TResult, TError>(predicate)` | `PredicateBuilder<TResult>`, custom types (explicit type arguments) | [Polly](polly/README.md#custom-result-types) |
+| `ExecuteResultAsync<TResult, TError>(operation, cancellationToken)` | `ResiliencePipeline<TResult>`, `ResiliencePipeline`, custom types (explicit type arguments) | [Polly](polly/README.md#custom-result-types) |
+| `ToResult<TResult, TError>()` | `Outcome<TResult>`, custom types (explicit type arguments) | [Polly](polly/README.md#custom-result-types) |
 
 ## OpenAPI
 

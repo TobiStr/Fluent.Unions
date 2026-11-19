@@ -8,6 +8,7 @@ This folder has one page. The topics are below.
 
 - [Quick example](#quick-example): retry a call that returns a result.
 - [What you get back](#what-you-get-back): the result for each outcome.
+- [Custom result types](#custom-result-types): the same members for your own `IResult` type.
 - [When to use](#when-to-use): where it helps, and when the core operators are enough.
 - [Rules](#rules): what is handled and what is not.
 
@@ -54,6 +55,34 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 
 `ToResult` converts the outcome that Polly passes to callbacks such as `OnRetry`: an exception becomes an error, and an outcome without a value is empty.
 
+## Custom result types
+
+For a type that implements `IResult<TSelf, T, TError>`, including `Result<T, TError>`, the same members take two type arguments: the result type and its error type. Polly's builders carry only the result type, so the compiler cannot infer `TError`. Write both type arguments at the call.
+
+```csharp
+var pipeline = new ResiliencePipelineBuilder<CallResult<Payment>>()
+    .AddRetry(new RetryStrategyOptions<CallResult<Payment>>
+    {
+        ShouldHandle = new PredicateBuilder<CallResult<Payment>>()
+            .HandleError<CallResult<Payment>, CallError>(error => error.Value is Transient),
+        MaxRetryAttempts = 3,
+    })
+    .Build();
+
+CallResult<Payment> payment = await pipeline
+    .ExecuteResultAsync<CallResult<Payment>, CallError>(ct => ChargeAsync(order, ct), cancellationToken);
+// an Ok payment, or the last error. A thrown exception becomes the error that FromException makes of it.
+```
+
+| Member | On |
+| --- | --- |
+| `HandleError<TResult, TError>()` | `PredicateBuilder<TResult>` |
+| `HandleError<TResult, TError>(predicate)` | `PredicateBuilder<TResult>`, with a `Func<TError, bool>` |
+| `ExecuteResultAsync<TResult, TError>(operation, cancellationToken)` | `ResiliencePipeline<TResult>` and `ResiliencePipeline` |
+| `ToResult<TResult, TError>()` | `Outcome<TResult>` |
+
+`TResult` must be a struct that implements `IErrorResult<TResult, TError>`, which `IResult<TSelf, T, TError>` extends. Empty is never handled. An exception that escapes the pipeline, including `OperationCanceledException`, becomes `TResult.FromError(TResult.FromException(exception))`. The overloads for `Result<T>` stay in use for `Result<T>` and need no type arguments.
+
 ## When to use
 
 - You already use Polly strategies such as circuit breaker, timeout, hedging or backoff, and your operations return `Result<T>`.
@@ -64,7 +93,7 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 
 - **Only the result state is read.** `HandleError` looks at the error in the result. Thrown exceptions stay with Polly's `Handle<TException>()`, which you can add to the same builder.
 - **Empty is not handled.** An empty result is never retried, like `Result.Retry`.
-- **The predicate is a lambda.** `HandleError(error => error is TimeoutException)` takes a `Func<Exception, bool>`.
+- **The predicate is a lambda.** `HandleError(error => error is TimeoutException)` takes a `Func<Exception, bool>`. For a custom type it takes a `Func<TError, bool>`.
 - **Exceptions are captured.** `ExecuteResultAsync` does not throw for an operation or strategy failure. Use `ToResult` on an `Outcome` for the same rule in your own callbacks.
 - **No sync form yet.** Only the async `ExecuteResultAsync` exists.
 

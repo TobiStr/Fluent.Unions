@@ -1,9 +1,10 @@
 using Polly;
+using Fluent.Unions.Abstractions;
 
 namespace Fluent.Unions.Polly;
 
 /// <summary>
-/// Lets a Polly strategy handle the error state of a <see cref="Result{T}"/>.
+/// Lets a Polly strategy handle the error state of a <see cref="Result{T}"/> or a custom result type.
 /// </summary>
 public static class PredicateBuilderExtensions
 {
@@ -26,5 +27,30 @@ public static class PredicateBuilderExtensions
         ArgumentNullException.ThrowIfNull(predicate);
 
         return builder.HandleResult(result => result.Value is Exception error && predicate(error));
+    }
+
+    /// <summary>
+    /// Handles every custom result that is an error. Ok and empty results are not handled. Needs explicit type arguments.
+    /// </summary>
+    public static PredicateBuilder<TResult> HandleError<TResult, TError>(this PredicateBuilder<TResult> builder)
+        where TResult : struct, IErrorResult<TResult, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        return builder.HandleResult(result => result.Value is TError);
+    }
+
+    /// <summary>
+    /// Handles custom results that are an error for which <paramref name="predicate"/> returns true. Needs explicit type arguments.
+    /// </summary>
+    public static PredicateBuilder<TResult> HandleError<TResult, TError>(this PredicateBuilder<TResult> builder, Func<TError, bool> predicate)
+        where TResult : struct, IErrorResult<TResult, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(predicate);
+
+        return builder.HandleResult(result => result.Value is TError error && predicate(error));
     }
 }
