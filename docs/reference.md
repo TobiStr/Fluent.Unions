@@ -226,7 +226,9 @@ Package `Fluent.Unions.AwesomeAssertions`, namespace `Fluent.Unions.AwesomeAsser
 | Member | Docs |
 | --- | --- |
 | `ToHttpResult()` on results, options, `Result<T, TError>` and their `Task` versions | [HTTP results](aspnetcore/http-results.md) |
+| `ToHttpResult(onError)` on custom result types | [HTTP results](aspnetcore/http-results.md#custom-result-types) |
 | `WithResultMapping()`, `ResultEndpointFilter` | [Endpoint filter](aspnetcore/endpoint-filter.md) |
+| `WithResultMapping()` on handlers that return custom result types | [Endpoint filter](aspnetcore/endpoint-filter.md#custom-result-types) |
 | `ResultHttpOptions.Map<TException>(statusCode)` | [Error mapping](aspnetcore/error-mapping.md) |
 
 ## Analyzer

@@ -44,6 +44,22 @@ public static class HttpResultExtensions
         return result.Match(value => TypedResults.Ok(value), onError, () => TypedResults.NotFound());
     }
 
+    /// <summary>
+    /// Gives 200 with the value, the response from <paramref name="onError"/> for an error, or 404 for an empty
+    /// custom result.
+    /// </summary>
+    public static IResult ToHttpResult<TSelf, T, TError>(
+        this IResult<TSelf, T, TError> result,
+        Func<TError, IResult> onError)
+        where TSelf : struct, IResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(onError);
+
+        return result.Match(value => (IResult)TypedResults.Ok(value), onError, () => TypedResults.NotFound());
+    }
+
     /// <inheritdoc cref="ToHttpResult{T}(Result{T})"/>
     public static async Task<IResult> ToHttpResult<T>(this Task<Result<T>> task) =>
         (await Settle(task).ConfigureAwait(false)).ToHttpResult();

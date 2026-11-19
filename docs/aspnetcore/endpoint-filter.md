@@ -42,9 +42,18 @@ Every other return value is left alone: strings, objects, `IResult` values such 
 
 The filter does not catch exceptions. An exception thrown by the handler goes through ASP.NET Core's normal exception handling. If you want a thrown exception to become an error, wrap the call in `Result.Try` or `Result.TryAsync`.
 
-## Errors as data need explicit mapping
+## Custom result types
 
-`Result<T, TError>` is not converted by the filter, because the library cannot know what status each of your error cases means. Convert it in the handler with `ToHttpResult(onError)`. The returned `IResult` passes through the filter untouched:
+The filter also converts a handler that returns a type implementing `IResult<TSelf, T, TError>`, including `Result<T, TError>` and your own result types. It finds the interface at runtime, reads the type arguments once per type and caches them.
+
+| Handler returns | Response |
+| --- | --- |
+| a value | 200 with the value |
+| an error that is an `Exception` | `ProblemDetails`, status from [error mapping](error-mapping.md) |
+| an error that is not an `Exception` | the error is wrapped in a `ResultErrorException` and mapped through `ResultHttpOptions`, so 500 unless you map `ResultErrorException` |
+| an empty result | 404 |
+
+The library cannot know what status each of your error cases means, so a data error is a server error by default and its content is not shown. Map the cases yourself in the handler with `ToHttpResult(onError)`. The returned `IResult` passes through the filter untouched:
 
 ```csharp
 var checkout = app.MapGroup("/checkout").WithResultMapping();
@@ -58,28 +67,18 @@ checkout.MapGet("/{id}", (int id) => Checkout(id).ToHttpResult(error => error sw
 }));
 ```
 
-## What is not converted
-
-`Result<T, TError>` and your own result types are not converted, and returning one from a filtered endpoint is a mistake:
-
-- A `Result<T, TError>` fails with status 500, because results are not JSON-serializable.
-- A custom result type, such as the `Result<T>` from [custom error types](../errors/custom-error-types.md), is written as JSON. A value gives 200 with the value. An error also gives 200, with the exception serialized as JSON, including its message. Never rely on this.
-
-Map a custom result yourself with `Match`:
+To give every data error one status, map `ResultErrorException`. The message names the error, so it is shown only for a 4xx status:
 
 ```csharp
-group.MapGet("/customers/{id}", (Guid id) => GetCustomer(id).Match(
-    customer => (IResult)TypedResults.Ok(customer),
-    error => TypedResults.Problem(error.Message, statusCode: StatusCodes.Status404NotFound),
-    () => TypedResults.NotFound()));
+builder.Services.Configure<ResultHttpOptions>(o => o.Map<ResultErrorException>(StatusCodes.Status409Conflict));
 ```
 
-The cast on the first callback fixes the return type of `Match` to `IResult`.
+A custom result type must be a struct, as `IResult<TSelf, T, TError>` requires. Other structs and classes pass through.
 
 ## Pitfalls
 
-- **Only `Result`, `Result<T>` and `Option<T>` are converted.** Check the table before you rely on it for another type.
-- **Custom results leak.** An error in a custom result type is serialized with its message and other exception properties, under status 200.
+- **Only the listed types are converted.** `Result`, `Result<T>`, `Option<T>` and types that implement `IResult<TSelf, T, TError>`. Check the tables before you rely on it for another type.
+- **A data error gives 500 by default.** Use `ToHttpResult(onError)` or map `ResultErrorException`.
 - **The filter does not catch.** Wrap code that throws in `Result.TryAsync`.
 
 ## See also

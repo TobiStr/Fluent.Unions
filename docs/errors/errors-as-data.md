@@ -147,7 +147,7 @@ app.MapGet("/checkout/{id}", (int id) => Checkout(id).ToHttpResult(error => erro
 }));
 ```
 
-The endpoint filter does not map `Result<T, TError>`, see [Endpoint filter](../aspnetcore/endpoint-filter.md).
+The endpoint filter maps `Result<T, TError>` with a fixed rule: an error gives 500. Use `ToHttpResult(onError)` for status codes of your own, see [Endpoint filter](../aspnetcore/endpoint-filter.md#custom-result-types).
 
 ## When to choose this over exceptions
 

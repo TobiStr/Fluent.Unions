@@ -139,7 +139,7 @@ Add a case to `CheckoutError` and the `switch` no longer compiles until you map 
 - **Messages of 4xx errors are public.** Do not put internal details into the message of an exception you map to 4xx.
 - **The mapping is by exception type, not by `Result` type.** A custom `DomainException` hierarchy is mapped with one `Map<DomainException>` call and refined with `Map<NotFoundException>`.
 - **Map `AggregateException`, not `ValidationException`,** to change what `Validate` returns.
-- **Errors as data bypass the options.** `Configure<ResultHttpOptions>` has no effect on `Result<T, TError>`.
+- **Errors as data bypass the options in `ToHttpResult(onError)`.** `Configure<ResultHttpOptions>` has no effect there. The [endpoint filter](endpoint-filter.md#custom-result-types) wraps such an error in a `ResultErrorException`, which the options map.
 
 ## See also
 

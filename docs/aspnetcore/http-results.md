@@ -10,6 +10,7 @@ This page covers `ToHttpResult`, the extension methods in `Fluent.Unions.AspNetC
 | `Result` | 204 | `ProblemDetails` | 404 |
 | `Option<T>` | 200 with the value | not applicable | 404 |
 | `Result<T, TError>` with `onError` | 200 with the value | the response from `onError` | 404 |
+| a custom type that implements `IResult<TSelf, T, TError>`, with `onError` | 200 with the value | the response from `onError` | 404 |
 
 Each of them has a `Task` overload, so a pipeline stays one expression:
 
@@ -79,6 +80,20 @@ static IResult ToResponse(CheckoutError error) => error switch
 
 `onError` must not be `null`: `ToHttpResult` throws `ArgumentNullException`. The arms may return different `TypedResults` types, because `onError` returns `IResult`. See [Error mapping](error-mapping.md#errors-as-data) for more.
 
+## Custom result types
+
+`ToHttpResult(onError)` also works on a type that implements `IResult<TSelf, T, TError>`, such as the `Result<T>` from [custom error types](../errors/custom-error-types.md). It follows the same rules as for `Result<T, TError>`: a value gives 200, an error gives the response from `onError`, and an empty result gives 404.
+
+```csharp
+app.MapGet("/customers/{id}", (Guid id) => GetCustomer(id).ToHttpResult(error => error switch
+{
+    NotFoundException => TypedResults.NotFound(),
+    _ => TypedResults.StatusCode(500)
+}));
+```
+
+The concrete overloads for `Result<T>` and `Result<T, TError>` stay in use for those types. `IResult` in the signature is `Microsoft.AspNetCore.Http.IResult`. `Fluent.Unions.Abstractions.IResult<TSelf, T, TError>` has three type arguments, so the names do not clash, but an alias such as `using HttpResult = Microsoft.AspNetCore.Http.IResult;` can make a file easier to read.
+
 ## Controllers
 
 ASP.NET Core MVC executes an `IResult` returned from an action, so the same extension works in a controller:
@@ -112,6 +127,7 @@ An empty `input` makes `Validate` fail with an `AggregateException`, which gives
 - **A result is not serializable.** Do not return a `Result<T>` from a minimal API without `ToHttpResult` or the [endpoint filter](endpoint-filter.md). `JsonSerializer` throws for it.
 - **Empty is 404.** A `Where` that filters the value out gives an empty result, and so a 404 and not an error.
 - **`Task<Result<T, TError>>` needs `onError` as well.** There is no overload without it.
+- **Custom result types have no `Task` overload.** Await the task and call `ToHttpResult(onError)` on the result.
 - **Only 4xx messages are exposed.** A `500` never shows the exception message, so log the error before you convert it, for example with `OnErrorDo`.
 
 ## See also

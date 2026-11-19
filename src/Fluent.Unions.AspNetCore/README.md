@@ -29,6 +29,12 @@ var group = app.MapGroup("/v2/orders").WithResultMapping();
 group.MapGet("/{id}", (Guid id, IOrders orders) => orders.LoadOrderAsync(id)); // Task<Result<Order>>
 ```
 
+Return a custom result type that implements `IResult<TSelf, T, TError>`, or `Result<T, TError>`, from a filtered endpoint. A value gives 200, an empty result gives 404, and an error that is not an exception gives 500 unless you map `ResultErrorException`. `ToHttpResult(onError)` takes over the mapping.
+
+```csharp
+group.MapGet("/customers/{id}", (Guid id) => GetCustomer(id)); // your own IResult type
+```
+
 Change the status code of an exception type, including its subclasses.
 
 ```csharp

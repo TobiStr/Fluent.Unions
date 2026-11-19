@@ -25,7 +25,7 @@ app.MapGet("/orders/{id}", async (Guid id, IOrders orders) => await orders.LoadO
 | empty result or `None` | 404 with an empty body |
 | error | `ProblemDetails` with the status code mapped from the exception type |
 | `Result<T, TError>` with a value | 200 with the value |
-| `Result<T, TError>` with an error | the response you return from the `onError` callback |
+| `Result<T, TError>` or a custom result type with an error | the response you return from the `onError` callback |
 
 ## When to use
 
@@ -37,7 +37,7 @@ app.MapGet("/orders/{id}", async (Guid id, IOrders orders) => await orders.LoadO
 
 - **Add the package, not just the library.** `Fluent.Unions.AspNetCore` references `Fluent.Unions`. It needs the `Microsoft.AspNetCore.App` framework.
 - **Server errors hide their message.** The exception message becomes `detail` only for status codes 400 to 499.
-- **The filter handles three types.** `Result`, `Result<T>` and `Option<T>`. Return a custom result type or `Result<T, TError>` from a filtered endpoint and it is not mapped. See [Endpoint filter](endpoint-filter.md#what-is-not-converted).
+- **The filter handles four kinds of type.** `Result`, `Result<T>`, `Option<T>` and any type that implements `IResult<TSelf, T, TError>`, including `Result<T, TError>`. An error that is not an exception gives 500 there. See [Endpoint filter](endpoint-filter.md#custom-result-types).
 - **Results are not JSON.** `JsonSerializer` refuses `Result<T>`. Always convert before the response is written.
 - **Errors as data need a mapping.** `Result<T, TError>` has no default, so the compiler checks every case.
 
