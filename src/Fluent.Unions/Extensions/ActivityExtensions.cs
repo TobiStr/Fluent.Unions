@@ -25,6 +25,21 @@ public static class ActivityExtensions
         where TError : notnull, IFromException<TError> =>
         Record(activity, result.Success, result.Value is TError error ? error as Exception ?? new ResultErrorException(error) : null);
 
+    /// <summary>
+    /// Sets the status from a custom result and records the error. An error that is not an exception is wrapped in a <see cref="ResultErrorException"/>.
+    /// </summary>
+    public static Activity? RecordResult<TSelf, T, TError>(this Activity? activity, IResult<TSelf, T, TError> result)
+        where TSelf : struct, IResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        return Record(
+            activity,
+            result.Value is not TError && result.Value is T,
+            result.Value is TError error ? error as Exception ?? new ResultErrorException(error) : null);
+    }
+
     private static Activity? Record(Activity? activity, bool success, Exception? error)
     {
         if (activity is null)

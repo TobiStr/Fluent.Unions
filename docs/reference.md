@@ -68,7 +68,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `Catch(e => ...)`, `Catch((IOException e) => ...)`, `Catch(fallback)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `OnErrorDo(e => ...)`, `Do(v => ..., e => ...)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `MapError(e => ...)` | `Result<T, TError>`, custom types (explicit type arguments) | [Errors as data](errors/errors-as-data.md) |
-| `Validate(rules...)` | `Result<T>`, `Task<Result<T>>` | [Validation](validation/README.md) |
+| `Validate(rules...)` | `Result<T>`, `Task<Result<T>>`, custom types (`Validate(combine, rules...)`) | [Validation](validation/README.md), [Custom error types](errors/custom-error-types.md) |
 
 ## Validation rules
 
@@ -162,6 +162,8 @@ Namespace `Fluent.Unions.Validation`.
 | --- | --- |
 | `union.Is<TCase>()`, `union.As<TCase>()` | [Your own unions](unions/your-own-unions.md) |
 | `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>` | [Custom error types](errors/custom-error-types.md) |
+| `Ensure`, `Validate`, `Out`, `DoAwait`, `CatchAwait`, `FinallyAwait`, `WhereAwait`, `ToOption`, `ToLoadable`, `Unwrap`, `RecordResult` on `IResult` | [Custom error types](errors/custom-error-types.md) |
+| `SelectAwait`, `Zip`, `BindAppend`, `WithValue`, `Transpose` on `IResult` (explicit type arguments) | [Custom error types](errors/custom-error-types.md) |
 | `IFromException<TSelf>`, `Result<T, TError>` | [Errors as data](errors/errors-as-data.md) |
 
 ## FluentValidation

@@ -59,11 +59,18 @@ Wrapping the original exception, as `UnexpectedDomainException` does, keeps the 
 | --- | --- |
 | `Chain(next)`, `ChainAwait(next)` | `next` must return a result with the same error type. |
 | `Catch(e => ...)`, `Catch((NotFoundException e) => ...)`, `Catch(fallback)` | The typed form needs the exception type on the lambda parameter. |
-| `Do`, `OnErrorDo`, `Finally`, `Where`, `DefaultIfEmpty(fallback)` | Same behavior as on the library's `Result<T>`. |
+| `CatchAwait(e => ...)` | `e` is your error type and the handler returns a `Task` of your result. |
+| `Do`, `DoAwait`, `OnErrorDo`, `Finally`, `FinallyAwait`, `Where`, `WhereAwait`, `DefaultIfEmpty(fallback)` | Same behavior as on the library's `Result<T>`. |
+| `Out(out var value)` | Captures the value for later steps. Filled only when the result holds a value. |
+| `Ensure(predicate, e => ...)`, `Ensure(predicate, message)` | The first form returns your error type. The message form makes a `ValidationException` and passes it through `FromException`. |
+| `Validate(combine, rules...)` | Runs every rule and collects all errors. `combine` turns the list of errors into one error of your type. |
 | `GetValueOrDefault()`, `GetValueOrDefault(fallback)` | The value, or `default` or the fallback for an error or an empty result. |
 | `Check()` | Rethrows the error with its stack trace. Throws `InvalidOperationException` on an empty result. |
 | `Match(onNext, onError, onEmpty)` | `onError` receives your error type. |
-| `Select`, `MapError` | Need a one-line wrapper, see below. |
+| `ToOption()`, `ToLoadable()` | An error or empty result gives no value or `NotLoaded`. A failed `ToLoadable` wraps an error that is not an exception in `ResultErrorException`. |
+| `Unwrap()` | Flattens a result of a result with the same error type. |
+| `activity.RecordResult(result)` | Sets the status and records the error on an `Activity`. |
+| `Select`, `SelectAwait`, `MapError`, `Zip`, `BindAppend`, `WithValue`, `Transpose` | Change the result type, so they need explicit type arguments. See below. |
 
 ### Chain
 
@@ -129,6 +136,34 @@ What each wrapper gives you:
   var fromThrowing = Fluent.Unions.Result.Try(() => LoadFromDatabase(id)).ToDomain();
   ```
 
+- **`SelectAwait`, `Zip`, `BindAppend`, `WithValue` and `Transpose`** change the result type as well, so they also need explicit type arguments. Wrap them the same way, or spell the type arguments out at the call site:
+
+  ```csharp
+  Result<int> score = await GetCustomer(id)
+      .SelectAwait<Result<Customer>, Customer, DomainException, Result<int>, int>(LoadScoreAsync);
+
+  Result<(Customer, Cart)> both = GetCustomer(id)
+      .BindAppend<Result<Customer>, Customer, DomainException, Result<Cart>, Cart, Result<(Customer, Cart)>>(GetCart);
+  ```
+
+  The type arguments are the receiver type, its value type, your error type, then the types of the other result and of the result you get back.
+
+### Operators that keep your type
+
+`Ensure`, `Validate`, `Out`, `DoAwait`, `CatchAwait`, `FinallyAwait`, `WhereAwait`, `ToOption`, `ToLoadable`, `Unwrap` and `RecordResult` infer everything from the receiver and need no wrapper:
+
+```csharp
+Result<Customer> checkedCustomer = GetCustomer(id)
+    .Ensure(c => c.Name.Length > 0, "A customer needs a name.")
+    .Ensure(c => c.Active, c => new DomainException($"{c.Name} is inactive."))
+    .Validate(
+        errors => new DomainException(string.Join("; ", errors.Select(e => e.Message))),
+        CheckAddress,
+        CheckEmail);
+```
+
+`Validate` runs every rule, so the caller decides how errors merge. A rule can return any result type that has your error type, such as `Result<Address>`. A rule that throws or returns an empty result counts as a failure. Give a rule a typed return, for example through a method group, because the compiler infers the rule's result type from it.
+
 - **The `Task` wrapper** keeps an asynchronous pipeline one expression:
 
   ```csharp
@@ -163,10 +198,10 @@ The operators take your result through the interface, which boxes it. The repo R
 
 These are not provided for custom types:
 
-- `Zip`, `Combine`, `CombineAll`, `Partition`, `Validate`, `Unwrap`, `Transpose` and `Try`.
+- `Combine`, `CombineAll`, `Partition` and `Try`.
 - The factory overloads of `GetValueOrDefault` and `DefaultIfEmpty`.
-- Query syntax with several `from` clauses.
-- The `...Await` operators other than `ChainAwait`.
+- Query syntax with several `from` clauses, so `SelectMany` and `SelectManyAwait`. `Chain` and `ChainAwait` cover that form.
+- `DiscardValue`, the `Ensure*` rule catalogue, and the remaining `...Await` operators such as `EnsureAwait`.
 - `Task` overloads of every operator, unless you write the wrapper above.
 
 ## Pitfalls
