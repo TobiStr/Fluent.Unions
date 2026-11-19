@@ -25,6 +25,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | --- | --- |
 | [ASP.NET Core](aspnetcore/README.md) | The `Fluent.Unions.AspNetCore` package: HTTP responses, ProblemDetails, the endpoint filter, error mapping. |
 | [Entity Framework Core](entity-framework-core/README.md) | Storing options in EF Core with nullable backing fields. |
+| [Tracing](tracing/README.md) | `RecordResult` copies a result onto a `System.Diagnostics.Activity`: status and exception event. |
 | [Analyzer](analyzer/README.md) | Warning `FLU0001` for results that are ignored. |
 
 ## Conventions in these docs

@@ -118,6 +118,12 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>` | [Custom error types](errors/custom-error-types.md) |
 | `IFromException<TSelf>`, `Result<T, TError>` | [Errors as data](errors/errors-as-data.md) |
 
+## Tracing
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `RecordResult(result)` | `Activity?`, with `Result`, `Result<T>` or `Result<T, TError>` | [Tracing](tracing/README.md) |
+
 ## Serialization
 
 | Type | Docs |
