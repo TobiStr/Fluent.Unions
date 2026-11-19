@@ -2,7 +2,13 @@
 
   <PropertyGroup>
     <Version>0.1.0</Version>
-    <Authors>Fluent.Unions contributors</Authors>
+    <Authors>Tobias Streng</Authors>
+    <Copyright>Copyright © 2026 Tobias Streng</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <PackageProjectUrl>https://github.com/TobiStr/Fluent.Unions</PackageProjectUrl>
+    <PackageReleaseNotes>https://github.com/TobiStr/Fluent.Unions/releases</PackageReleaseNotes>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
