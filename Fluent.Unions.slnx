@@ -5,6 +5,7 @@
     <Project Path="src/Fluent.Unions.AspNetCore/Fluent.Unions.AspNetCore.csproj" />
     <Project Path="src/Fluent.Unions.FluentValidation/Fluent.Unions.FluentValidation.csproj" />
     <Project Path="src/Fluent.Unions.Polly/Fluent.Unions.Polly.csproj" />
+    <Project Path="src/Fluent.Unions.OpenApi/Fluent.Unions.OpenApi.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -12,5 +13,6 @@
     <Project Path="test/Fluent.Unions.AspNetCore.Tests/Fluent.Unions.AspNetCore.Tests.csproj" />
     <Project Path="test/Fluent.Unions.FluentValidation.Tests/Fluent.Unions.FluentValidation.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Polly.Tests/Fluent.Unions.Polly.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.OpenApi.Tests/Fluent.Unions.OpenApi.Tests.csproj" />
   </Folder>
 </Solution>

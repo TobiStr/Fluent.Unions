@@ -183,6 +183,15 @@ Package `Fluent.Unions.Polly`, namespace `Fluent.Unions.Polly`.
 | `ExecuteResultAsync(operation, cancellationToken)` | `ResiliencePipeline<Result<T>>`, `ResiliencePipeline` | [Polly](polly/README.md) |
 | `ToResult()` | `Outcome<Result<T>>` | [Polly](polly/README.md) |
 
+## OpenAPI
+
+Package `Fluent.Unions.OpenApi`, namespace `Fluent.Unions.OpenApi`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `AddFluentUnions()` | `OpenApiOptions` | [OpenAPI](openapi/README.md) |
+| `OptionSchemaTransformer` | `IOpenApiSchemaTransformer` for `Option<T>` | [OpenAPI](openapi/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |
