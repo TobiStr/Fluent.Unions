@@ -200,9 +200,10 @@ Package `Fluent.Unions.AwesomeAssertions`, namespace `Fluent.Unions.AwesomeAsser
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `Should()` | `Result`, `Result<T>`, `Option<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
+| `Should()` | `Result`, `Result<T>`, `Option<T>`, custom types | [AwesomeAssertions](awesome-assertions/README.md) |
 | `BeOk()`, `BeError()`, `BeError<TException>()`, `BeError<TException>(predicate)`, `BeAggregateError()` | `ResultAssertions`, `ResultAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
 | `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeOkSatisfying(assertion)`, `BeEmpty()` | `ResultAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
+| `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeError()` (with `Which`), `BeError<TCase>()`, `BeError<TCase>(predicate)`, `BeEmpty()` | `CustomResultAssertions<TSelf, T, TError>` | [AwesomeAssertions](awesome-assertions/README.md#custom-result-types) |
 | `BeSome()` (with `Which`), `BeSomeWithValue(value)`, `NotBeSomeWithValue(value)`, `BeSomeMatching(predicate)`, `BeSomeSatisfying(assertion)`, `BeNone()` | `OptionAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
 | `WithMessage(pattern)`, `WithMessageContaining(text)` | `ErrorAssertions<TException>` | [AwesomeAssertions](awesome-assertions/README.md) |
 | `WithInnerCount(count)`, `WithInner<TException>()`, `WithInnerMessage(pattern)` | `AggregateErrorAssertions` | [AwesomeAssertions](awesome-assertions/README.md) |

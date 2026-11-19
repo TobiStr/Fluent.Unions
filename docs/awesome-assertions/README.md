@@ -1,6 +1,6 @@
 # AwesomeAssertions
 
-The package `Fluent.Unions.AwesomeAssertions` (namespace `Fluent.Unions.AwesomeAssertions`) adds `Should()` for `Result`, `Result<T>` and `Option<T>` to [AwesomeAssertions](https://awesomeassertions.org). It checks the state of a result, its value, and the exception inside an error.
+The package `Fluent.Unions.AwesomeAssertions` (namespace `Fluent.Unions.AwesomeAssertions`) adds `Should()` for `Result`, `Result<T>`, `Option<T>` and custom result types to [AwesomeAssertions](https://awesomeassertions.org). It checks the state of a result, its value, and the exception inside an error.
 
 ## In this section
 
@@ -9,6 +9,7 @@ This folder has one page. The topics are below.
 - [Quick example](#quick-example): assert on an Ok result, an error and an option.
 - [Result assertions](#result-assertions): the state and value checks.
 - [Option assertions](#option-assertions): some, none and the value.
+- [Custom result types](#custom-result-types): assertions for your own `IResult` type and `Result<T, TError>`.
 - [Error assertions](#error-assertions): the exception type and message, and aggregate errors.
 - [When to use](#when-to-use): where it helps.
 - [Rules](#rules): empty results, failure messages and chaining.
@@ -63,6 +64,32 @@ nickname.Should().BeSomeWithValue("ada");
 | `BeSomeSatisfying(assertion)` | the option has a value and the assertion runs on it |
 | `BeNone()` | the option has no value. A `default` option counts as none. |
 
+## Custom result types
+
+`Should()` on a type that implements `IResult<TSelf, T, TError>` returns `CustomResultAssertions<TSelf, T, TError>`. This includes `Result<T, TError>`. The concrete `Should()` overloads for `Result` and `Result<T>` still apply to those types.
+
+| Method | Passes when |
+| --- | --- |
+| `BeOk()` | the result holds a value, which `Which` returns |
+| `BeOkWithValue(value)` | the result holds an equal value |
+| `BeOkMatching(predicate)` | the result holds a value that matches the predicate |
+| `BeError()` | the result is an error, which `Which` returns as `TError` |
+| `BeError<TCase>()` | the error is a `TCase`, or the error union holds a `TCase`. `Which` returns the `TCase`. |
+| `BeError<TCase>(predicate)` | the error is a `TCase` and the predicate is true |
+| `BeEmpty()` | the result is neither a value nor an error |
+
+```csharp
+StockResult<Reservation> reserved = await stock.ReserveAsync(sku, quantity);
+
+reserved.Should().BeOk().Which.Quantity.Should().Be(2);
+// passes when the reservation holds a quantity of 2
+
+reserved.Should().BeError<OutOfStock>(error => error.Sku == "KB-1");
+// passes when the error union holds an OutOfStock for that sku
+```
+
+An error that is not an exception is named in a failure message by the type of its case and its content.
+
 ## Error assertions
 
 `ErrorAssertions<TException>` works on the exception inside an error. `Which` returns the exception, and `And` continues on the same assertions.
@@ -99,7 +126,7 @@ registered.Should().BeAggregateError().WithInnerCount(2);
 - **The message names the state.** A failure shows whether the result was Ok, empty or an error, with the exception type and message.
 - **None includes `default`.** `BeNone()` passes for `default(Option<T>)`, and `BeSome()` fails for it.
 - **Predicates are expressions.** `BeOkMatching` and `BeError<TException>(predicate)` take an `Expression<Func<..>>`, so the failure message shows the condition.
-- **Not covered yet.** `Result<T, TError>` and `Loadable<T>` have no assertions.
+- **Not covered yet.** `Loadable<T>` has no assertions.
 
 ---
 

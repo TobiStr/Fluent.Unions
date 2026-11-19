@@ -42,6 +42,13 @@ Assert on the inner exceptions of an aggregate error, such as the output of `Val
 registered.Should().BeAggregateError().WithInnerCount(2);
 ```
 
+Assert on a custom result type that implements `IResult<TSelf, T, TError>`, including `Result<T, TError>`. `BeError<TCase>()` also matches a case inside an error union.
+
+```csharp
+StockResult<Reservation> reserved = await stock.ReserveAsync(sku, quantity);
+reserved.Should().BeError<OutOfStock>().Which.Sku.Should().Be("KB-1");
+```
+
 An empty `Result<T>` fails every Ok and error assertion. Only `BeEmpty()` passes for it.
 
 ## Documentation
