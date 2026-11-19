@@ -249,6 +249,22 @@ public class OptionTests
     }
 
     [Test]
+    public void NullableToResult()
+    {
+        string? name = "Ada";
+        string? missingName = null;
+        int? age = 36;
+        int? missingAge = null;
+
+        Assert.That(name.ToResult(() => Failure).GetOk(), Is.EqualTo("Ada"));
+        Assert.That(missingName.ToResult(() => Failure).GetError(), Is.SameAs(Failure));
+        Assert.That(age.ToResult(() => Failure).GetOk(), Is.EqualTo(36));
+        Assert.That(missingAge.ToResult(() => Failure).GetError(), Is.SameAs(Failure));
+        Assert.That(missingName.ToResult(() => throw Failure).GetError(), Is.SameAs(Failure));
+        Assert.That(missingAge.ToResult(() => null!).GetError(), Is.TypeOf<InvalidOperationException>());
+    }
+
+    [Test]
     public void FirstOrNoneAndLastOrNone()
     {
         int[] numbers = [0, 1, 2, 3];

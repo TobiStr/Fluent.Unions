@@ -65,6 +65,16 @@ Result<Customer> customer = await FindCustomerAsync(id)
     .ToResult(() => new KeyNotFoundException($"No customer {id}."));
 ```
 
+Nullable references and nullable value types convert directly, without going through an option first:
+
+```csharp
+Customer? found = repository.Find(id);
+Result<Customer> customer = found.ToResult(() => new KeyNotFoundException($"No customer {id}."));
+
+int? stock = inventory.GetStock(sku);
+Result<int> available = stock.ToResult(() => new KeyNotFoundException($"No stock for {sku}."));
+```
+
 ## Transpose
 
 `Transpose()` swaps the nesting of an optional value that may be invalid, like Rust's `transpose`. It exists in both directions.

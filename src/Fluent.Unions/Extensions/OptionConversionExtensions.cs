@@ -64,6 +64,18 @@ public static class OptionConversionExtensions
     };
 
     /// <summary>
+    /// Turns a reference that may be <c>null</c> into a result, using <paramref name="error"/> for <c>null</c>.
+    /// </summary>
+    public static Result<T> ToResult<T>(this T? value, Func<Exception> error) where T : class =>
+        value.ToOption().ToResult(error);
+
+    /// <summary>
+    /// Turns a nullable value type into a result, using <paramref name="error"/> for <c>null</c>.
+    /// </summary>
+    public static Result<T> ToResult<T>(this T? value, Func<Exception> error) where T : struct =>
+        value.ToOption().ToResult(error);
+
+    /// <summary>
     /// Turns the option into a result, using <paramref name="error"/> when it holds no value.
     /// </summary>
     public static Result<T> ToResult<T>(this Option<T> option, Func<Exception> error)

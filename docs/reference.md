@@ -134,7 +134,7 @@ Namespace `Fluent.Unions.Validation`.
 | Operator | From → to | Docs |
 | --- | --- | --- |
 | `ToOption()` | `Result<T>` → `Option<T>`, `Loadable<T>` → `Option<T>` | [Option conversions](option/conversions.md) |
-| `ToResult(() => error)` | `Option<T>` → `Result<T>` | [Option conversions](option/conversions.md) |
+| `ToResult(() => error)` | `Option<T>`, `T?` (nullable reference or value type) → `Result<T>` | [Option conversions](option/conversions.md) |
 | `Transpose()` | `Option<Result<T>>` ↔ `Result<Option<T>>` | [Option conversions](option/conversions.md) |
 | `ToLoadable()` | `Result<T>` / `Task<Result<T>>` → `Loadable<T>` | [Loadable](unions/loadable.md) |
 | implicit | `Result<T>` → `Result` | [Result core concepts](result/core-concepts.md) |
