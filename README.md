@@ -60,6 +60,165 @@ app.MapGet("/orders/{id}", (Guid id) => LoadOrderAsync(id)
     .ToHttpResult());   // 200, 404, or ProblemDetails with a mapped status code
 ```
 
+## A real-world example: checkout
+
+A shop places an order. Like most real code, it works with code it does not control: a repository that returns `null`, and a payment SDK that throws. The request can fail in six ways: invalid input, unknown customer, unknown product, out of stock, payment declined, or success.
+
+### The traditional way
+
+Null checks, early returns, a `try`/`catch`, and an `out` parameter that carries the error as a string:
+
+```csharp
+public static Receipt? PlaceOrder(Shop shop, CheckoutRequest request, out string? error)
+{
+    if (string.IsNullOrWhiteSpace(request.Sku))
+    {
+        error = "Sku must not be empty or white space.";
+        return null;
+    }
+
+    if (request.Quantity is < 1 or > 10)
+    {
+        error = "Quantity must be between 1 and 10.";
+        return null;
+    }
+
+    var customer = shop.FindCustomer(request.CustomerId);
+    if (customer is null)
+    {
+        error = $"No customer {request.CustomerId}.";
+        return null;
+    }
+
+    var product = shop.FindProduct(request.Sku);
+    if (product is null)
+    {
+        error = $"No product {request.Sku}.";
+        return null;
+    }
+
+    if (product.Stock < request.Quantity)
+    {
+        error = $"Only {product.Stock} left of {product.Sku}.";
+        return null;
+    }
+
+    var total = product.Price * request.Quantity;
+    string paymentId;
+    try
+    {
+        paymentId = shop.Charge(customer, total);
+    }
+    catch (PaymentDeclinedException exception)
+    {
+        error = exception.Message;
+        return null;
+    }
+
+    var receipt = new Receipt(customer.Name, product.Sku, total, paymentId);
+    shop.Save(receipt);
+    error = null;
+    return receipt;
+}
+```
+
+The caller has to remember the null check, and can only tell the failures apart by inspecting strings:
+
+```csharp
+var receipt = PlaceOrder(shop, request, out var error);
+if (receipt is not null) return 201;
+if (error!.StartsWith("No ")) return 404;
+if (error.StartsWith("Only ")) return 409;
+if (error.Contains("declined")) return 402;
+return 400;
+```
+
+### With Fluent.Unions
+
+The same flow as one chain. Each step runs only if the previous one succeeded:
+
+```csharp
+public static Result<Receipt> PlaceOrder(Shop shop, CheckoutRequest request) =>
+    Result<CheckoutRequest>.Ok(request)
+        .Validate(
+            r => r.Sku.EnsureNotWhiteSpace(),
+            r => r.Quantity.EnsureInRange(1, 10))
+        .Chain(r => FindCustomer(shop, r.CustomerId)).Out(out var customer)
+        .Chain(_ => FindProduct(shop, request.Sku))
+        .Ensure(p => p.Stock >= request.Quantity, p => new InvalidOperationException($"Only {p.Stock} left of {p.Sku}."))
+        .Select(p => (Product: p, Total: p.Price * request.Quantity))
+        .Select(x => new Receipt(customer.Value.Name, x.Product.Sku, x.Total, shop.Charge(customer, x.Total)))
+        .Do(shop.Save);
+
+private static Result<Customer> FindCustomer(Shop shop, Guid id) =>
+    shop.FindCustomer(id).ToResult(() => new KeyNotFoundException($"No customer {id}."));
+
+private static Result<Product> FindProduct(Shop shop, string sku) =>
+    shop.FindProduct(sku).ToResult(() => new KeyNotFoundException($"No product {sku}."));
+```
+
+The caller matches on the error's type, and the compiler checks that every case is handled:
+
+```csharp
+int status = PlaceOrder(shop, request) switch
+{
+    Receipt => 201,
+    AggregateException => 400,          // every validation error at once
+    KeyNotFoundException => 404,
+    InvalidOperationException => 409,
+    PaymentDeclinedException => 402,
+    Exception => 500
+};
+```
+
+That is fine for one call. With many commands, don't repeat it in each one. Commands like `PlaceOrder` only return a result, and turning it into an HTTP response happens once, at the boundary:
+
+```csharp
+public record HttpError(int StatusCode, string Message);
+
+public record HttpResponse(int StatusCode, object? Body);
+
+public static class HttpResponseExtensions
+{
+    public static HttpResponse ToHttpResponse<T>(this Result<T> result, int successStatusCode = 200) => result.Match(
+        value => new HttpResponse(successStatusCode, value),
+        error => ToHttpResponse(error.ToHttpError()),
+        () => new HttpResponse(204, null));
+
+    public static HttpError ToHttpError(this Exception error) => error switch
+    {
+        AggregateException validation => new(400, string.Join(" ", validation.InnerExceptions.Select(e => e.Message))),
+        KeyNotFoundException => new(404, error.Message),
+        InvalidOperationException => new(409, error.Message),
+        PaymentDeclinedException => new(402, error.Message),
+        _ => new(500, "An unexpected error occurred.")
+    };
+
+    private static HttpResponse ToHttpResponse(HttpError error) => new(error.StatusCode, error);
+}
+```
+
+Each endpoint is then one line:
+
+```csharp
+HttpResponse response = PlaceOrder(shop, request).ToHttpResponse(201);
+// 201 with the receipt, or e.g. 400 "Sku must not be empty or white space. Quantity must be between 1 and 10."
+```
+
+In ASP.NET Core, [Fluent.Unions.AspNetCore](docs/aspnetcore/README.md) provides this boundary ready-made: `ToHttpResult()` answers with ProblemDetails, and the status codes are configured once with `ResultHttpOptions`.
+
+### What the union gives you
+
+- **The signature is honest.** `Result<Receipt>` says that the call can fail. `Receipt?` with an `out string?` hides it, and nothing makes the caller check.
+- **Every case is handled.** A `switch` over the result has to cover both the receipt and the error, or the compiler reports the missing case (CS8509). `Match` takes one callback per state, so none can be forgotten there either.
+- **Errors keep their type, and the mapping lives in one place.** `ToHttpError` maps `KeyNotFoundException` and `PaymentDeclinedException` to status codes, not strings. Rewording a message cannot change a status code, and unknown errors answer 500 without leaking their details.
+- **Throwing code joins the chain.** `shop.Charge` throws on a declined card. Inside `Select` that exception becomes the error, so no `try`/`catch` is needed and the order is not saved.
+- **No `null` leaks.** `ToResult(...)` turns the repository's `null` into a named error once, at the boundary.
+- **Validation reports everything.** The traditional version stops at the first problem. `Validate` collects all of them in one `AggregateException`.
+- **The happy path reads top to bottom.** Errors skip the remaining steps instead of breaking the flow with early returns.
+
+Both versions, including the `Shop` stub, are in [`CheckoutSample.cs`](test/Fluent.Unions.Tests/Samples/CheckoutSample.cs). Its tests check that they return the same status code for all six cases, and that the error mapping hides unexpected errors.
+
 ## Features
 
 - **Compiler-checked handling:**
