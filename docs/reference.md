@@ -28,7 +28,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | Member | Result | Docs |
 | --- | --- | --- |
 | implicit conversion from `T`, `Exception`, `Ok`, `None` | the matching case | [Result](result/core-concepts.md), [Option](option/core-concepts.md) |
-| `Result.Ok`, `Result<T>.Ok(value)`, `Result.Error(e)`, `Result<T>.Error(e)` | explicit creation | [Result core concepts](result/core-concepts.md) |
+| `Result.Ok`, `Result<T>.Ok(value)`, `Result.From(value)`, `Result.Error(e)`, `Result<T>.Error(e)` | explicit creation | [Result core concepts](result/core-concepts.md) |
 | `Result.Try(...)`, `Result.TryAsync(...)` | runs code that may throw | [Error handling](result/error-handling.md) |
 | `Option.None`, `Option.Some(value)` | explicit creation | [Option core concepts](option/core-concepts.md) |
 | `value.ToOption()` | from a nullable reference or nullable value type | [Option conversions](option/conversions.md) |

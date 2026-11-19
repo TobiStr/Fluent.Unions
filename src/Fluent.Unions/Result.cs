@@ -45,6 +45,12 @@ public union Result(Ok, Exception)
     public static Result Error(Exception error) => error;
 
     /// <summary>
+    /// Starts a successful result from a value, with the type inferred.
+    /// </summary>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <c>null</c>.</exception>
+    public static Result<T> From<T>(T value) => Result<T>.Ok(value);
+
+    /// <summary>
     /// Runs <paramref name="body"/> and returns its value, or the thrown exception as an error.
     /// </summary>
     public static Result<T> Try<T>(Func<T> body)

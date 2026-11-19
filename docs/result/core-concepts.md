@@ -53,6 +53,14 @@ Result failed = Result.Error(new TimeoutException());
 
 `Result.Ok` is a property. `Result<T>.Ok(value)` is a method and throws `ArgumentNullException` for `null`, where the implicit conversion gives an empty result.
 
+`Result.From(value)` does the same as `Result<T>.Ok(value)`, but infers `T`. Use it to start a chain from a plain value:
+
+```csharp
+Result<Order> placed = Result.From(order)
+    .Ensure(o => o.Lines.Count > 0, "An order needs at least one line.")
+    .Chain(Save);
+```
+
 `Try` and `TryAsync` run code that may throw:
 
 ```csharp

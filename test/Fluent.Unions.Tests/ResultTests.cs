@@ -103,6 +103,15 @@ public class ResultTests
     }
 
     [Test]
+    public void FromInfersTheTypeTest()
+    {
+        Result<string> name = Result.From("Ada");
+
+        Assert.That(name.GetOk(), Is.EqualTo("Ada"));
+        Assert.Throws<ArgumentNullException>(() => Result.From<string>(null!));
+    }
+
+    [Test]
     public void ImplicitNullPayloadTest()
     {
         Result<string> result = (string)null!;
