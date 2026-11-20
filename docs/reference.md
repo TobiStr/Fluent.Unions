@@ -250,6 +250,15 @@ Package `Fluent.Unions.FluentAssertions`, namespace `Fluent.Unions.FluentAsserti
 | `WithMessage(pattern)`, `WithMessageContaining(text)` | `ErrorAssertions<TException>` | [FluentAssertions](fluent-assertions/README.md) |
 | `WithInnerCount(count)`, `WithInner<TException>()`, `WithInnerMessage(pattern)` | `AggregateErrorAssertions` | [FluentAssertions](fluent-assertions/README.md) |
 
+## Serilog
+
+Package `Fluent.Unions.Serilog`, namespace `Fluent.Unions.Serilog`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `WithFluentUnions()` | `LoggerDestructuringConfiguration` (`.Destructure.WithFluentUnions()`) | [Serilog](serilog/README.md) |
+| `UnionDestructuringPolicy` | `IDestructuringPolicy` for `Result`, `Result<T>`, `Result<T, TError>`, `Option<T>`, `Loadable<T>` | [Serilog](serilog/README.md#log-shape) |
+
 ## Tracing
 
 | Member | On | Docs |

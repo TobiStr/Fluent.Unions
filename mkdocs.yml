@@ -97,4 +97,5 @@ nav:
       - Dapper: dapper/README.md
       - Refit: refit/README.md
       - FluentAssertions: fluent-assertions/README.md
+      - Serilog: serilog/README.md
   - Reference: reference.md
