@@ -6,7 +6,7 @@ A C# 15 `union` holds exactly one of a fixed list of case types, and `switch` ma
 
 - [Your own unions](your-own-unions.md): declaring unions, `Is<T>` and `As<T>`, and `UnionJsonConverter` for JSON that can be read back.
 - [Loadable](loadable.md): `Loadable<T>`, the state of data that loads asynchronously, for views and view models.
-- [Modeling with unions](modeling.md): a state machine and event sourcing for an online shop.
+- [Modeling with unions](modeling.md): a state machine, event sourcing, polymorphic API input, operations with several outcomes, a UI reducer and configuration variants.
 
 ## Quick example
 
@@ -35,7 +35,9 @@ Option<BankTransfer> transfer = method.As<BankTransfer>(); // None
 
 ## When to use
 
-- A value is one of several distinct shapes, and each shape carries its own data: payment methods, order states, commands, events.
+- A value is one of several distinct shapes, and each shape carries its own data: payment methods, order states, commands, events, storage settings.
+- An operation has several normal outcomes that are not errors, such as registered, already registered and pending approval.
+- A UI sends actions and one function computes the next state.
 - You want a forgotten case to be a compiler warning, not a runtime surprise.
 - You need a state for asynchronous UI data: use `Loadable<T>`.
 
