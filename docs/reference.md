@@ -259,6 +259,17 @@ Package `Fluent.Unions.Serilog`, namespace `Fluent.Unions.Serilog`.
 | `WithFluentUnions()` | `LoggerDestructuringConfiguration` (`.Destructure.WithFluentUnions()`) | [Serilog](serilog/README.md) |
 | `UnionDestructuringPolicy` | `IDestructuringPolicy` for `Result`, `Result<T>`, `Result<T, TError>`, `Option<T>`, `Loadable<T>` | [Serilog](serilog/README.md#log-shape) |
 
+## Newtonsoft.Json
+
+Package `Fluent.Unions.NewtonsoftJson`, namespace `Fluent.Unions.NewtonsoftJson`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `AddFluentUnions()` | `JsonSerializerSettings` | [Newtonsoft.Json](newtonsoft-json/README.md) |
+| `OptionJsonConverter` | `Option<T>` | [Newtonsoft.Json](newtonsoft-json/README.md#options) |
+| `ResultJsonConverter` | `Result`, `Result<T>`, `Result<T, TError>` | [Newtonsoft.Json](newtonsoft-json/README.md#results-refuse-to-serialize) |
+| `UnionJsonConverter` | your own unions | [Newtonsoft.Json](newtonsoft-json/README.md#your-own-unions) |
+
 ## Tracing
 
 | Member | On | Docs |

@@ -98,4 +98,5 @@ nav:
       - Refit: refit/README.md
       - FluentAssertions: fluent-assertions/README.md
       - Serilog: serilog/README.md
+      - Newtonsoft.Json: newtonsoft-json/README.md
   - Reference: reference.md

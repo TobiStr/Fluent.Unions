@@ -12,6 +12,7 @@
     <Project Path="src/Fluent.Unions.Refit/Fluent.Unions.Refit.csproj" />
     <Project Path="src/Fluent.Unions.FluentAssertions/Fluent.Unions.FluentAssertions.csproj" />
     <Project Path="src/Fluent.Unions.Serilog/Fluent.Unions.Serilog.csproj" />
+    <Project Path="src/Fluent.Unions.NewtonsoftJson/Fluent.Unions.NewtonsoftJson.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -25,5 +26,6 @@
     <Project Path="test/Fluent.Unions.Refit.Tests/Fluent.Unions.Refit.Tests.csproj" />
     <Project Path="test/Fluent.Unions.FluentAssertions.Tests/Fluent.Unions.FluentAssertions.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Serilog.Tests/Fluent.Unions.Serilog.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.NewtonsoftJson.Tests/Fluent.Unions.NewtonsoftJson.Tests.csproj" />
   </Folder>
 </Solution>
