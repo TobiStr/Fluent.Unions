@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 11.0.x
+
+      - name: Restore and audit dependencies
+        run: dotnet restore Fluent.Unions.slnx -p:NuGetAudit=true -p:NuGetAuditMode=all -p:WarningsAsErrors="NU1901%3BNU1902%3BNU1903%3BNU1904"
+
+      - name: Build
+        run: dotnet build Fluent.Unions.slnx -c Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test Fluent.Unions.slnx -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack Fluent.Unions.slnx -c Release --no-build -o artifacts -p:PackageValidationBaselineVersion=
