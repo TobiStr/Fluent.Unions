@@ -9,6 +9,7 @@ This folder has one page. The topics are below.
 - [Quick example](#quick-example): validate a command and a result.
 - [What you get back](#what-you-get-back): the error shape for each state.
 - [Custom result types](#custom-result-types): validate your own `IResult` type.
+- [Option properties](#option-properties): rules that run only when an option has a value.
 - [When to use](#when-to-use): where it helps.
 - [Rules](#rules): name clash, severity and what is not covered.
 
@@ -78,6 +79,37 @@ CheckoutResult<PlaceOrder> validated = command.Validate(
 
 Use the overload without `map` when `FromException` can hold an exception. Use the `map` overload when the error type is data. An error passes through and the validator is not called.
 
+## Option properties
+
+`RuleForSome` starts a rule for the value of an `Option<T>` property, like `RuleFor`. The rule runs only when the option has a value, so `None` is always valid:
+
+```csharp
+using FluentValidation;
+using Fluent.Unions.FluentValidation;
+
+public record UpdateProfile(Option<string> Nickname, Option<int> Age);
+
+public class UpdateProfileValidator : AbstractValidator<UpdateProfile>
+{
+    public UpdateProfileValidator()
+    {
+        this.RuleForSome(p => p.Nickname).NotEmpty().MaximumLength(20);
+        this.RuleForSome(p => p.Age).InclusiveBetween(0, 150);
+    }
+}
+```
+
+| `Nickname` | Outcome |
+| --- | --- |
+| `None` | valid, no rule runs |
+| `"Ada"` | valid |
+| `""` | a failure named `Nickname` |
+
+- **Call it with `this.`** It is an extension method on `AbstractValidator<T>`, so C# needs the receiver inside the constructor.
+- **Failures are named after the property.** A nested property such as `p => p.Address.Street` gives `Address.Street`, as `RuleFor` does.
+- **Every validator in the chain is skipped for `None`**, including ones added after `When` or `WithMessage`.
+- **To require a value**, add a separate rule: `RuleFor(p => p.Nickname).Must(n => n.HasValue)`.
+
 ## When to use
 
 - You already have FluentValidation validators and your handlers return `Result<T>`.
@@ -90,7 +122,6 @@ Use the overload without `map` when `FromException` can hold an exception. Use t
 - **Every failure counts.** A failure with `Severity.Warning` or `Severity.Info` also makes the result an error, as `IsValid` does.
 - **Check the type, not the count.** The error is a `ValidationErrors` even for one failure. Read `Errors` or `ToDictionary()`.
 - **The map must not return `null`.** A `null` error, or an exception thrown by `map`, becomes the error that `FromException` makes of it.
-- **Options are not covered.** `WhenSome` for `Option<T>` properties is not part of the package yet.
 
 ---
 

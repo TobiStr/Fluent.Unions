@@ -41,6 +41,12 @@ CheckoutResult<PlaceOrder> validated = command.Validate(
     failures => new InvalidOrder(failures.Select(f => f.ErrorMessage).ToList()));
 ```
 
+Validate an `Option<T>` property only when it has a value. `None` is always valid.
+
+```csharp
+this.RuleForSome(p => p.Nickname).NotEmpty().MaximumLength(20);
+```
+
 An endpoint that returns the error through Fluent.Unions.AspNetCore answers 400 with every message in `errors`.
 
 Failures with `Severity.Warning` or `Severity.Info` also make the result an error.
