@@ -13,6 +13,7 @@ This folder has one page. The topics are below.
 - [General rules](#general-rules): equality, membership, null and option rules for any value.
 - [Collection rules](#collection-rules): count, uniqueness, membership and item predicates.
 - [Date, time and other value rules](#date-time-and-other-value-rules): dates with a `TimeProvider`, `TimeSpan`, `char`, `Guid`, `bool` and enums.
+- [DataAnnotations](#dataannotations): check the attributes of a value.
 - [CombineAll](#combineall-for-many-inputs): collect every error from many results.
 - [Partition](#partition-for-reporting): split values and errors without failing.
 - [A realistic command](#a-realistic-command): validation in a handler.
@@ -329,6 +330,33 @@ Result<DateTimeOffset> placedAt = order.PlacedAt.EnsureInPastOrPresent(timeProvi
 Result<Guid> id = order.Id.EnsureNotEmpty();
 // error: ValidationError "Id must not be empty."
 ```
+
+## DataAnnotations
+
+`ValidateAnnotations()` checks the value of a `Result<T>` with its `System.ComponentModel.DataAnnotations` attributes and `IValidatableObject`, as `Validator.TryValidateObject` does with every property. It needs no package:
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+public class SignUp
+{
+    [Required, EmailAddress]
+    public string? Email { get; init; }
+
+    [Range(18, 120)]
+    public int Age { get; init; }
+}
+
+Result<SignUp> validated = Result.From(form).ValidateAnnotations();
+// error: ValidationErrors with one ValidationError for Email and one for Age
+```
+
+- **The same error as `Validate`.** Each failure becomes a `ValidationError` named after its member, all of them in one `ValidationErrors`, so the [HTTP 400 mapping](#http-400-with-an-errors-list) applies unchanged.
+- **One error per member.** A failure that names several members, such as a date range from `IValidatableObject`, gives one `ValidationError` for each. A failure without a member has no `MemberName`.
+- **Nested objects are not checked.** DataAnnotations validates the properties of the value itself, not the objects they hold.
+- **An attribute that throws gives the exception as the error.** Cancellation propagates.
+- **Not trimming-safe.** The attributes are read through reflection, so the method is marked `[RequiresUnreferencedCode]`.
+- `Task<Result<T>>` has the same method.
 
 ## CombineAll for many inputs
 

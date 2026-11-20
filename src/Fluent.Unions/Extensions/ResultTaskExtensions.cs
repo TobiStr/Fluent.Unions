@@ -148,6 +148,11 @@ public static class ResultTaskExtensions
     public static Task<Result<T>> Validate<T>(this Task<Result<T>> task, params Func<T, Result>[] rules) =>
         Capture.Then(Capture.Settle(task), result => result.Validate(rules));
 
+    /// <inheritdoc cref="ResultAnnotationExtensions.ValidateAnnotations{T}(Result{T})"/>
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(ResultAnnotationExtensions.TrimmingMessage)]
+    public static Task<Result<T>> ValidateAnnotations<T>(this Task<Result<T>> task) =>
+        Capture.Then(Capture.Settle(task), result => result.ValidateAnnotations());
+
     /// <inheritdoc cref="ResultErrorExtensions.Catch{T}(Result{T}, Func{Exception, Result{T}})"/>
     public static Task<Result<T>> Catch<T>(this Task<Result<T>> task, Func<Exception, Result<T>> handler) =>
         Capture.Then(Capture.Settle(task), result => result.Catch(handler));
