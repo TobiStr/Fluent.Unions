@@ -27,6 +27,14 @@ public class UnusedResultAnalyzerTests
         Assert.That(diagnostics[0].GetMessage(), Does.Contain($"'{name}'"));
     }
 
+    [Test]
+    public void DescriptorLinksToTheAnalyzerDocumentation()
+    {
+        var descriptor = new UnusedResultAnalyzer().SupportedDiagnostics.Single(d => d.Id == UnusedResultAnalyzer.DiagnosticId);
+
+        Assert.That(descriptor.HelpLinkUri, Is.EqualTo("https://tobistr.github.io/Fluent.Unions/analyzer/"));
+    }
+
     [TestCase("void M(Service s) { _ = s.Save(); }")]
     [TestCase("void M(Service s) { var r = s.Save(); }")]
     [TestCase("Result M(Service s) { return s.Save(); }")]

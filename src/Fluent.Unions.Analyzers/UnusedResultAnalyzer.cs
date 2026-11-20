@@ -24,7 +24,8 @@ public sealed class UnusedResultAnalyzer : DiagnosticAnalyzer
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "An ignored result hides its error. Handle it, or discard it explicitly with '_ = ...'.");
+        description: "An ignored result hides its error. Handle it, or discard it explicitly with '_ = ...'.",
+        helpLinkUri: "https://tobistr.github.io/Fluent.Unions/analyzer/");
 
     private static readonly ImmutableHashSet<string> HandlingOperators = ImmutableHashSet.Create("Check", "OnErrorDo");
 
