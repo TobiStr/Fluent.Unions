@@ -110,4 +110,5 @@ nav:
       - MessagePack: messagepack/README.md
       - Orleans: orleans/README.md
       - gRPC: grpc/README.md
+      - Verify: verify/README.md
   - Reference: reference.md

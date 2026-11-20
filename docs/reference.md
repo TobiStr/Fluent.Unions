@@ -373,6 +373,14 @@ Package `Fluent.Unions.Grpc`, namespace `Fluent.Unions.Grpc`.
 | `Map<T>(statusCode, exposeMessage)` | `ResultGrpcOptions` | [gRPC](grpc/README.md) |
 | `ResultServerInterceptor` | gRPC server interceptor | [gRPC](grpc/README.md) |
 
+## Verify
+
+Package `Fluent.Unions.Verify`, namespace `Fluent.Unions.Verify`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `VerifyFluentUnions.Initialize()` | static class `VerifyFluentUnions` | [Verify](verify/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |

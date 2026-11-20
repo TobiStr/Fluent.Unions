@@ -28,6 +28,7 @@
     <Project Path="src/Fluent.Unions.MessagePack/Fluent.Unions.MessagePack.csproj" />
     <Project Path="src/Fluent.Unions.Orleans/Fluent.Unions.Orleans.csproj" />
     <Project Path="src/Fluent.Unions.Grpc/Fluent.Unions.Grpc.csproj" />
+    <Project Path="src/Fluent.Unions.Verify/Fluent.Unions.Verify.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -57,5 +58,6 @@
     <Project Path="test/Fluent.Unions.MessagePack.Tests/Fluent.Unions.MessagePack.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Orleans.Tests/Fluent.Unions.Orleans.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Grpc.Tests/Fluent.Unions.Grpc.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Verify.Tests/Fluent.Unions.Verify.Tests.csproj" />
   </Folder>
 </Solution>

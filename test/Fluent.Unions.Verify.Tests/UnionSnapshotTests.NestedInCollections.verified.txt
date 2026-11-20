@@ -1,0 +1,28 @@
+﻿[
+  Ok,
+  {
+    Ok: 1
+  },
+  {
+    Error: {
+      Type: InvalidOperationException,
+      Message: bad
+    }
+  },
+  {
+    Some: x
+  },
+  None,
+  Loading,
+  {
+    first: {
+      Ok: 1
+    },
+    second: {
+      Error: {
+        Type: InvalidOperationException,
+        Message: second failed
+      }
+    }
+  }
+]

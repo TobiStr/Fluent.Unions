@@ -1,0 +1,6 @@
+﻿{
+  Error: {
+    Type: InvalidOperationException,
+    Message: disk full
+  }
+}

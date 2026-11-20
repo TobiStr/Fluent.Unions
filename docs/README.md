@@ -44,6 +44,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | [MessagePack](messagepack/README.md) | The `Fluent.Unions.MessagePack` package: formatter and resolver for `Option<T>`. |
 | [Orleans](orleans/README.md) | The `Fluent.Unions.Orleans` package: `Option<T>` in grain calls and state. |
 | [gRPC](grpc/README.md) | The `Fluent.Unions.Grpc` package: calls as `Result<T>`, errors as status codes. |
+| [Verify](verify/README.md) | The `Fluent.Unions.Verify` package: readable Verify snapshots of results, options and loadables. |
 | [Tracing](tracing/README.md) | `RecordResult` copies a result onto a `System.Diagnostics.Activity`: status and exception event. |
 | [Analyzer](analyzer/README.md) | Rules for ignored results, async lambdas that escape a result, overlapping cases and more. |
 

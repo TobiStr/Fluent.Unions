@@ -1,0 +1,22 @@
+﻿{
+  Error: {
+    Type: ValidationErrors,
+    Message: Name is required. Age must be positive. The order is invalid.,
+    Errors: [
+      {
+        Type: ValidationError,
+        Message: Name is required.,
+        MemberName: Name
+      },
+      {
+        Type: ValidationError,
+        Message: Age must be positive.,
+        MemberName: Age
+      },
+      {
+        Type: ValidationError,
+        Message: The order is invalid.
+      }
+    ]
+  }
+}

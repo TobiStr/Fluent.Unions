@@ -1,0 +1,7 @@
+﻿{
+  Error: {
+    Type: ValidationError,
+    Message: Name is required.,
+    MemberName: Name
+  }
+}

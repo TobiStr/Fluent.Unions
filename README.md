@@ -43,6 +43,7 @@ dotnet add package Fluent.Unions.HotChocolate   # optional: return Result<T> and
 dotnet add package Fluent.Unions.MessagePack   # optional: MessagePack formatter and resolver for Option<T>
 dotnet add package Fluent.Unions.Orleans   # optional: Orleans serialization for Option<T> in grain calls and state
 dotnet add package Fluent.Unions.Grpc   # optional: gRPC calls as Result<T> and errors as status codes
+dotnet add package Fluent.Unions.Verify   # optional: readable Verify snapshots of results, options and loadables
 ```
 
 Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed.
@@ -221,6 +222,7 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **Mapster and AutoMapper:** `Option<T>` maps to and from `T?` and between option types.
   - **HotChocolate:** GraphQL resolvers return `Result<T>` and `Option<T>`; errors become GraphQL errors or mutation error unions.
   - **MessagePack, Orleans and gRPC:** `Option<T>` on the wire, results refused like in JSON, and gRPC calls as results.
+  - **Verify:** readable snapshots of results, options and loadables, with the error as data.
   - **OpenTelemetry:** `Activity.RecordResult` sets the status and records the exception.
 
 ## Documentation
@@ -282,6 +284,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | MessagePack | [MessagePack](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/messagepack/README.md) | MessagePack formatter and resolver for `Option<T>`; results refuse to serialize |
 | Orleans | [Orleans](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/orleans/README.md) | Orleans surrogate for `Option<T>` in grain calls and state; results refuse to serialize |
 | gRPC | [gRPC](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/grpc/README.md) | `ToResult()` on gRPC calls and a server interceptor that maps errors to status codes |
+| Verify | [Verify](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/verify/README.md) | Readable Verify snapshots of `Result`, `Option` and `Loadable` |
 | Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                                     |
 | Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013`: ignored results, async lambdas, overlapping cases and more, with code fixes                     |
 
@@ -322,6 +325,7 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions.MessagePack` | The `Fluent.Unions.MessagePack` package |
 | `src/Fluent.Unions.Orleans` | The `Fluent.Unions.Orleans` package |
 | `src/Fluent.Unions.Grpc` | The `Fluent.Unions.Grpc` package |
+| `src/Fluent.Unions.Verify` | The `Fluent.Unions.Verify` package |
 | `test/`                               | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/`                               | The documentation                                                                                    |
 | `assets/`                             | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |
