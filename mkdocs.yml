@@ -104,4 +104,5 @@ nav:
       - Newtonsoft.Json: newtonsoft-json/README.md
       - Mediator and MediatR: mediator/README.md
       - MongoDB: mongodb/README.md
+      - Testing: testing/README.md
   - Reference: reference.md

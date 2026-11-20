@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Fluent.Unions.TUnit</PackageId>
+    <Description>TUnit integration for Fluent.Unions: IsOk, IsError, IsSome and IsNone assertions for Result, Result&lt;T&gt; and Option&lt;T&gt;.</Description>
+    <PackageTags>result;option;union;tunit;assertions;testing</PackageTags>
+    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluent.Unions\Fluent.Unions.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit.Assertions" Version="1.87.12" />
+  </ItemGroup>
+
+</Project>

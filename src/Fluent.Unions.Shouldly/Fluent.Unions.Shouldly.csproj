@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Fluent.Unions.Shouldly</PackageId>
+    <Description>Shouldly integration for Fluent.Unions: ShouldBeOk, ShouldBeError, ShouldBeSome and ShouldBeNone for Result, Result&lt;T&gt; and Option&lt;T&gt;.</Description>
+    <PackageTags>result;option;union;shouldly;assertions;testing</PackageTags>
+    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluent.Unions\Fluent.Unions.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>

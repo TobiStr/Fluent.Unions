@@ -18,6 +18,10 @@
     <Project Path="src/Fluent.Unions.MongoDB/Fluent.Unions.MongoDB.csproj" />
     <Project Path="src/Fluent.Unions.Swashbuckle/Fluent.Unions.Swashbuckle.csproj" />
     <Project Path="src/Fluent.Unions.NSwag/Fluent.Unions.NSwag.csproj" />
+    <Project Path="src/Fluent.Unions.Shouldly/Fluent.Unions.Shouldly.csproj" />
+    <Project Path="src/Fluent.Unions.TUnit/Fluent.Unions.TUnit.csproj" />
+    <Project Path="src/Fluent.Unions.NUnit/Fluent.Unions.NUnit.csproj" />
+    <Project Path="src/Fluent.Unions.Xunit/Fluent.Unions.Xunit.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -37,5 +41,9 @@
     <Project Path="test/Fluent.Unions.MongoDB.Tests/Fluent.Unions.MongoDB.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Swashbuckle.Tests/Fluent.Unions.Swashbuckle.Tests.csproj" />
     <Project Path="test/Fluent.Unions.NSwag.Tests/Fluent.Unions.NSwag.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Shouldly.Tests/Fluent.Unions.Shouldly.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.TUnit.Tests/Fluent.Unions.TUnit.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.NUnit.Tests/Fluent.Unions.NUnit.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Xunit.Tests/Fluent.Unions.Xunit.Tests.csproj" />
   </Folder>
 </Solution>

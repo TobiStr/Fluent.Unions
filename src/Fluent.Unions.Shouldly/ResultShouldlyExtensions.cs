@@ -1,0 +1,94 @@
+using Shouldly;
+
+namespace Fluent.Unions.Shouldly;
+
+/// <summary>
+/// Shouldly assertions for <see cref="Result"/>, <see cref="Result{T}"/> and <see cref="Option{T}"/>.
+/// </summary>
+public static class ResultShouldlyExtensions
+{
+    /// <summary>
+    /// Asserts that the result is Ok.
+    /// </summary>
+    public static Result ShouldBeOk(this Result result, string? customMessage = null)
+    {
+        if (result.TryGetError(out var error))
+        {
+            throw Fail($"Expected an ok result, but it failed with {Describe(error)}", customMessage);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Asserts that the result is Ok and returns its value.
+    /// </summary>
+    public static T ShouldBeOk<T>(this Result<T> result, string? customMessage = null)
+    {
+        if (result.TryGetError(out var error))
+        {
+            throw Fail($"Expected an ok result, but it failed with {Describe(error)}", customMessage);
+        }
+
+        return result.GetValue();
+    }
+
+    /// <summary>
+    /// Asserts that the result is an error and returns it.
+    /// </summary>
+    public static Exception ShouldBeError(this Result result, string? customMessage = null)
+    {
+        return result.TryGetError(out var error)
+            ? error
+            : throw Fail("Expected an error result, but it was ok", customMessage);
+    }
+
+    /// <summary>
+    /// Asserts that the result is an error and returns it.
+    /// </summary>
+    public static Exception ShouldBeError<T>(this Result<T> result, string? customMessage = null)
+    {
+        return result.TryGetError(out var error)
+            ? error
+            : throw Fail($"Expected an error result, but it was ok with value {result.GetValue()}", customMessage);
+    }
+
+    /// <summary>
+    /// Asserts that the result is an error of type <typeparamref name="TException"/> or a derived type and returns it.
+    /// </summary>
+    public static TException ShouldBeError<TException>(this Result result, string? customMessage = null)
+        where TException : Exception
+    {
+        return result.TryGetError(out var error)
+            ? error as TException ?? throw Fail($"Expected an error of type {typeof(TException).Name}, but it failed with {Describe(error)}", customMessage)
+            : throw Fail($"Expected an error of type {typeof(TException).Name}, but the result was ok", customMessage);
+    }
+
+    /// <summary>
+    /// Asserts that the option has a value and returns it.
+    /// </summary>
+    public static T ShouldBeSome<T>(this Option<T> option, string? customMessage = null)
+    {
+        return option.TryGetValue(out var value)
+            ? value
+            : throw Fail("Expected an option with a value, but it was none", customMessage);
+    }
+
+    /// <summary>
+    /// Asserts that the option has no value. A default option counts as none.
+    /// </summary>
+    public static void ShouldBeNone<T>(this Option<T> option, string? customMessage = null)
+    {
+        if (option.TryGetValue(out var value))
+        {
+            throw Fail($"Expected an option without a value, but it was some with value {value}", customMessage);
+        }
+    }
+
+    private static string Describe(Exception error) => $"{error.GetType().Name}: {error.Message}";
+
+    private static ShouldAssertException Fail(string message, string? customMessage)
+    {
+        return new ShouldAssertException(customMessage is null ? message : $"{message}\nAdditional info: {customMessage}");
+    }
+}

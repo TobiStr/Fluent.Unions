@@ -33,6 +33,10 @@ dotnet add package Fluent.Unions.MediatR   # optional: pipeline behaviors for Me
 dotnet add package Fluent.Unions.MongoDB   # optional: store Option<T> as a value or BSON null with MongoDB.Bson
 dotnet add package Fluent.Unions.Swashbuckle   # optional: Option<T> as nullable T in Swashbuckle documents
 dotnet add package Fluent.Unions.NSwag   # optional: Option<T> as nullable T in NSwag documents
+dotnet add package Fluent.Unions.Shouldly   # optional: ShouldBeOk and ShouldBeNone assertions for Shouldly
+dotnet add package Fluent.Unions.TUnit   # optional: IsOk and IsNone assertions for TUnit
+dotnet add package Fluent.Unions.NUnit   # optional: IsResult and IsOption constraints for NUnit
+dotnet add package Fluent.Unions.Xunit   # optional: ResultAssert and OptionAssert for xUnit v3
 ```
 
 Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed.
@@ -207,6 +211,7 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **Newtonsoft.Json:** the same option, union and result behavior as with System.Text.Json.
   - **Mediator and MediatR:** pipeline behaviors that return a failed result for an exception or an invalid request.
   - **MongoDB:** `Option<T>` as a value or BSON null; results refuse to serialize.
+  - **Shouldly, TUnit, NUnit and xUnit:** assertions for results and options in each test library's style.
   - **OpenTelemetry:** `Activity.RecordResult` sets the status and records the exception.
 
 ## Documentation
@@ -262,6 +267,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | MongoDB | [MongoDB](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mongodb/README.md) | `FluentUnionsBson.Register()` stores `Option<T>` as a value or BSON null |
 | Swashbuckle | [Swashbuckle](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/swashbuckle.md) | `options.AddFluentUnions()` describes `Option<T>` as a nullable `T` in Swashbuckle documents |
 | NSwag | [NSwag](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/nswag.md) | `settings.AddFluentUnions()` describes `Option<T>` as a nullable `T` in NSwag documents |
+| Testing | [Testing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/testing/README.md) | Assertions for Shouldly, TUnit, NUnit and xUnit v3 |
 | Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                                     |
 | Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013`: ignored results, async lambdas, overlapping cases and more, with code fixes                     |
 
@@ -292,6 +298,10 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions.MongoDB` | The `Fluent.Unions.MongoDB` package |
 | `src/Fluent.Unions.Swashbuckle` | The `Fluent.Unions.Swashbuckle` package |
 | `src/Fluent.Unions.NSwag` | The `Fluent.Unions.NSwag` package |
+| `src/Fluent.Unions.Shouldly` | The `Fluent.Unions.Shouldly` package |
+| `src/Fluent.Unions.TUnit` | The `Fluent.Unions.TUnit` package |
+| `src/Fluent.Unions.NUnit` | The `Fluent.Unions.NUnit` package |
+| `src/Fluent.Unions.Xunit` | The `Fluent.Unions.Xunit` package |
 | `test/`                               | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/`                               | The documentation                                                                                    |
 | `assets/`                             | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |

@@ -315,6 +315,17 @@ Package `Fluent.Unions.NSwag`, namespace `Fluent.Unions.NSwag`.
 | --- | --- | --- |
 | `AddFluentUnions()`, `OptionSchemaProcessor` | `OpenApiDocumentGeneratorSettings`, `ISchemaProcessor` | [NSwag](openapi/nswag.md) |
 
+## Testing
+
+Packages `Fluent.Unions.Shouldly`, `.TUnit`, `.NUnit` and `.Xunit`, namespaces of the same names.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `ShouldBeOk()`, `ShouldBeError()`, `ShouldBeError<TException>()`, `ShouldBeSome()`, `ShouldBeNone()` | `Result`, `Result<T>`, `Option<T>` (Shouldly) | [Testing](testing/README.md#shouldly) |
+| `IsOk()`, `IsError()`, `IsError<TException>()`, `IsSome()`, `IsNone()` | `Assert.That` of `Result`, `Result<T>`, `Option<T>` (TUnit) | [Testing](testing/README.md#tunit) |
+| `IsResult.Ok`, `Error`, `OkWith`, `ErrorWith`, `ErrorOfType<TException>()`; `IsOption.Some`, `None`, `SomeWith` | `UnionConstraint` (NUnit) | [Testing](testing/README.md#nunit) |
+| `ResultAssert.Ok`, `Error`, `Error<TException>`; `OptionAssert.Some`, `None` | `Result`, `Result<T>`, `Option<T>` (xUnit v3) | [Testing](testing/README.md#xunit) |
+
 ## Tracing
 
 | Member | On | Docs |

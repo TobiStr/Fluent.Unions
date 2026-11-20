@@ -38,6 +38,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | [MongoDB](mongodb/README.md) | The `Fluent.Unions.MongoDB` package: store `Option<T>` as a value or BSON null and refuse to serialize results. |
 | [Swashbuckle](openapi/swashbuckle.md) | The `Fluent.Unions.Swashbuckle` package: describe `Option<T>` as a nullable `T` in Swashbuckle documents. |
 | [NSwag](openapi/nswag.md) | The `Fluent.Unions.NSwag` package: describe `Option<T>` as a nullable `T` in NSwag documents. |
+| [Testing](testing/README.md) | The `Fluent.Unions.Shouldly`, `.TUnit`, `.NUnit` and `.Xunit` packages: assert on a `Result`, `Result<T>` or `Option<T>` in each test library. |
 | [Tracing](tracing/README.md) | `RecordResult` copies a result onto a `System.Diagnostics.Activity`: status and exception event. |
 | [Analyzer](analyzer/README.md) | Rules for ignored results, async lambdas that escape a result, overlapping cases and more. |
 
