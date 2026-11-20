@@ -106,7 +106,7 @@ public class CustomResultPollyTests
     }
 
     [Test]
-    public async Task HandleError_DoesNotRetryOkOrEmptyAndDoesNotCallThePredicate()
+    public async Task HandleError_RetriesADefaultResultAsAnErrorButNotOk()
     {
         var attempts = 0;
         var predicateCalls = 0;
@@ -127,10 +127,10 @@ public class CustomResultPollyTests
             return ValueTask.FromResult(default(CallResult<int>));
         });
 
-        Assert.That(attempts, Is.EqualTo(2));
-        Assert.That(predicateCalls, Is.EqualTo(0));
+        Assert.That(attempts, Is.EqualTo(5));
+        Assert.That(predicateCalls, Is.EqualTo(4));
         Assert.That(ok.Value, Is.EqualTo(5));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.TryGetError(out _), Is.True);
     }
 
     [Test]
@@ -189,21 +189,19 @@ public class CustomResultPollyTests
     }
 
     [Test]
-    public async Task ExecuteResultAsync_CancelledToken_BecomesCancellationError()
+    public async Task ExecuteResultAsync_CancelledToken_Throws()
     {
         var pipeline = RetryPipeline(new PredicateBuilder<CallResult<int>>().HandleError<CallResult<int>, CallError>());
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync();
 
-        var result = await pipeline.ExecuteResultAsync<CallResult<int>, CallError>(
+        Assert.CatchAsync<OperationCanceledException>(async () => await pipeline.ExecuteResultAsync<CallResult<int>, CallError>(
             token =>
             {
                 token.ThrowIfCancellationRequested();
                 return ValueTask.FromResult(Ok(1));
             },
-            cancellation.Token);
-
-        Assert.That(ExceptionOf(result), Is.InstanceOf<OperationCanceledException>());
+            cancellation.Token));
     }
 
     [Test]
@@ -295,6 +293,6 @@ public class CustomResultPollyTests
         var result = await pipeline.ExecuteResultAsync(_ => ValueTask.FromResult(Result<int>.Error(new TimeoutException())));
 
         Assert.That(result.Value, Is.InstanceOf<TimeoutException>());
-        Assert.That(Outcome.FromResult(Result<int>.Ok(1)).ToResult().GetOk(), Is.EqualTo(1));
+        Assert.That(Outcome.FromResult(Result<int>.Ok(1)).ToResult().GetValue(), Is.EqualTo(1));
     }
 }

@@ -12,7 +12,7 @@ public class ResiliencePipelineTests
     {
         var result = await ResiliencePipeline<Result<int>>.Empty.ExecuteResultAsync(_ => ValueTask.FromResult(Result<int>.Ok(3)));
 
-        Assert.That(result.GetOk(), Is.EqualTo(3));
+        Assert.That(result.GetValue(), Is.EqualTo(3));
     }
 
     [Test]
@@ -21,7 +21,7 @@ public class ResiliencePipelineTests
         var result = await ResiliencePipeline<Result<int>>.Empty.ExecuteResultAsync(_ => ValueTask.FromResult(default(Result<int>)));
 
         Assert.That(result.Value, Is.Null);
-        Assert.That(result.Success, Is.False);
+        Assert.That(result.IsSuccess, Is.False);
     }
 
     [Test]
@@ -35,7 +35,7 @@ public class ResiliencePipelineTests
     }
 
     [Test]
-    public async Task ExecuteResultAsync_CancelledToken_BecomesCancellationError()
+    public async Task ExecuteResultAsync_CancelledToken_Throws()
     {
         var pipeline = new ResiliencePipelineBuilder<Result<int>>()
             .AddRetry(new RetryStrategyOptions<Result<int>>
@@ -48,15 +48,13 @@ public class ResiliencePipelineTests
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync();
 
-        var result = await pipeline.ExecuteResultAsync(
+        Assert.CatchAsync<OperationCanceledException>(async () => await pipeline.ExecuteResultAsync(
             token =>
             {
                 token.ThrowIfCancellationRequested();
                 return ValueTask.FromResult(Result<int>.Ok(1));
             },
-            cancellation.Token);
-
-        Assert.That(result.Value, Is.InstanceOf<OperationCanceledException>());
+            cancellation.Token));
     }
 
     [Test]
@@ -73,7 +71,7 @@ public class ResiliencePipelineTests
             },
             cancellation.Token);
 
-        Assert.That(result.Success, Is.True);
+        Assert.That(result.IsSuccess, Is.True);
         Assert.That(received, Is.EqualTo(cancellation.Token));
     }
 
@@ -107,7 +105,7 @@ public class ResiliencePipelineTests
         var empty = await ResiliencePipeline.Empty.ExecuteResultAsync(_ => ValueTask.FromResult(default(Result<int>)));
         var thrown = await ResiliencePipeline.Empty.ExecuteResultAsync<int>(_ => throw new TimeoutException());
 
-        Assert.That(ok.GetOk(), Is.EqualTo(9));
+        Assert.That(ok.GetValue(), Is.EqualTo(9));
         Assert.That(empty.Value, Is.Null);
         Assert.That(thrown.Value, Is.InstanceOf<TimeoutException>());
     }
@@ -151,7 +149,7 @@ public class ResiliencePipelineTests
     {
         var result = Outcome.FromResult(Result<int>.Ok(4)).ToResult();
 
-        Assert.That(result.GetOk(), Is.EqualTo(4));
+        Assert.That(result.GetValue(), Is.EqualTo(4));
     }
 
     [Test]
@@ -170,6 +168,6 @@ public class ResiliencePipelineTests
         var result = Outcome.FromResult(default(Result<int>)).ToResult();
 
         Assert.That(result.Value, Is.Null);
-        Assert.That(result.Success, Is.False);
+        Assert.That(result.IsSuccess, Is.False);
     }
 }

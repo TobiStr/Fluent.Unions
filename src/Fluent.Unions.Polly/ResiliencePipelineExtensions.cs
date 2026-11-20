@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Polly;
 using Fluent.Unions.Abstractions;
 
@@ -9,8 +10,8 @@ namespace Fluent.Unions.Polly;
 public static class ResiliencePipelineExtensions
 {
     /// <summary>
-    /// Runs <paramref name="operation"/> through the pipeline. An exception that escapes the pipeline, including
-    /// <see cref="OperationCanceledException"/>, becomes an error.
+    /// Runs <paramref name="operation"/> through the pipeline. An exception that escapes the pipeline becomes an error.
+    /// Cancellation throws <see cref="OperationCanceledException"/>.
     /// </summary>
     public static async ValueTask<Result<T>> ExecuteResultAsync<T>(
         this ResiliencePipeline<Result<T>> pipeline,
@@ -34,8 +35,8 @@ public static class ResiliencePipelineExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="operation"/> through the pipeline. An exception that escapes the pipeline, including
-    /// <see cref="OperationCanceledException"/>, becomes an error.
+    /// Runs <paramref name="operation"/> through the pipeline. An exception that escapes the pipeline becomes an error.
+    /// Cancellation throws <see cref="OperationCanceledException"/>.
     /// </summary>
     public static async ValueTask<Result<T>> ExecuteResultAsync<T>(
         this ResiliencePipeline pipeline,
@@ -59,11 +60,17 @@ public static class ResiliencePipelineExtensions
     }
 
     /// <summary>
-    /// Converts a Polly outcome to a result. An exception in the outcome becomes an error, and an outcome without a value is empty.
+    /// Converts a Polly outcome to a result. An exception in the outcome becomes an error;
+    /// an <see cref="OperationCanceledException"/> is rethrown.
     /// </summary>
     public static Result<T> ToResult<T>(this Outcome<Result<T>> outcome)
     {
-        return outcome.Exception is { } exception ? Result<T>.Error(exception) : outcome.Result;
+        return outcome.Exception switch
+        {
+            OperationCanceledException canceled => throw Rethrow(canceled),
+            { } exception => Result<T>.Error(exception),
+            null => outcome.Result
+        };
     }
 
     private static async ValueTask<Outcome<Result<T>>> Run<T>(ResilienceContext context, Func<CancellationToken, ValueTask<Result<T>>> operation)
@@ -79,8 +86,8 @@ public static class ResiliencePipelineExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="operation"/> through the pipeline. An exception that escapes the pipeline, including
-    /// <see cref="OperationCanceledException"/>, becomes the error that <c>FromException</c> makes of it. Needs explicit type arguments.
+    /// Runs <paramref name="operation"/> through the pipeline. An exception that escapes the pipeline becomes the error that
+    /// <c>FromException</c> makes of it. Cancellation throws <see cref="OperationCanceledException"/>. Needs explicit type arguments.
     /// </summary>
     public static async ValueTask<TResult> ExecuteResultAsync<TResult, TError>(
         this ResiliencePipeline<TResult> pipeline,
@@ -106,8 +113,8 @@ public static class ResiliencePipelineExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="operation"/> through the pipeline. An exception that escapes the pipeline, including
-    /// <see cref="OperationCanceledException"/>, becomes the error that <c>FromException</c> makes of it. Needs explicit type arguments.
+    /// Runs <paramref name="operation"/> through the pipeline. An exception that escapes the pipeline becomes the error that
+    /// <c>FromException</c> makes of it. Cancellation throws <see cref="OperationCanceledException"/>. Needs explicit type arguments.
     /// </summary>
     public static async ValueTask<TResult> ExecuteResultAsync<TResult, TError>(
         this ResiliencePipeline pipeline,
@@ -134,15 +141,18 @@ public static class ResiliencePipelineExtensions
 
     /// <summary>
     /// Converts a Polly outcome to a custom result. An exception in the outcome becomes the error that <c>FromException</c>
-    /// makes of it, and an outcome without a value is empty. Needs explicit type arguments.
+    /// makes of it; an <see cref="OperationCanceledException"/> is rethrown. Needs explicit type arguments.
     /// </summary>
     public static TResult ToResult<TResult, TError>(this Outcome<TResult> outcome)
         where TResult : struct, IErrorResult<TResult, TError>
         where TError : notnull
     {
-        return outcome.Exception is { } exception
-            ? TResult.FromError(TResult.FromException(exception))
-            : outcome.Result;
+        return outcome.Exception switch
+        {
+            OperationCanceledException canceled => throw Rethrow(canceled),
+            { } exception => TResult.FromError(TResult.FromException(exception)),
+            null => outcome.Result
+        };
     }
 
     private static async ValueTask<Outcome<TResult>> Run<TResult, TError>(ResilienceContext context, Func<CancellationToken, ValueTask<TResult>> operation)
@@ -157,5 +167,11 @@ public static class ResiliencePipelineExtensions
         {
             return Outcome.FromException<TResult>(exception);
         }
+    }
+
+    private static Exception Rethrow(Exception exception)
+    {
+        ExceptionDispatchInfo.Throw(exception);
+        return exception;
     }
 }

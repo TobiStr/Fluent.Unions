@@ -14,7 +14,7 @@ dotnet add package Fluent.Unions.Polly
 
 ## Usage
 
-Retry on the error in a result. `HandleError` reads only the result state, and an empty result is never retried.
+Retry on the error in a result. `HandleError` reads only the result state. Cancellation is never turned into an error: it throws as usual.
 
 ```csharp
 using Polly;

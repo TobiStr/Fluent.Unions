@@ -9,13 +9,13 @@ namespace Fluent.Unions.Polly;
 public static class PredicateBuilderExtensions
 {
     /// <summary>
-    /// Handles every result that is an error. Ok and empty results are not handled.
+    /// Handles every result that is an error.
     /// </summary>
     public static PredicateBuilder<Result<T>> HandleError<T>(this PredicateBuilder<Result<T>> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return builder.HandleResult(result => result.Value is Exception);
+        return builder.HandleResult(result => result.IsError);
     }
 
     /// <summary>
@@ -26,11 +26,11 @@ public static class PredicateBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(predicate);
 
-        return builder.HandleResult(result => result.Value is Exception error && predicate(error));
+        return builder.HandleResult(result => result.TryGetError(out var error) && predicate(error));
     }
 
     /// <summary>
-    /// Handles every custom result that is an error. Ok and empty results are not handled. Needs explicit type arguments.
+    /// Handles every custom result that is an error. Needs explicit type arguments.
     /// </summary>
     public static PredicateBuilder<TResult> HandleError<TResult, TError>(this PredicateBuilder<TResult> builder)
         where TResult : struct, IErrorResult<TResult, TError>
@@ -38,7 +38,7 @@ public static class PredicateBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return builder.HandleResult(result => result.Value is TError);
+        return builder.HandleResult(result => result.TryGetError(out _));
     }
 
     /// <summary>
@@ -51,6 +51,6 @@ public static class PredicateBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(predicate);
 
-        return builder.HandleResult(result => result.Value is TError error && predicate(error));
+        return builder.HandleResult(result => result.TryGetError(out var error) && predicate(error));
     }
 }

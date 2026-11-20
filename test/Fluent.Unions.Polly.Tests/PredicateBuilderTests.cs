@@ -48,7 +48,7 @@ public class PredicateBuilderTests
         });
 
         Assert.That(attempts, Is.EqualTo(3));
-        Assert.That(result.GetOk(), Is.EqualTo(7));
+        Assert.That(result.GetValue(), Is.EqualTo(7));
     }
 
     [Test]
@@ -96,11 +96,11 @@ public class PredicateBuilderTests
         });
 
         Assert.That(attempts, Is.EqualTo(1));
-        Assert.That(result.GetOk(), Is.EqualTo(5));
+        Assert.That(result.GetValue(), Is.EqualTo(5));
     }
 
     [Test]
-    public async Task HandleError_DoesNotRetryAnEmptyResult()
+    public async Task HandleError_RetriesADefaultResultAsAnError()
     {
         var attempts = 0;
         var pipeline = RetryPipeline(new PredicateBuilder<Result<int>>().HandleError());
@@ -111,13 +111,13 @@ public class PredicateBuilderTests
             return ValueTask.FromResult(default(Result<int>));
         });
 
-        Assert.That(attempts, Is.EqualTo(1));
-        Assert.That(result.Value, Is.Null);
-        Assert.That(result.Success, Is.False);
+        Assert.That(attempts, Is.EqualTo(4));
+        Assert.That(result.GetError().Message, Does.Contain("holds neither a value nor an error"));
+        Assert.That(result.IsSuccess, Is.False);
     }
 
     [Test]
-    public async Task HandleError_WithPredicate_DoesNotCallThePredicateForOkOrEmpty()
+    public async Task HandleError_WithPredicate_CallsThePredicateForDefaultButNotForOk()
     {
         var predicateCalls = 0;
         var pipeline = RetryPipeline(new PredicateBuilder<Result<int>>().HandleError(_ =>
@@ -129,9 +129,9 @@ public class PredicateBuilderTests
         var ok = await pipeline.ExecuteResultAsync(_ => ValueTask.FromResult(Result<int>.Ok(1)));
         var empty = await pipeline.ExecuteResultAsync(_ => ValueTask.FromResult(default(Result<int>)));
 
-        Assert.That(predicateCalls, Is.EqualTo(0));
-        Assert.That(ok.Success, Is.True);
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(predicateCalls, Is.EqualTo(4));
+        Assert.That(ok.IsSuccess, Is.True);
+        Assert.That(empty.IsError, Is.True);
     }
 
     [Test]
