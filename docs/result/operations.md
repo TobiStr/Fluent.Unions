@@ -226,17 +226,14 @@ The factory runs only when the result is not ok. An exception from the factory i
 
 ## Unwrap
 
-Flattens a nested result, like `Task.Unwrap()`. Nesting appears when you `Select` with a function that returns a result:
+Flattens a nested result, like `Task.Unwrap()`. Nesting appears when generic code wraps a result of yours in its own, such as a cache that returns `Result<T>` and loads a value that is a result itself:
 
 ```csharp
-Result<Result<Payment>> nested = order.Select(Pay);
+Result<Result<Payment>> nested = cache.GetOrLoad(order.Id, () => Pay(order));
 Result<Payment> flat = nested.Unwrap();
-
-Result<Result> nestedPlain = order.Select(Save);
-Result flatPlain = nestedPlain.Unwrap();
 ```
 
-`order.Chain(Pay)` gives the flat result directly. Prefer `Chain` and use `Unwrap` when you already hold a nested result.
+`Select` with a function that returns a result would nest too, but analyzer error [FLU0006](../analyzer/README.md#flu0006) rejects it. Use `order.Chain(Pay)`, which gives the flat result directly.
 
 ## Match
 

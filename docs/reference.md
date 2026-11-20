@@ -240,7 +240,19 @@ Package `Fluent.Unions.AwesomeAssertions`, namespace `Fluent.Unions.AwesomeAsser
 
 | Rule | Docs |
 | --- | --- |
-| `FLU0001`: the result of a call is not used | [Analyzer](analyzer/README.md) |
+| `FLU0001`: the result of a call is not used | [Analyzer](analyzer/README.md#flu0001) |
+| `FLU0002`: an async lambda passed to a synchronous operator | [Analyzer](analyzer/README.md#flu0002) |
+| `FLU0003`: an async lambda that becomes `async void` | [Analyzer](analyzer/README.md#flu0003) |
+| `FLU0004`: a type argument that overlaps another case | [Analyzer](analyzer/README.md#flu0004) |
+| `FLU0005`: a nullable type argument | [Analyzer](analyzer/README.md#flu0005) |
+| `FLU0006`: `Select` that returns a nested result | [Analyzer](analyzer/README.md#flu0006) |
+| `FLU0007`: a result created with `default` | [Analyzer](analyzer/README.md#flu0007) |
+| `FLU0008`: a result that is serialized to JSON | [Analyzer](analyzer/README.md#flu0008) |
+| `FLU0009`: `FromException` or `FromError` that throws or returns `null` | [Analyzer](analyzer/README.md#flu0009) |
+| `FLU0010`: `GetValue()` or `GetError()` without a check | [Analyzer](analyzer/README.md#flu0010) |
+| `FLU0011`: a cast of `Value` | [Analyzer](analyzer/README.md#flu0011) |
+| `FLU0012`: a `throw` in a method that returns a result | [Analyzer](analyzer/README.md#flu0012) |
+| `FLU0013`: `ToOption()` that drops an error | [Analyzer](analyzer/README.md#flu0013) |
 
 ---
 

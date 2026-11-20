@@ -38,9 +38,9 @@ In ASP.NET Core files that also import `Microsoft.AspNetCore.Http.HttpResults`, 
 
 If you declare your own `Result<T>`, see [Custom error types](../errors/custom-error-types.md#namespaces) for the namespace rules.
 
-## The bundled analyzer
+## The bundled analyzers
 
-`Fluent.Unions` ships an analyzer. Calling a method that returns a result and ignoring it gives warning `FLU0001`:
+`Fluent.Unions` ships analyzers for the mistakes the compiler lets through. Calling a method that returns a result and ignoring it gives warning `FLU0001`:
 
 ```csharp
 Save(order);      // warning FLU0001: The result of 'Save' is not used
@@ -48,7 +48,7 @@ _ = Save(order);  // fine: discarded on purpose
 Save(order).Check();
 ```
 
-It does not report assignments, returns, arguments, calls that end in `Check()`, `OnErrorDo(...)` or `Do(onSuccess, onError)`, or options. To raise the severity, add this to `.editorconfig`:
+Other rules catch an async lambda passed to `Try` or `Select`, a type such as `Result<Exception>` that cannot tell its cases apart, a result that is serialized to JSON, and more. Several come with a code fix. See [Analyzer](../analyzer/README.md) for every rule. To raise a severity, add it to `.editorconfig`:
 
 ```
 dotnet_diagnostic.FLU0001.severity = error

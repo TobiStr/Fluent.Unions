@@ -2,7 +2,7 @@
 
 What the current version of the library cannot do.
 
-- **`Result<Exception>`** declares fine, but implicit conversion from an exception fails with CS0457 (ambiguous user-defined conversions), because both cases take an `Exception`. Wrap the payload in another type.
+- **`Result<Exception>`** declares fine, but implicit conversion from an exception fails with CS0457 (ambiguous user-defined conversions), because both cases take an `Exception`. Analyzer error [FLU0004](../analyzer/README.md#flu0004) reports the type. Wrap the payload in another type.
 - **No `null` literal for a result.** A `default` result is an error; return a value or an exception instead.
 - **`default` is not caught by `switch`.** A `switch` over a `default` result throws `SwitchExpressionException`, because the compiler cannot see that state. Operators and `Match` treat it as an error.
 - **Equality is not payload-based.** Two results wrapping distinct class instances are not equal.

@@ -171,7 +171,7 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
 
 - **Compiler-checked handling:**
   - **Matching:** `switch` over a result or option warns when a case is missing.
-  - **Analyzer:** `FLU0001` warns when a result is ignored.
+  - **Analyzers:** warn when a result is ignored, an async lambda escapes a result, a union cannot tell its cases apart, a result is serialized, and more.
 - **LINQ and Rx operators:**
   - **On the value:** `Select`, `Chain`, `Ensure`, `Zip`, `BindAppend`.
   - **On the error and side effects:** `Catch`, `Do`, `OnErrorDo`, `Finally`.
@@ -237,7 +237,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | OpenAPI               | [OpenAPI](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/README.md)                                      | `AddFluentUnions()` describes `Option<T>` as a nullable `T`                                                                 |
 | AwesomeAssertions     | [AwesomeAssertions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/awesome-assertions/README.md)                 | Assertions for `Result`, `Result<T>`, `Option<T>` and the error inside                                                      |
 | Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                                     |
-| Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Warning `FLU0001` for ignored results, and how to configure it                                                              |
+| Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013`: ignored results, async lambdas, overlapping cases and more, with code fixes                     |
 
 ## Build and test
 
@@ -249,7 +249,8 @@ dotnet test Fluent.Unions.slnx
 | Folder                                | Contents                                                                                             |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `src/Fluent.Unions`                   | The `Fluent.Unions` package                                                                          |
-| `src/Fluent.Unions.Analyzers`         | The analyzer packed into `Fluent.Unions`                                                             |
+| `src/Fluent.Unions.Analyzers`         | The analyzers packed into `Fluent.Unions`                                                            |
+| `src/Fluent.Unions.Analyzers.CodeFixes` | The code fixes for the analyzers, packed into `Fluent.Unions`                                      |
 | `src/Fluent.Unions.AspNetCore`        | The `Fluent.Unions.AspNetCore` package                                                               |
 | `src/Fluent.Unions.FluentValidation`  | The `Fluent.Unions.FluentValidation` package                                                         |
 | `src/Fluent.Unions.Polly`             | The `Fluent.Unions.Polly` package                                                                    |

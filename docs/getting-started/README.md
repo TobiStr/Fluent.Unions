@@ -16,7 +16,7 @@ Operators are named after LINQ and Rx.NET: `Select`, `SelectMany`, `Catch`, `Do`
 
 Two packages:
 
-- `Fluent.Unions` has the types, the operators and an analyzer that warns when you ignore a result.
+- `Fluent.Unions` has the types, the operators and analyzers that warn when you ignore a result or misuse a union.
 - `Fluent.Unions.AspNetCore` turns results and options into HTTP responses.
 
 ## In this section

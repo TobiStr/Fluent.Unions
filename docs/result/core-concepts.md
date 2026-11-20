@@ -158,7 +158,7 @@ It also exists on `Task<Result<T>>` and `Task<Result>`.
 ## Pitfalls
 
 - `GetValue()` throws for an error. Prefer `TryGetValue`, `switch` or `Match`.
-- `Result<Exception>` compiles, but converting an exception to it fails with CS0457, because both cases take an `Exception`. Wrap the payload in another type.
+- `Result<Exception>` compiles, but converting an exception to it fails with CS0457, because both cases take an `Exception`. Analyzer error [FLU0004](../analyzer/README.md#flu0004) reports the type. Wrap the payload in another type.
 - Equality is not payload-based. Two results wrapping different class instances are not equal.
 
 ## See also

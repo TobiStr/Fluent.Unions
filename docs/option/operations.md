@@ -30,7 +30,7 @@ Option<string> nick = customer.Select(c => c.Nickname);   // None when Nickname 
 Option<Address> address = FindCustomer(id).Chain(c => FindAddress(c.AddressId));
 ```
 
-A `None` anywhere stops the chain. Use `Select` when the next step returns a plain value, and `Chain` when it returns an option. `Select` with an option-returning function gives an `Option<Option<T>>`, which `Unwrap` flattens.
+A `None` anywhere stops the chain. Use `Select` when the next step returns a plain value, and `Chain` when it returns an option. `Select` with an option-returning function would give an `Option<Option<T>>`, which analyzer error [FLU0006](../analyzer/README.md#flu0006) rejects.
 
 ## Where
 
@@ -124,11 +124,11 @@ Option<Customer> customer = cache.Find(id).Or(() => database.Find(id));
 
 ## Unwrap
 
-Flattens `Option<Option<T>>`.
+Flattens `Option<Option<T>>`. A nested option comes from code that stores options, such as a cache that remembers a missing address. `None` means not cached, and an inner `None` means cached as missing:
 
 ```csharp
-Option<Option<Address>> nested = FindCustomer(id).Select(c => FindAddress(c.AddressId));
-Option<Address> flat = nested.Unwrap();
+Option<Option<Address>> cached = addressCache.Find(id);
+Option<Address> flat = cached.Unwrap();
 ```
 
 ## Match
