@@ -40,6 +40,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | [NSwag](openapi/nswag.md) | The `Fluent.Unions.NSwag` package: describe `Option<T>` as a nullable `T` in NSwag documents. |
 | [Testing](testing/README.md) | The `Fluent.Unions.Shouldly`, `.TUnit`, `.NUnit` and `.Xunit` packages: assert on a `Result`, `Result<T>` or `Option<T>` in each test library. |
 | [Mapping](mapping/README.md) | The `Fluent.Unions.Mapster` and `Fluent.Unions.AutoMapper` packages: map `Option<T>` to and from `T?` and between option types. |
+| [HotChocolate](hotchocolate/README.md) | The `Fluent.Unions.HotChocolate` package: resolvers return `Result<T>` and `Option<T>`, errors become GraphQL errors or mutation error unions. |
 | [Tracing](tracing/README.md) | `RecordResult` copies a result onto a `System.Diagnostics.Activity`: status and exception event. |
 | [Analyzer](analyzer/README.md) | Rules for ignored results, async lambdas that escape a result, overlapping cases and more. |
 

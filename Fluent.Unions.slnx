@@ -24,6 +24,7 @@
     <Project Path="src/Fluent.Unions.Xunit/Fluent.Unions.Xunit.csproj" />
     <Project Path="src/Fluent.Unions.Mapster/Fluent.Unions.Mapster.csproj" />
     <Project Path="src/Fluent.Unions.AutoMapper/Fluent.Unions.AutoMapper.csproj" />
+    <Project Path="src/Fluent.Unions.HotChocolate/Fluent.Unions.HotChocolate.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -49,5 +50,6 @@
     <Project Path="test/Fluent.Unions.Xunit.Tests/Fluent.Unions.Xunit.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Mapster.Tests/Fluent.Unions.Mapster.Tests.csproj" />
     <Project Path="test/Fluent.Unions.AutoMapper.Tests/Fluent.Unions.AutoMapper.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.HotChocolate.Tests/Fluent.Unions.HotChocolate.Tests.csproj" />
   </Folder>
 </Solution>

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Fluent.Unions.HotChocolate</PackageId>
+    <Description>HotChocolate integration for Fluent.Unions: resolvers can return Result&lt;T&gt;, Task&lt;Result&lt;T&gt;&gt; and Option&lt;T&gt;, and an error becomes a GraphQL error or a mutation convention error.</Description>
+    <PackageTags>result;option;union;hotchocolate;graphql</PackageTags>
+    <PackageValidationBaselineVersion />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HotChocolate.Types" Version="16.7.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluent.Unions\Fluent.Unions.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+</Project>

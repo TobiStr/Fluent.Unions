@@ -106,4 +106,5 @@ nav:
       - MongoDB: mongodb/README.md
       - Testing: testing/README.md
       - Mapping: mapping/README.md
+      - HotChocolate: hotchocolate/README.md
   - Reference: reference.md

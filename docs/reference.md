@@ -335,6 +335,14 @@ Packages `Fluent.Unions.Mapster` and `Fluent.Unions.AutoMapper`, namespaces `Flu
 | `AddFluentUnions()` | `TypeAdapterConfig` (Mapster) | [Mapping](mapping/README.md#mapster) |
 | `AddFluentUnions()` | `IMapperConfigurationExpression` (AutoMapper) | [Mapping](mapping/README.md#automapper) |
 
+## HotChocolate
+
+Package `Fluent.Unions.HotChocolate`, namespace `Fluent.Unions.HotChocolate`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `AddFluentUnions()` | `IRequestExecutorBuilder` | [HotChocolate](hotchocolate/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |
