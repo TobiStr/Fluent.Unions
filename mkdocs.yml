@@ -95,4 +95,5 @@ nav:
       - OpenAPI: openapi/README.md
       - AwesomeAssertions: awesome-assertions/README.md
       - Dapper: dapper/README.md
+      - Refit: refit/README.md
   - Reference: reference.md

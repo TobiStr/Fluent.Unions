@@ -226,6 +226,16 @@ Package `Fluent.Unions.Dapper`, namespace `Fluent.Unions.Dapper`.
 | `RegisterCommon()` | `OptionHandlers`, registers `Option<T>` for the common database types | [Dapper](dapper/README.md#registering-handlers) |
 | `OptionTypeHandler<T>` | `SqlMapper.TypeHandler<Option<T>>` | [Dapper](dapper/README.md#what-is-mapped) |
 
+## Refit
+
+Package `Fluent.Unions.Refit`, namespace `Fluent.Unions.Refit`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `ToResult()` | `IApiResponse`, `Task<IApiResponse>` | [Refit](refit/README.md) |
+| `ToResult<T>()` | `IApiResponse<T>`, `Task<IApiResponse<T>>`, `Task<ApiResponse<T>>` | [Refit](refit/README.md) |
+| `ToOptionalResult<T>()` | `IApiResponse<T>`, `Task<IApiResponse<T>>`, `Task<ApiResponse<T>>` | [Refit](refit/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |
