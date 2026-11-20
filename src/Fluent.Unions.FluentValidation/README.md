@@ -14,7 +14,7 @@ dotnet add package Fluent.Unions.FluentValidation
 
 ## Usage
 
-Validate an instance. Every failure ends up in one `AggregateException` with one `ValidationException` per failure.
+Validate an instance. Every failure ends up in one `ValidationErrors` with one `ValidationError` per failure, named after its property. A validator that throws gives the exception as the error.
 
 ```csharp
 using FluentValidation;
@@ -23,10 +23,10 @@ using Fluent.Unions.FluentValidation;
 var validator = new PlaceOrderValidator();
 
 Result<PlaceOrder> command = validator.ValidateToResult(new PlaceOrder(Guid.Empty, 0));
-// error: AggregateException with two ValidationException
+// error: ValidationErrors with two ValidationError (CustomerId, Quantity)
 ```
 
-Validate a result inside a pipeline. An error or empty result is passed on and the validator is not called.
+Validate a result inside a pipeline. An error is passed on and the validator is not called.
 
 ```csharp
 Result<PlaceOrder> parsed = ParseCommand(request);

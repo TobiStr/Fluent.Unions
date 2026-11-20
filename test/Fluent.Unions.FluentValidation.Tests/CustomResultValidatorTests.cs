@@ -58,32 +58,32 @@ public class CustomResultValidatorTests
     }
 
     [Test]
-    public void FailuresBecomeTheAggregateThroughFromException()
+    public void FailuresBecomeValidationErrorsThroughFromException()
     {
         var validated = Wrap(Invalid).Validate(new CustomerValidator());
 
         var error = (CheckoutError)validated.Value!;
         var cause = ((Unexpected)error.Value!).Exception;
-        var failures = ((AggregateException)cause).InnerExceptions.Cast<ValidationException>().ToList();
+        var failures = ((ValidationErrors)cause).Errors;
         Assert.That(failures.Select(f => f.Message), Is.EqualTo(new[] { "Name is required.", "Email is invalid." }));
-        Assert.That(failures.Select(f => f.Errors.Single().PropertyName), Is.EqualTo(new[] { "Name", "Email" }));
+        Assert.That(failures.Select(f => f.MemberName), Is.EqualTo(new[] { "Name", "Email" }));
     }
 
     [Test]
-    public void TheAggregateMatchesTheResultOfTVersion()
+    public void TheValidationErrorsMatchTheResultOfTVersion()
     {
         var custom = Wrap(Invalid).Validate(new CustomerValidator());
         Result<Customer> concrete = Invalid;
 
-        var customCause = (AggregateException)((Unexpected)((CheckoutError)custom.Value!).Value!).Exception;
-        var concreteCause = (AggregateException)concrete.Validate(new CustomerValidator()).GetError();
+        var customCause = (ValidationErrors)((Unexpected)((CheckoutError)custom.Value!).Value!).Exception;
+        var concreteCause = (ValidationErrors)concrete.Validate(new CustomerValidator()).GetError();
 
         Assert.That(
-            customCause.InnerExceptions.Select(e => e.Message),
-            Is.EqualTo(concreteCause.InnerExceptions.Select(e => e.Message)));
+            customCause.Errors.Select(e => e.Message),
+            Is.EqualTo(concreteCause.Errors.Select(e => e.Message)));
         Assert.That(
-            customCause.InnerExceptions.Select(e => e.GetType()),
-            Is.EqualTo(concreteCause.InnerExceptions.Select(e => e.GetType())));
+            customCause.Errors.Select(e => e.MemberName),
+            Is.EqualTo(concreteCause.Errors.Select(e => e.MemberName)));
     }
 
     [Test]
@@ -96,11 +96,14 @@ public class CustomResultValidatorTests
     }
 
     [Test]
-    public void MapOverloadRejectsANullError()
+    public void MapOverloadCapturesANullError()
     {
         ExceptionResult<Customer> result = Invalid;
 
-        Assert.Throws<InvalidOperationException>(() => result.Validate(new CustomerValidator(), _ => null!));
+        var validated = result.Validate(new CustomerValidator(), _ => null!);
+
+        Assert.That(validated.Value, Is.TypeOf<InvalidOperationException>());
+        Assert.That(((Exception)validated.Value!).Message, Does.Contain("returned null"));
     }
 
     [Test]
@@ -131,7 +134,7 @@ public class CustomResultValidatorTests
 
         Assert.That(valid.Value, Is.SameAs(Valid));
         Assert.That(validMapped.Value, Is.SameAs(Valid));
-        Assert.That(((Unexpected)((CheckoutError)invalid.Value!).Value!).Exception, Is.TypeOf<AggregateException>());
+        Assert.That(((Unexpected)((CheckoutError)invalid.Value!).Value!).Exception, Is.TypeOf<ValidationErrors>());
         Assert.That(((ValidationFailed)((CheckoutError)invalidMapped.Value!).Value!).Messages, Has.Count.EqualTo(2));
     }
 
@@ -182,8 +185,8 @@ public class CustomResultValidatorTests
         var kept = valid.Validate(new CustomerValidator());
 
         Assert.That(((ValidationFailed)mapped.GetError().Value!).Messages, Has.Count.EqualTo(2));
-        Assert.That(((Unexpected)thrown.GetError().Value!).Exception, Is.TypeOf<AggregateException>());
-        Assert.That(kept.GetOk(), Is.SameAs(Valid));
+        Assert.That(((Unexpected)thrown.GetError().Value!).Exception, Is.TypeOf<ValidationErrors>());
+        Assert.That(kept.GetValue(), Is.SameAs(Valid));
     }
 
     [Test]

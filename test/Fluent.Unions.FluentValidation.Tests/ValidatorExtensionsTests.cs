@@ -35,29 +35,28 @@ public class ValidatorExtensionsTests
     {
         var result = new CustomerValidator().ValidateToResult(Valid);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.GetOk(), Is.SameAs(Valid));
+        Assert.That(result.IsSuccess, Is.True);
+        Assert.That(result.GetValue(), Is.SameAs(Valid));
     }
 
     [Test]
-    public void EveryFailureBecomesAValidationException()
+    public void EveryFailureBecomesAValidationErrorWithItsMemberName()
     {
         var result = new CustomerValidator().ValidateToResult(new Customer("", "nope"));
 
-        var error = (AggregateException)result.GetError();
-        var failures = error.InnerExceptions.Cast<ValidationException>().ToList();
-        Assert.That(failures.Select(f => f.Message), Is.EqualTo(new[] { "Name is required.", "Email is invalid." }));
-        Assert.That(failures.Select(f => f.Errors.Single().PropertyName), Is.EqualTo(new[] { "Name", "Email" }));
+        var error = (ValidationErrors)result.GetError();
+        Assert.That(error.Errors.Select(f => f.Message), Is.EqualTo(new[] { "Name is required.", "Email is invalid." }));
+        Assert.That(error.Errors.Select(f => f.MemberName), Is.EqualTo(new[] { "Name", "Email" }));
     }
 
     [Test]
-    public void OneFailureIsStillAnAggregate()
+    public void OneFailureIsStillValidationErrors()
     {
         var result = new CustomerValidator().ValidateToResult(new Customer("Ada", "nope"));
 
-        var error = (AggregateException)result.GetError();
-        Assert.That(error.InnerExceptions, Has.Count.EqualTo(1));
-        Assert.That(error.InnerExceptions[0], Is.TypeOf<ValidationException>());
+        var error = (ValidationErrors)result.GetError();
+        Assert.That(error.Errors, Has.Count.EqualTo(1));
+        Assert.That(error.Errors[0].MemberName, Is.EqualTo("Email"));
     }
 
     [Test]
@@ -72,8 +71,8 @@ public class ValidatorExtensionsTests
         Result<Customer> ok = Valid;
         Result<Customer> invalid = new Customer("", "ada@example.com");
 
-        Assert.That(ok.Validate(new CustomerValidator()).Success, Is.True);
-        Assert.That(invalid.Validate(new CustomerValidator()).GetError(), Is.TypeOf<AggregateException>());
+        Assert.That(ok.Validate(new CustomerValidator()).IsSuccess, Is.True);
+        Assert.That(invalid.Validate(new CustomerValidator()).GetError(), Is.TypeOf<ValidationErrors>());
     }
 
     [Test]
@@ -90,13 +89,13 @@ public class ValidatorExtensionsTests
     }
 
     [Test]
-    public void EmptyStaysEmptyWithoutCallingTheValidator()
+    public void DefaultStaysAnErrorWithoutCallingTheValidator()
     {
         var validator = new CustomerValidator();
 
         var validated = default(Result<Customer>).Validate(validator);
 
-        Assert.That(validated.Value, Is.Null);
+        Assert.That(validated.GetError().Message, Does.Contain("holds neither a value nor an error"));
         Assert.That(validator.Calls, Is.EqualTo(0));
     }
 
@@ -117,10 +116,10 @@ public class ValidatorExtensionsTests
         var fromResult = await wrapped.ValidateAsync(new CustomerValidator());
         var invalid = await ((Result<Customer>)new Customer("", "ada@example.com")).ValidateAsync(new CustomerValidator());
 
-        Assert.That(direct.Success, Is.True);
+        Assert.That(direct.IsSuccess, Is.True);
         Assert.That(seen, Is.EqualTo(source.Token));
-        Assert.That(fromResult.Success, Is.True);
-        Assert.That(invalid.GetError(), Is.TypeOf<AggregateException>());
+        Assert.That(fromResult.IsSuccess, Is.True);
+        Assert.That(invalid.GetError(), Is.TypeOf<ValidationErrors>());
     }
 
     [Test]
@@ -133,7 +132,7 @@ public class ValidatorExtensionsTests
         var passedEmpty = await default(Result<Customer>).ValidateAsync(validator);
 
         Assert.That(passedError.GetError().Message, Is.EqualTo("Boom"));
-        Assert.That(passedEmpty.Value, Is.Null);
+        Assert.That(passedEmpty.GetError().Message, Does.Contain("holds neither a value nor an error"));
         Assert.That(validator.Calls, Is.EqualTo(0));
     }
 
@@ -152,7 +151,44 @@ public class ValidatorExtensionsTests
         context.Response.Body.Position = 0;
         var body = JsonDocument.Parse(await new StreamReader(context.Response.Body).ReadToEndAsync()).RootElement;
         Assert.That(context.Response.StatusCode, Is.EqualTo(400));
-        var errors = body.GetProperty("errors").EnumerateArray().Select(e => e.GetString());
-        Assert.That(errors, Is.EqualTo(new[] { "Name is required.", "Email is invalid." }));
+        var errors = body.GetProperty("errors");
+        Assert.That(errors.GetProperty("Name").EnumerateArray().Select(e => e.GetString()), Is.EqualTo(new[] { "Name is required." }));
+        Assert.That(errors.GetProperty("Email").EnumerateArray().Select(e => e.GetString()), Is.EqualTo(new[] { "Email is invalid." }));
+    }
+
+    [Test]
+    public void ThrowingValidatorGivesTheExceptionAsTheError()
+    {
+        var failure = new InvalidOperationException("Rule blew up");
+        var validator = new InlineValidator<Customer>();
+        validator.RuleFor(c => c.Name).Must(_ => throw failure);
+
+        var result = validator.ValidateToResult(Valid);
+
+        Assert.That(result.GetError(), Is.SameAs(failure));
+    }
+
+    [Test]
+    public void ThrowingValidatorGivesTheExceptionAsTheErrorOfAResultForm()
+    {
+        var failure = new InvalidOperationException("Rule blew up");
+        var validator = new InlineValidator<Customer>();
+        validator.RuleFor(c => c.Name).Must(_ => throw failure);
+        Result<Customer> result = Valid;
+
+        Assert.That(result.Validate(validator).GetError(), Is.SameAs(failure));
+    }
+
+    [Test]
+    public void MemberNameIsThePropertyNameAndMissingForEntityRules()
+    {
+        var validator = new InlineValidator<Customer>();
+        validator.RuleFor(c => c.Name).NotEmpty();
+        validator.RuleFor(c => c).Must(_ => false).WithMessage("Customer rejected.");
+
+        var error = (ValidationErrors)validator.ValidateToResult(new Customer("", "ada@example.com")).GetError();
+
+        Assert.That(error.Errors.Select(e => e.MemberName), Is.EqualTo(new string?[] { "Name", null }));
+        Assert.That(error.ToDictionary().Keys, Is.EquivalentTo(new[] { "Name", "" }));
     }
 }
