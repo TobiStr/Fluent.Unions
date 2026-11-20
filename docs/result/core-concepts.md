@@ -4,7 +4,6 @@ This page explains what a result is, how to create one, and how to read it.
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## Result and Result&lt;T&gt;
@@ -15,23 +14,23 @@ using Fluent.Unions.Extensions;
 
 Both are structs. There is no `null` result, and `Result r = null;` does not compile.
 
-## The three states
+## Two states
+
+A result is ok or an error, nothing else.
 
 | State | Meaning | Produced by |
 | --- | --- | --- |
 | ok | holds a value (or `Ok`) | returning a value, `Result.Ok`, `Result<T>.Ok(value)`, a successful `Try` |
 | error | holds an exception | returning an exception, `Error(...)`, a throwing lambda inside an operator, a throwing `Try` body |
-| empty | holds nothing | `default`, a `null` value, `Where` with a failing predicate |
 
-Empty is easy to miss. A `null` payload cannot be told apart from `default`, so it gives an empty result with `Success == false`:
+A result can never be "empty". A `default` result, and a result created from a `null` value, count as an error: an `InvalidOperationException` that says the result holds neither a value nor an error. Use `Option<T>` for a value that may be missing.
 
 ```csharp
 string? nickname = null;
-Result<string> nullPayload = nickname!; // empty
-Result<Order> missing = default;        // empty
+Result<string> fromNull = nickname!;      // error
+Result<Order> missing = default;          // error
+Result<string> nick = Result.From(user).Select(u => u.Nickname); // error when Nickname is null
 ```
-
-`Where` turns a value that fails the predicate into an empty result, the closest thing to LINQ's "no element".
 
 ## Creating results
 
@@ -51,7 +50,7 @@ Result ok = Result.Ok;
 Result failed = Result.Error(new TimeoutException());
 ```
 
-`Result.Ok` is a property. `Result<T>.Ok(value)` is a method and throws `ArgumentNullException` for `null`, where the implicit conversion gives an empty result.
+`Result.Ok` is a property. `Result<T>.Ok(value)` is a method and throws `ArgumentNullException` for `null`, where the implicit conversion gives an error.
 
 `Result.From(value)` does the same as `Result<T>.Ok(value)`, but infers `T`. Use it to start a chain from a plain value:
 
@@ -74,28 +73,30 @@ See [Error handling](error-handling.md#try-and-tryasync) for the body types they
 
 | Member | Behavior |
 | --- | --- |
-| `Success` | `true` only when the result is ok. `false` for error and empty. |
-| `Message` | The exception message, or `""` for ok and empty. |
-| `GetOk()` | The value of a `Result<T>`. Throws `InvalidOperationException` for an error or an empty result. |
-| `GetError()` | The exception. Throws `InvalidOperationException` when the result holds none. |
-| `ToString()` | The value's `ToString()`, the exception's `ToString()`, or `""` when empty. |
+| `IsSuccess` | `true` when the result is ok. |
+| `IsError` | `true` when the result holds an error. |
+| `TryGetValue(out value)` | Gets the value of a `Result<T>`, if there is one. |
+| `TryGetError(out error)` | Gets the exception, if there is one. |
+| `GetValue()` | The value of a `Result<T>`. Throws `InvalidOperationException` for an error, with the error as `InnerException`. |
+| `GetError()` | The exception. Throws `InvalidOperationException` when the result is ok. |
+| `ToString()` | The value's `ToString()`, or the exception's `ToString()`. |
 
-`ToString()` on an error gives the full exception text with type name and stack trace, not just `Message`. Use `Message` for display.
+`ToString()` on an error gives the full exception text with type name and stack trace. Use `GetError().Message` for display.
 
 ```csharp
 Result<Order> placed = PlaceOrder(cart);
 
-if (placed.Success)
+if (placed.TryGetValue(out var order))
 {
-    Order o = placed.GetOk();
+    Ship(order);
 }
-else if (placed.Message != "")
+else if (placed.TryGetError(out var error))
 {
-    Exception error = placed.GetError();
+    logger.LogWarning(error, "Order failed");
 }
 ```
 
-The `else if` guards against the empty state, where `GetError()` would throw. Prefer `switch` or `Match`, which cannot forget a state.
+Prefer `switch` or `Match` when both cases produce a value.
 
 ## Pattern matching
 
@@ -115,13 +116,15 @@ static string DescribeValidation(Result result) => result switch
 };
 ```
 
-The success arm of `Result` is the `Ok` struct. An empty result matches neither arm and the switch throws at runtime. Use [`Match`](operations.md#match), which has a callback for the empty state, when an empty result is possible.
+The success arm of `Result` is the `Ok` struct. A `default` result is not covered by the arms and makes the switch throw at runtime; it only comes from forgetting to initialize a result. [`Match`](operations.md#match) treats it as an error instead.
+
+In ASP.NET Core code that imports `Microsoft.AspNetCore.Http.HttpResults`, `Ok` is ambiguous with the HTTP result of the same name (CS0104). Add `using Ok = Fluent.Unions.Ok;` to that file.
 
 Leaving out an arm is warning CS8509. To make it an error, add `<WarningsAsErrors>CS8509</WarningsAsErrors>` to the project file. See [Installation](../getting-started/installation.md).
 
 ## Result&lt;T&gt; to Result
 
-`Result<T>` converts implicitly to `Result`. The conversion keeps ok, error and empty, and drops the value.
+`Result<T>` converts implicitly to `Result`. The conversion keeps ok or the error, and drops the value.
 
 ```csharp
 Result<Order> typed = placed;
@@ -137,25 +140,24 @@ In statement code, a `Result<T>` deconstructs into a value and an error:
 ```csharp
 var (customer, error) = GetCustomer(id);
 if (error is not null) return error;
-if (customer is null) return default; // the result was empty
 ```
 
-Check `error` first. On an error the value is `default`, so `0` for an `int`. An empty result gives `default` and `null`. Deconstruction exists on `Result<T>` only, not on `Result`.
+Exactly one of the two is set. Check `error` first: on an error the value is `default`, so `0` for an `int`. Deconstruction exists on `Result<T>` only, not on `Result`.
 
 ## Check()
 
-`Check()` returns the result unchanged when it is ok. Otherwise it throws the underlying exception. It rethrows with `ExceptionDispatchInfo`, so the original stack trace is kept and each rethrowing layer is appended.
+`Check()` returns the result unchanged when it is ok. Otherwise it throws the error. It rethrows with `ExceptionDispatchInfo`, so the original stack trace is kept and each rethrowing layer is appended.
 
 ```csharp
 Result<Order> checkedOrder = placed.Check();
 Result checkedSave = Save(order).Check();
 ```
 
-`Check()` on an empty result throws `InvalidOperationException` ("Error property for Result&lt;T&gt; not set."). It also exists on `Task<Result<T>>` and `Task<Result>`.
+It also exists on `Task<Result<T>>` and `Task<Result>`.
 
 ## Pitfalls
 
-- `GetOk()` throws for error and empty. Use it only after checking `Success`.
+- `GetValue()` throws for an error. Prefer `TryGetValue`, `switch` or `Match`.
 - `Result<Exception>` compiles, but converting an exception to it fails with CS0457, because both cases take an `Exception`. Wrap the payload in another type.
 - Equality is not payload-based. Two results wrapping different class instances are not equal.
 

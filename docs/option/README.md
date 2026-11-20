@@ -14,7 +14,6 @@
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 static Option<Customer> FindCustomer(Guid id) =>
     customers.GetValueOrNone(id);

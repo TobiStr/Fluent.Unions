@@ -8,7 +8,6 @@ This page covers what an `Option<T>` is, how to create one, its members, and how
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 Option<int> quantity = 3;                   // value
 Option<string> nickname = Option.None;      // None

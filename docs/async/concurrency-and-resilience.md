@@ -4,7 +4,6 @@ This page covers running several results in parallel, collecting all errors, ret
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## Result.WhenAll
@@ -25,8 +24,7 @@ Rules:
 
 - **All tasks run to completion.** `WhenAll` waits for every task, even after one failed. It does not cancel the others.
 - **The first error by order wins**, not the first to fail in time. With the tasks `[A, B, C]`, an error in `B` beats an error in `C` even if `C` failed earlier.
-- **A faulted task counts as an error.** It does not make `WhenAll` throw.
-- **Empty results are skipped** in the generic version, as in `Combine()`.
+- **A faulted task counts as an error.** It does not make `WhenAll` throw. A cancelled task does: its `OperationCanceledException` propagates.
 
 ```csharp
 var tasks = new[]
@@ -48,7 +46,7 @@ Result<IReadOnlyList<int>> result = await Result.WhenAll(tasks);
 Result<Product>[] results = await Task.WhenAll(skus.Select(LoadProductAsync));
 
 Result<IReadOnlyList<Product>> products = results.CombineAll();
-// ok with all products, or an AggregateException with every error
+// ok with all products, or every error: ValidationErrors or AggregateException
 ```
 
 `Task.WhenAll` throws when a task is faulted, so every task must return a result instead of throwing. Wrap sources that throw with `Result.TryAsync`:
@@ -89,7 +87,7 @@ Details:
 - An exception thrown by the operation counts as a failure, like an error result.
 - `shouldRetry` is only called for errors, and not after the last attempt. An error it rejects is returned at once.
 - The `delay` is the same for every attempt. There is no backoff. Write your own `shouldRetry` and loop when you need one.
-- **Cancellation stops retrying.** When the token is cancelled, `RetryAsync` returns the last result and does not wait or retry again. If the cancellation happens during the delay, the result is an error holding a `TaskCanceledException`, which is an `OperationCanceledException`.
+- **Cancellation stops retrying.** When the token is cancelled, `RetryAsync` throws `OperationCanceledException` instead of waiting or retrying again.
 - Retry only operations that are safe to repeat. A payment call needs an idempotency key.
 
 ## Timeout

@@ -22,20 +22,21 @@ Add `Fluent.Unions.AspNetCore` only to web projects. It references `Fluent.Union
 
 | Namespace | Contents |
 | --- | --- |
-| `Fluent.Unions` | `Result`, `Result<T>`, `Option<T>`, `Loadable<T>`, `Result<T, TError>`, `Ok`, `None`, `Captured<T>` |
-| `Fluent.Unions.Extensions` | All operators: `Select`, `Chain`, `Catch`, `Match`, `Combine` and the rest |
+| `Fluent.Unions` | `Result`, `Result<T>`, `Option<T>`, `Loadable<T>`, `Result<T, TError>`, `Ok`, `None`, `Captured<T>`, `ValidationError(s)`, and every operator |
+| `Fluent.Unions.Validation` | `Is` and the ready-made `Ensure*` rules |
 | `Fluent.Unions.Abstractions` | `IResult<TSelf, T, TError>` and `IFromException<T>`, for your own result types |
 | `Fluent.Unions.Serialization` | JSON converters, such as `UnionJsonConverter` |
 | `Fluent.Unions.AspNetCore` | `ToHttpResult`, `WithResultMapping`, `ResultHttpOptions` |
 
-Without `using Fluent.Unions.Extensions;` the operators do not appear. Most files need the first two lines. A global using saves repeating them:
+`using Fluent.Unions;` is all most files need. The rules stay in their own namespace, so the `Ensure*` methods do not show up on every string and number unless you ask for them. A global using saves repeating it:
 
 ```csharp
 global using Fluent.Unions;
-global using Fluent.Unions.Extensions;
 ```
 
-If you declare your own `Result<T>` (see the custom error types section of the repository README), import only `Fluent.Unions.Extensions` where yours is in scope. Importing `Fluent.Unions` as well makes `Result<T>` ambiguous (CS0104).
+In ASP.NET Core files that also import `Microsoft.AspNetCore.Http.HttpResults`, the case `Ok` clashes with the HTTP result `Ok` (CS0104). Add `using Ok = Fluent.Unions.Ok;` there.
+
+If you declare your own `Result<T>`, see [Custom error types](../errors/custom-error-types.md#namespaces) for the namespace rules.
 
 ## The bundled analyzer
 
@@ -47,7 +48,7 @@ _ = Save(order);  // fine: discarded on purpose
 Save(order).Check();
 ```
 
-It does not report assignments, returns, arguments, calls that end in `Check()`, `OnErrorDo(...)` or `Do(onNext, onError)`, or options. To raise the severity, add this to `.editorconfig`:
+It does not report assignments, returns, arguments, calls that end in `Check()`, `OnErrorDo(...)` or `Do(onSuccess, onError)`, or options. To raise the severity, add this to `.editorconfig`:
 
 ```
 dotnet_diagnostic.FLU0001.severity = error

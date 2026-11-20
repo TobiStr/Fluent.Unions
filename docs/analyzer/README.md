@@ -31,7 +31,7 @@ Each of these is a warning:
 Save(order);                                   // a discarded Result
 maybe?.Save(order);                            // conditional access
 await SaveAsync(order);                        // an awaited Task<Result>
-Load(order.Id).Do(o => Console.WriteLine(o));  // a chain that ends in Do(onNext)
+Load(order.Id).Do(o => Console.WriteLine(o));  // a chain that ends in Do(onSuccess)
 Load(order.Id).Finally(() => { });             // a chain that ends in Finally
 ```
 
@@ -55,7 +55,7 @@ SaveAsync(order);                                       // in an async method: t
 ```
 
 - Assignments, returns, arguments and explicit discards with `_ =`.
-- Calls that end in `Check()`, `OnErrorDo(...)` or `Do(onNext, onError)`. These are recognized by name and by the library assembly they come from, so a method of your own called `Check` does not count.
+- Calls that end in `Check()`, `OnErrorDo(...)` or `Do(onSuccess, onError)`. These are recognized by name and by the library assembly they come from, so a method of your own called `Check` does not count.
 - An unawaited task inside an `async` method, such as `SaveAsync(order);`. The compiler already warns there with CS4014.
 - Options. A missing value is not an error, so `Option<T>` is never reported.
 - Methods that return anything else, such as an `int`.

@@ -9,7 +9,6 @@ The error type only has to say how an unexpected exception is represented. Imple
 ```csharp
 using Fluent.Unions;
 using Fluent.Unions.Abstractions;
-using Fluent.Unions.Extensions;
 
 public record CustomerNotFound(int Id);
 public record CartEmpty;
@@ -43,7 +42,7 @@ The cast is the only ceremony. Without it, the compiler reports that it cannot i
 
 ## Chaining
 
-The operators of [custom error types](custom-error-types.md#operators) apply as they are: `Chain`, `Catch`, `Do`, `OnErrorDo`, `Finally`, `Where`, `Match` and the rest. `Select`, `SelectMany` and `MapError` need no wrapper, because the library ships them for `Result<T, TError>`.
+The operators of [custom error types](custom-error-types.md#operators) apply as they are: `Chain`, `Catch`, `Do`, `OnErrorDo`, `Finally`, `Ensure`, `Match` and the rest. `Select`, `SelectMany` and `MapError` need no wrapper, because the library ships them for `Result<T, TError>`.
 
 ```csharp
 static Result<Order, CheckoutError> Checkout(int customerId) =>
@@ -59,7 +58,7 @@ var thrown = GetCustomer(1).Chain(Result<Order, CheckoutError> (_) => throw new 
 
 ## Matching every case
 
-`Match` takes one callback for the value, one for the error and one for the empty state. A `switch` inside the error callback must cover every record, or the compiler reports CS8509:
+`Match` takes one callback for the value and one for the error. A `switch` inside the error callback must cover every record, or the compiler reports CS8509:
 
 ```csharp
 int status = Checkout(id).Match(
@@ -70,8 +69,7 @@ int status = Checkout(id).Match(
         CartEmpty => 400,
         PaymentDeclined => 402,
         Unexpected => 500
-    },
-    () => 204);
+    });
 ```
 
 Add a case to `CheckoutError` and every such `switch` stops compiling until it handles the new case. This is the main reason to choose errors as data. CS8509 is only a warning by default. Add `<WarningsAsErrors>CS8509</WarningsAsErrors>` to the project to make it fail the build.
@@ -98,7 +96,6 @@ Result<string, CheckoutError> name = GetCustomer(1).Select(customer => customer.
 Result<Order, CheckoutError> order =
     from customer in GetCustomer(1)
     from cart in GetCart(customer)
-    where cart.Items > 1
     select new Order(customer.Id, cart.Items);
 ```
 
@@ -114,7 +111,7 @@ Result<Order, AuditError> audited = Checkout(0).MapError(error => (AuditError)$"
 // error: "Checkout failed: CustomerNotFound { Id = 0 }"
 ```
 
-A `null` from the mapping becomes an error, not an empty result.
+A `null` from the mapping becomes an error.
 
 ## Check
 

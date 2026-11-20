@@ -12,7 +12,7 @@ The types:
 | `Loadable<T>` | not loaded, loading, a `T` or an `Exception` | UI state for data that loads asynchronously. |
 | `Result<T, TError>` | a `T` or an error you define | Errors as data: a union of plain records instead of exceptions. |
 
-Operators are named after LINQ and Rx.NET: `Select`, `Where`, `SelectMany`, `Catch`, `Do`, `Finally`, `Match`. The same names work on `Task<Result<T>>`, so an asynchronous pipeline stays one expression.
+Operators are named after LINQ and Rx.NET: `Select`, `SelectMany`, `Catch`, `Do`, `Finally`, `Match`, plus `Chain` and `Ensure`. The same names work on `Task<Result<T>>`, so an asynchronous pipeline stays one expression.
 
 Two packages:
 
@@ -30,7 +30,6 @@ Two packages:
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 Result<Order> order = GetCustomer(id)
     .Chain(GetCart)
@@ -47,7 +46,7 @@ Each step runs only if the previous one succeeded. The first error ends the chai
 
 ## Rules
 
-- A `Result` is a struct. `default(Result<T>)` is a third state, empty, that is neither ok nor an error.
+- A `Result` is a struct. `default(Result<T>)` is not a third state: it counts as an error.
 - Operators on results never throw for failures inside your lambdas. They turn the exception into the error. Only `Check()` throws on purpose.
 - Operators on options do not catch exceptions, because an option has no error state.
 

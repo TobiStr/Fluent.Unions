@@ -30,11 +30,24 @@ Handlers may be synchronous or asynchronous. Minimal APIs await the returned `Ta
 | --- | --- |
 | `Result<T>` with a value | 200 with the value |
 | `Result<T>` with an error | `ProblemDetails`, status from [error mapping](error-mapping.md) |
-| empty `Result<T>` | 404 |
+| a `default` `Result<T>` | `ProblemDetails` with 500 |
 | `Result` that succeeded | 204 |
-| `Result` with an error, or empty | `ProblemDetails`, or 404 |
+| `Result` with an error | `ProblemDetails` |
 | `Option<T>` with a value | 200 with the value |
 | `None` or a `default` option | 404 |
+
+## OpenAPI
+
+`WithResultMapping()` also reads the handler's return type when the endpoint is built and adds the response types to the endpoint metadata, so OpenAPI and ApiExplorer describe the real responses instead of the `Result<T>` struct:
+
+| Handler returns | Documented responses |
+| --- | --- |
+| `Result<T>` or `Task<Result<T>>` | 200 with `T`, 400 `HttpValidationProblemDetails`, 500 `ProblemDetails` |
+| `Result` | 204, 400, 500 |
+| `Option<T>` | 200 with `T`, 404 |
+| a custom result type | 200 with `T`, 400, 500 |
+
+Add `.Produces(...)` yourself for other statuses you map, such as 404 or 409.
 
 ## What passes through
 
@@ -51,7 +64,7 @@ The filter also converts a handler that returns a type implementing `IResult<TSe
 | a value | 200 with the value |
 | an error that is an `Exception` | `ProblemDetails`, status from [error mapping](error-mapping.md) |
 | an error that is not an `Exception` | the error is wrapped in a `ResultErrorException` and mapped through `ResultHttpOptions`, so 500 unless you map `ResultErrorException` |
-| an empty result | 404 |
+| a `default` result | `ProblemDetails` with 500 |
 
 The library cannot know what status each of your error cases means, so a data error is a server error by default and its content is not shown. Map the cases yourself in the handler with `ToHttpResult(onError)`. The returned `IResult` passes through the filter untouched:
 
@@ -67,10 +80,10 @@ checkout.MapGet("/{id}", (int id) => Checkout(id).ToHttpResult(error => error sw
 }));
 ```
 
-To give every data error one status, map `ResultErrorException`. The message names the error, so it is shown only for a 4xx status:
+To give every data error one status, map `ResultErrorException`. Its message names the error, so expose it only if that is safe:
 
 ```csharp
-builder.Services.Configure<ResultHttpOptions>(o => o.Map<ResultErrorException>(StatusCodes.Status409Conflict));
+builder.Services.Configure<ResultHttpOptions>(o => o.Map<ResultErrorException>(StatusCodes.Status409Conflict, exposeMessage: true));
 ```
 
 A custom result type must be a struct, as `IResult<TSelf, T, TError>` requires. Other structs and classes pass through.

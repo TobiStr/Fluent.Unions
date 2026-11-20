@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://www.nuget.org/packages/Fluent.Unions"><img src="https://img.shields.io/nuget/v/Fluent.Unions.svg" alt="NuGet" /></a>
   <a href="https://www.nuget.org/packages/Fluent.Unions"><img src="https://img.shields.io/nuget/dt/Fluent.Unions.svg" alt="Downloads" /></a>
+  <a href="https://github.com/TobiStr/Fluent.Unions/actions/workflows/ci.yml"><img src="https://github.com/TobiStr/Fluent.Unions/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml"><img src="https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg" alt="Publish" /></a>
   <a href="https://tobistr.github.io/Fluent.Unions/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2" alt="Documentation" /></a>
 </p>
@@ -26,9 +27,11 @@ dotnet add package Fluent.Unions.AwesomeAssertions   # optional: AwesomeAssertio
 
 Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed.
 
+`using Fluent.Unions;` brings in the types and every operator. The ready-made validation rules live in `Fluent.Unions.Validation`. In ASP.NET Core code that also imports `Microsoft.AspNetCore.Http.HttpResults`, the success case `Ok` has the same name as the HTTP result; add `using Ok = Fluent.Unions.Ok;` to the file.
+
 ## Common scenarios
 
-**Return a value or an error, and handle both.** The compiler reports a `switch` that misses a case:
+**Return a value or an error, and handle both.** A result is always one of the two, and the compiler reports a `switch` that misses a case:
 
 ```csharp
 Result<Customer> GetCustomer(Guid id) =>
@@ -46,7 +49,7 @@ string greeting = GetCustomer(id) switch
 ```csharp
 Result<Order> order = GetCustomer(id)
     .Chain(GetCart)
-    .Where(cart => cart.Items.Count > 0)
+    .Ensure(cart => cart.Items.Count > 0, "The cart is empty.")
     .Chain(PlaceOrder)
     .OnErrorDo(error => logger.LogWarning(error, "Checkout failed"));
 ```
@@ -121,13 +124,17 @@ public static Result<Receipt> PlaceOrder(Shop shop, CheckoutRequest request) =>
         .Validate(
             r => r.Sku.EnsureNotWhiteSpace(),
             r => r.Quantity.EnsureInRange(1, 10))
-        .Chain(r => FindCustomer(shop, r.CustomerId))
-            .Out(out var customer)
-        .Chain(_ => FindProduct(shop, request.Sku))
-        .Ensure(p => p.Stock >= request.Quantity, p => new InvalidOperationException($"Only {p.Stock} left of {p.Sku}."))
-        .Select(p => (Product: p, Total: p.Price * request.Quantity))
-        .Select(x => new Receipt(customer.Value.Name, x.Product.Sku, x.Total, shop.Charge(customer, x.Total)))
+        .Chain(r => FindCustomer(shop, r.CustomerId)
+            .Zip(FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
+        .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}."))
+        .Chain(o => Result.Try(() => shop.Charge(o.Customer, o.Total))
+            .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
         .Do(shop.Save);
+
+private sealed record Order(Customer Customer, Product Product, int Quantity)
+{
+    public decimal Total => Product.Price * Quantity;
+}
 
 private static Result<Customer> FindCustomer(Shop shop, Guid id) =>
     shop.FindCustomer(id).ToResult(() => new KeyNotFoundException($"No customer {id}."));
@@ -142,9 +149,9 @@ The caller matches on the error's type instead of parsing strings:
 int status = PlaceOrder(shop, request) switch
 {
     Receipt => 201,
-    AggregateException => 400,          // every validation error at once
+    ValidationErrors => 400,            // every validation error at once
     KeyNotFoundException => 404,
-    InvalidOperationException => 409,
+    OutOfStockException => 409,
     PaymentDeclinedException => 402,
     Exception => 500
 };
@@ -155,8 +162,8 @@ What the union gives you:
 - **An honest signature.** `Result<Receipt>` says that the call can fail; `Receipt?` with an `out string?` hides it.
 - **Every case handled.** A `switch` that misses the error case is reported by the compiler (CS8509).
 - **Typed errors.** Status codes come from exception types, not from message text.
-- **No `try`/`catch`, no `null`.** The declined card's exception and the repository's `null` become errors inside the chain, so the order is not saved.
-- **Every validation error at once**, instead of stopping at the first.
+- **No `try`/`catch`, no `null`.** `Result.Try` turns the declined card into an error and `ToResult` turns the repository's `null` into one, so the order is not saved. Unlike the traditional version, an unexpected exception from the payment SDK also becomes an error instead of escaping.
+- **Every validation error at once**, each with the name of its property, instead of stopping at the first.
 
 Both versions are tested side by side in [`CheckoutSample.cs`](https://github.com/TobiStr/Fluent.Unions/blob/main/test/Fluent.Unions.Tests/Samples/CheckoutSample.cs).
 
@@ -166,17 +173,17 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **Matching:** `switch` over a result or option warns when a case is missing.
   - **Analyzer:** `FLU0001` warns when a result is ignored.
 - **LINQ and Rx operators:**
-  - **On the value:** `Select`, `Chain`, `Where`, `Zip`, `Ensure`, `BindAppend`.
+  - **On the value:** `Select`, `Chain`, `Ensure`, `Zip`, `BindAppend`.
   - **On the error and side effects:** `Catch`, `Do`, `OnErrorDo`, `Finally`.
-  - **Leaving the chain:** `Match`, `GetValueOrDefault`, `DefaultIfEmpty`.
+  - **Leaving the chain:** `Match`, `TryGetValue`, `GetValueOrDefault`.
   - **Query syntax** works too.
 - **`Option<T>`** for missing values: `TryParse`, `FirstOrNone`, `GetValueOrNone`, `Or`, and conversions to and from results.
 - **Async everywhere:** `Task` overloads, `...Await` operators, `Result.WhenAll`, `RetryAsync`, `Timeout`, async streams.
-- **Validation** that collects every error: `Validate`, `CombineAll`, and a catalogue of ready-made rules such as `EnsureNotEmpty` and `EnsureInRange`.
+- **Validation** that collects every error as `ValidationErrors` with property names: `Validate`, `CombineAll`, and a catalogue of ready-made rules such as `EnsureNotEmpty` and `EnsureInRange`.
 - **Custom error types:** restrict errors to your own base exception, or model errors as data with `Result<T, TError>` and a union of error records.
 - **More unions:** `Loadable<T>` for UI state, plus `Is`/`As` and a JSON converter for your own unions.
 - **Integrations:**
-  - **ASP.NET Core:** HTTP responses with ProblemDetails.
+  - **ASP.NET Core:** HTTP responses with ProblemDetails, validation errors as ValidationProblemDetails, and OpenAPI response types for endpoints that return results.
   - **System.Text.Json:** support for options; results refuse to serialize, so exception details cannot leak.
   - **EF Core:** a documented mapping pattern.
   - **FluentValidation:** run a validator and get every failure as a `Result<T>`.
@@ -196,8 +203,8 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 |                       | [Quick start](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/quick-start.md)                     | A 10-minute walkthrough from `return` to an HTTP endpoint                                                                   |
 |                       | [Limitations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/limitations.md)                     | What the library cannot do                                                                                                  |
 | Result                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/README.md)                                      | `Result` and `Result<T>` in short                                                                                           |
-|                       | [Core concepts](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/core-concepts.md)                          | The three states, creating results, members, matching, deconstruction, `Check()`                                            |
-|                       | [Operations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/operations.md)                                | `Select`, `Chain`, `Where`, `Zip`, `Ensure`, `CombineAll`, `BindAppend`, `Do`, `Out`, `Finally`, `Unwrap`, `Match` and more |
+|                       | [Core concepts](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/core-concepts.md)                          | The two states, creating results, members, matching, deconstruction, `Check()`                                              |
+|                       | [Operations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/operations.md)                                | `Select`, `Chain`, `Ensure`, `Zip`, `CombineAll`, `BindAppend`, `Do`, `Out`, `Finally`, `Unwrap`, `Match` and more         |
 |                       | [Error handling](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/error-handling.md)                        | `Catch`, `OnErrorDo`, `Try`, `Retry`, and what still throws                                                                 |
 |                       | [Collections](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/collections.md)                              | `Combine`, `CombineAll`, `Partition`, `Values`, `Errors`                                                                    |
 |                       | [Patterns](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/patterns.md)                                    | Pipelines, query syntax, using earlier values, early returns, service layers                                                |

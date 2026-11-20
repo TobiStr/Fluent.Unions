@@ -4,7 +4,6 @@ This page walks through the main features in about ten minutes, using a small on
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## Return a result
@@ -119,7 +118,7 @@ using Fluent.Unions.AspNetCore;
 app.MapGet("/orders/{id}", (Guid id) => LoadOrderAsync(id).ToHttpResult());
 ```
 
-A value gives 200, an empty result gives 404, and an error gives ProblemDetails with a status code chosen from the exception type. See [ASP.NET Core](../aspnetcore/README.md).
+A value gives 200, and an error gives ProblemDetails with a status code chosen from the exception type. Validation errors give 400 with every message grouped by property. See [ASP.NET Core](../aspnetcore/README.md).
 
 ## Pitfalls
 

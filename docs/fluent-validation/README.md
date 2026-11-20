@@ -30,23 +30,23 @@ public class PlaceOrderValidator : AbstractValidator<PlaceOrder>
 var validator = new PlaceOrderValidator();
 
 Result<PlaceOrder> command = validator.ValidateToResult(new PlaceOrder(Guid.Empty, 0));
-// error: AggregateException with two ValidationException
+// error: ValidationErrors with two ValidationError, for CustomerId and Quantity
 
 Result<PlaceOrder> parsed = ParseCommand(request);
 Result<PlaceOrder> checkedCommand = await parsed.ValidateAsync(validator, cancellationToken);
 // parsed with an error: the same error, the validator is not called
 ```
 
-An endpoint that returns the first result with `ToHttpResult()` answers 400 with both messages in `errors`, because the error is an `AggregateException` (see [Error mapping](../aspnetcore/error-mapping.md)).
+An endpoint that returns the first result with `ToHttpResult()` answers 400 with a `ValidationProblemDetails` whose `errors` are grouped by property, because the error is a `ValidationErrors` (see [Error mapping](../aspnetcore/error-mapping.md#validation-errors)).
 
 ## What you get back
 
 | Input | Result |
 | --- | --- |
 | valid instance | the instance as `Result<T>` |
-| one or more failures | error: an `AggregateException` with one `FluentValidation.ValidationException` per failure |
+| one or more failures | error: a `ValidationErrors` with one `ValidationError` per failure, `MemberName` set to the property name |
+| the validator throws | error: the thrown exception (cancellation propagates) |
 | `Result<T>` with an error | the same error, the validator is not called |
-| empty `Result<T>` | empty, the validator is not called |
 | `null` instance | `ArgumentNullException` |
 
 The aggregate is always flattened, also for a single failure, the same as `Validate`. Each inner exception carries the failure in its `Errors`, so `PropertyName`, `ErrorCode`, `AttemptedValue` and `Severity` stay available.
@@ -64,7 +64,7 @@ The aggregate is always flattened, also for a single failure, the same as `Valid
 
 | Member | A failure becomes |
 | --- | --- |
-| `Validate(validator)`, `ValidateAsync(validator, cancellationToken)` | `TSelf.FromError(TSelf.FromException(aggregate))`, with the same `AggregateException` of `ValidationException` as for `Result<T>` |
+| `Validate(validator)`, `ValidateAsync(validator, cancellationToken)` | `TSelf.FromError(TSelf.FromException(errors))`, with the same `ValidationErrors` as for `Result<T>` |
 | `Validate(validator, map)`, `ValidateAsync(validator, map, cancellationToken)` | `TSelf.FromError(map(failures))`, where `map` receives every `ValidationFailure` |
 
 ```csharp
@@ -76,7 +76,7 @@ CheckoutResult<PlaceOrder> validated = command.Validate(
 // invalid: the error holds an InvalidOrder with every message
 ```
 
-Use the overload without `map` when `FromException` can hold an exception. Use the `map` overload when the error type is data. An error or empty result passes through and the validator is not called.
+Use the overload without `map` when `FromException` can hold an exception. Use the `map` overload when the error type is data. An error passes through and the validator is not called.
 
 ## When to use
 
@@ -86,10 +86,10 @@ Use the overload without `map` when `FromException` can hold an exception. Use t
 
 ## Rules
 
-- **Name clash.** `ValidationException` exists in FluentValidation and in `System.ComponentModel.DataAnnotations`, which the rules in [Validation](../validation/README.md) use. Alias one of them when a file needs both: `using FluentValidationException = FluentValidation.ValidationException;`.
+- **One error type for both kinds of rules.** FluentValidation failures and the rules in [Validation](../validation/README.md) both become `ValidationError`, so the HTTP mapping and your `switch` arms treat them alike.
 - **Every failure counts.** A failure with `Severity.Warning` or `Severity.Info` also makes the result an error, as `IsValid` does.
-- **Check the type, not the count.** The error is an `AggregateException` even for one failure. Use `GetError()` and read `InnerExceptions`.
-- **The map must not return `null`.** The `map` overload throws an `InvalidOperationException` for a `null` error. An exception from `map` is not captured.
+- **Check the type, not the count.** The error is a `ValidationErrors` even for one failure. Read `Errors` or `ToDictionary()`.
+- **The map must not return `null`.** A `null` error, or an exception thrown by `map`, becomes the error that `FromException` makes of it.
 - **Options are not covered.** `WhenSome` for `Option<T>` properties is not part of the package yet.
 
 ---

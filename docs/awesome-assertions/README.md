@@ -12,7 +12,7 @@ This folder has one page. The topics are below.
 - [Custom result types](#custom-result-types): assertions for your own `IResult` type and `Result<T, TError>`.
 - [Error assertions](#error-assertions): the exception type and message, and aggregate errors.
 - [When to use](#when-to-use): where it helps.
-- [Rules](#rules): empty results, failure messages and chaining.
+- [Rules](#rules): `default` results, failure messages and chaining.
 
 ## Quick example
 
@@ -44,10 +44,11 @@ nickname.Should().BeSomeWithValue("ada");
 | `BeError<TException>()` | the error is a `TException` or a derived type | both |
 | `BeError<TException>(predicate)` | the error is a `TException` and the predicate is true | both |
 | `BeAggregateError()` | the error is an `AggregateException` | both |
+
+For validation failures use `BeError<ValidationErrors>()` and read `Which.Errors`.
 | `BeOkWithValue(value)` | the result is Ok and holds an equal value | `Result<T>` |
 | `BeOkMatching(predicate)` | the result is Ok and the value matches the predicate | `Result<T>` |
 | `BeOkSatisfying(assertion)` | the result is Ok and the assertion runs on the value | `Result<T>` |
-| `BeEmpty()` | the result is empty: neither a value nor an error | `Result<T>` |
 
 `BeError`, `BeError<TException>` and `BeError<TException>(predicate)` return `ErrorAssertions<TException>`. `BeAggregateError` returns `AggregateErrorAssertions`.
 
@@ -76,7 +77,6 @@ nickname.Should().BeSomeWithValue("ada");
 | `BeError()` | the result is an error, which `Which` returns as `TError` |
 | `BeError<TCase>()` | the error is a `TCase`, or the error union holds a `TCase`. `Which` returns the `TCase`. |
 | `BeError<TCase>(predicate)` | the error is a `TCase` and the predicate is true |
-| `BeEmpty()` | the result is neither a value nor an error |
 
 ```csharp
 StockResult<Reservation> reserved = await stock.ReserveAsync(sku, quantity);
@@ -118,12 +118,12 @@ registered.Should().BeAggregateError().WithInnerCount(2);
 ## When to use
 
 - You test code that returns `Result`, `Result<T>` or `Option<T>` and want the failure message to name the actual state instead of `Value is Exception` checks.
-- You already use AwesomeAssertions. For NUnit constraints alone, `Assert.That(result.Success, Is.True)` still works.
+- You already use AwesomeAssertions. For NUnit constraints alone, `Assert.That(result.IsSuccess, Is.True)` still works.
 
 ## Rules
 
-- **Empty is its own state.** Every Ok and error assertion on an empty `Result<T>` fails and says the result was empty. Only `BeEmpty()` passes for it.
-- **The message names the state.** A failure shows whether the result was Ok, empty or an error, with the exception type and message.
+- **`default` is an error.** A `default` result passes `BeError()` and fails `BeOk()`, like everywhere else in the library.
+- **The message names the state.** A failure shows whether the result was Ok or an error, with the exception type and message.
 - **None includes `default`.** `BeNone()` passes for `default(Option<T>)`, and `BeSome()` fails for it.
 - **Predicates are expressions.** `BeOkMatching` and `BeError<TException>(predicate)` take an `Expression<Func<..>>`, so the failure message shows the condition.
 - **Not covered yet.** `Loadable<T>` has no assertions.

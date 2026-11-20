@@ -4,20 +4,18 @@ This page covers the operators that work on the value of a result and the ones t
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
-| Operators | ok | error | empty |
-| --- | --- | --- | --- |
-| `Select`, `Chain`, `SelectMany`, `Where`, `Ensure`, `Zip`, `BindAppend`, `Do(onNext)` | runs | passes through | passes through |
-| `Finally` | runs | runs | runs |
-| `DefaultIfEmpty` | passes through | passes through | becomes ok |
+| Operators | ok | error |
+| --- | --- | --- |
+| `Select`, `Chain`, `Ensure`, `Zip`, `BindAppend`, `Do(onSuccess)` | runs | passes through |
+| `Finally` | runs | runs |
 
 All of them also exist on `Task<Result<T>>`. Asynchronous lambdas use the `...Await` variants. See [Async](../async/README.md).
 
 ## Select
 
-Projects the value. An error or an empty result passes through, and the lambda does not run. A selector that returns `null` gives an empty result.
+Projects the value. An error passes through, and the lambda does not run. A selector that returns `null` gives an error, because a result cannot hold `null`; return an `Option<T>` when a value may be missing.
 
 ```csharp
 Result<int> length = GetCustomer(id).Select(customer => customer.Name.Length); // 3
@@ -69,25 +67,9 @@ Result<Customer> checkedEmail = GetCustomer(id)
     .Chain(GetCustomer);
 ```
 
-## Where
-
-Keeps the value when the predicate holds. Otherwise the result becomes empty, not an error. An error passes through unchanged.
-
-```csharp
-Result<Customer> company = GetCustomer(id).Where(c => c.Email.EndsWith("@example.com"));
-```
-
-To supply a value instead of staying empty, follow it with `DefaultIfEmpty`:
-
-```csharp
-Result<Customer> orGuest = GetCustomer(id)
-    .Where(c => c.Email.EndsWith("@shop.test"))
-    .DefaultIfEmpty(new Customer(Guid.Empty, "Guest", ""));
-```
-
 ## Zip
 
-Combines two results. The first error wins, then an empty side makes the result empty. Both sides must be ok to produce a value.
+Combines two results. The first error wins. Both sides must be ok to produce a value.
 
 ```csharp
 Result<(Customer First, Cart Second)> pair =
@@ -106,7 +88,7 @@ Result<decimal> total = GetCustomer(id).Chain(GetCart).Zip(
 
 ## Ensure
 
-Checks the value and turns a failed check into an error. Where `Where` leaves the result empty, `Ensure` produces an error. An error or an empty result passes through, and the predicate does not run. You always supply the message or the exception.
+Checks the value and turns a failed check into an error. An error passes through, and the predicate does not run. You always supply the message or the exception.
 
 ```csharp
 Result<Cart> checkedCart = GetCustomer(id)
@@ -114,7 +96,7 @@ Result<Cart> checkedCart = GetCustomer(id)
     .Ensure(c => c.Items.Count > 0, "The cart is empty.");
 ```
 
-With a message the error is a `ValidationException`. To produce your own exception, pass a function:
+With a message the error is a [`ValidationError`](../validation/README.md#errors). To produce your own exception, pass a function:
 
 ```csharp
 Result<Cart> stocked = GetCustomer(id)
@@ -132,7 +114,7 @@ Result<Cart> available = await GetCustomer(id)
 
 ## CombineAll
 
-Combines two to four independent results into a tuple. Unlike `Zip`, it collects every error in one flat `AggregateException`. When nothing failed but one side is empty, the result is empty.
+Combines two to four independent results into a tuple. Unlike `Zip`, it collects every error: a `ValidationErrors` when all of them are validation failures, otherwise a flat `AggregateException`.
 
 ```csharp
 Result<(Customer, Cart)> both = Result.CombineAll(GetCustomer(id), GetCustomer(id).Chain(GetCart));
@@ -157,17 +139,17 @@ Result<(Customer, Cart, Shipping)> context = GetCustomer(id)
     .BindAppend((customer, cart) => Shipping(cart));
 ```
 
-It stops at the first error. An error or an empty result passes through and the lambda does not run, and an empty result from the lambda makes the result empty. `BindAppendAwait` takes an asynchronous step. Both forms exist on `Task<Result<T>>` and work up to a four-element tuple.
+It stops at the first error. An error passes through and the lambda does not run. `BindAppendAwait` takes an asynchronous step. Both forms exist on `Task<Result<T>>` and work up to a four-element tuple.
 
 ## WithValue and DiscardValue
 
-`WithValue` gives a successful `Result` a value. An error passes through, and an empty result becomes an empty `Result<T>`. A `null` value throws `ArgumentNullException`.
+`WithValue` gives a successful `Result` a value. An error passes through. A `null` value throws `ArgumentNullException`.
 
 ```csharp
 Result<Order> placed = Save(known).WithValue(order);
 ```
 
-`DiscardValue` goes the other way and drops the value. An empty result stays empty.
+`DiscardValue` goes the other way and drops the value.
 
 ```csharp
 Result saved = GetCustomer(id).Chain(GetCart).DiscardValue();
@@ -177,14 +159,14 @@ Both also exist on `Task` of a result.
 
 ## Do
 
-Runs an action with the value and returns the same result. Use it for logging and other side effects. It does not run for an error or an empty result.
+Runs an action with the value and returns the same result. Use it for logging and other side effects. It does not run for an error.
 
 ```csharp
 Result<Customer> logged = GetCustomer(id)
     .Do(c => log.LogInformation("Loaded {Name}", c.Name));
 ```
 
-`Do(onNext, onError)` runs one action or the other:
+`Do(onSuccess, onError)` runs one action or the other:
 
 ```csharp
 Result<Customer> logged = GetCustomer(id).Do(
@@ -207,7 +189,7 @@ Result<string> confirmation = GetCustomer(id).Out(out var customer)
 
 - As an argument, `customer` converts implicitly to `Customer`.
 - For members, use `.Value`. Interfaces and `object` also need `.Value` as an argument.
-- After a failed or empty chain, `HasValue` is `false` and `.Value` throws `InvalidOperationException`. Check `HasValue` outside the chain.
+- After a failed chain, `HasValue` is `false` and `.Value` throws `InvalidOperationException`. Check `HasValue` outside the chain.
 
 It works in asynchronous chains without awaiting each step. The holder is filled when the task completes, before any later step runs:
 
@@ -222,28 +204,16 @@ Result<string> confirmation = await GetCustomerAsync(id).Out(out var customer)
 
 ## Finally
 
-Runs an action in every state, ok, error and empty, and returns the same result. Use it for cleanup and timing.
+Runs an action for ok and error alike, and returns the same result. Use it for cleanup and timing.
 
 ```csharp
 var sw = System.Diagnostics.Stopwatch.StartNew();
 Result<Order> timed = order.Finally(() => log.LogInformation("Checkout took {Ms} ms", sw.ElapsedMilliseconds));
 ```
 
-## DefaultIfEmpty
-
-Turns an empty result into an ok one, from a value or from a factory. Ok and error pass through. It stays a result, and a factory that throws gives an error.
-
-```csharp
-Result<Cart> empty = default;
-Result<Cart> filled = empty.DefaultIfEmpty(new Cart(id, []));
-Result<Cart> lazy = empty.DefaultIfEmpty(() => new Cart(id, []));
-```
-
-An error is not replaced. To replace an error, use [`Catch`](error-handling.md#catch).
-
 ## GetValueOrDefault
 
-Leaves the chain with the value. For an error or an empty result you get `default`, a fallback or the factory's result.
+Leaves the chain with the value. For an error you get `default`, a fallback or the factory's result.
 
 ```csharp
 Cart? maybeCart = GetCustomer(id).Chain(GetCart).GetValueOrDefault();
@@ -270,15 +240,14 @@ Result flatPlain = nestedPlain.Unwrap();
 
 ## Match
 
-Leaves the chain with one callback per state: value, error and empty. All three are required, so no state is forgotten.
+Leaves the chain with one callback for the value and one for the error. Both are required, so neither case is forgotten.
 
 ```csharp
 string text = order.Match(
-    o => $"Order total {o.Total}",
-    e => $"Failed: {e.Message}",
-    () => "No order");
+    onSuccess: o => $"Order total {o.Total}",
+    onError: e => $"Failed: {e.Message}");
 
-int status = Save(known).Match(() => 204, e => 500, () => 404);
+int status = Save(known).Match(() => 204, e => 500);
 ```
 
 On a `Result`, the first callback takes no argument. `Match` also works on `Task<Result<T>>`, so `await LoadOrderAsync(id).Match(...)` ends an asynchronous pipeline. An exception thrown by a callback propagates.
@@ -286,8 +255,8 @@ On a `Result`, the first callback takes no argument. `Match` also works on `Task
 ## Pitfalls
 
 - `Select` with a function that returns a result nests. Use `Chain`.
-- `Where` leaves the result empty, not in error. A later `Catch` does not see it. Use `DefaultIfEmpty` or `Match`.
-- `Do` does not run for errors. Use `OnErrorDo` or `Do(onNext, onError)`.
+- A `default` result is an error, not a value. Initialize every result you return.
+- `Do` does not run for errors. Use `OnErrorDo` or `Do(onSuccess, onError)`.
 
 ## See also
 

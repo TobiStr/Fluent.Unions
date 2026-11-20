@@ -1,10 +1,9 @@
 # Operations
 
-This page covers the operators on `Option<T>`. They live in `Fluent.Unions.Extensions` and are named after LINQ and Rx.NET.
+This page covers the operators on `Option<T>`. They live in `Fluent.Unions` and are named after LINQ and Rx.NET.
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 Every operator that takes a value runs only when the option holds one. A `None` or `default` option passes through as `None`.
@@ -59,8 +58,8 @@ These run side effects and return the same option.
 
 | Operator | Runs |
 | --- | --- |
-| `Do(onNext)` | `onNext` with the value |
-| `Do(onNext, onNone)` | `onNext` with the value, or `onNone` |
+| `Do(onSome)` | `onSome` with the value |
+| `Do(onSome, onNone)` | `onSome` with the value, or `onNone` |
 | `OnNoneDo(onNone)` | `onNone` when there is no value |
 | `Finally(action)` | `action` in both cases |
 

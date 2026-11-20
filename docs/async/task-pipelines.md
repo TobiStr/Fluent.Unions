@@ -4,7 +4,6 @@ This page covers the `Task` overloads of the operators, the `...Await` variants,
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## Task overloads
@@ -13,7 +12,7 @@ The operators exist on `Task<Result<T>>`, `Task<Result>` and `Task<Option<T>>` w
 
 ```csharp
 Result<string> name = await LoadCustomerAsync(id)       // Task<Result<Customer>>
-    .Where(customer => customer.Age >= 18)
+    .Ensure(customer => customer.Age >= 18, "The customer must be an adult.")
     .Do(customer => logger.LogInformation("Found {Name}", customer.Name))
     .Select(customer => customer.Name)
     .Catch(e => "unknown");
@@ -27,7 +26,7 @@ Option<string> nickname = await FindCustomerAsync(id)   // Task<Option<Customer>
     .DefaultIfEmpty("none");
 ```
 
-**A faulted task becomes an error result.** Every result operator, and `Result.TryAsync`, turns the task's exception into the error. This includes `OperationCanceledException`.
+**A faulted task becomes an error result.** Every result operator, and `Result.TryAsync`, turns the task's exception into the error. A cancelled task is the exception: its `OperationCanceledException` propagates, as everywhere else in .NET.
 
 ```csharp
 Result<int> result = await Task.FromException<Result<int>>(new IOException("disk"))
@@ -151,7 +150,7 @@ async Task<Result<Customer>> LoadAsync(Guid id, CancellationToken ct) =>
         .ChainAwait(customer => EnrichAsync(customer, ct));
 ```
 
-- A cancelled operation inside a result pipeline becomes an error holding the `OperationCanceledException`. Later steps are skipped, and the pipeline still completes. For options, the exception propagates.
+- A cancelled operation throws `OperationCanceledException` out of the pipeline, for results and options alike. It is never turned into an error, so ASP.NET Core aborts the request instead of answering 500.
 - Check `ct.IsCancellationRequested` or call `ct.ThrowIfCancellationRequested()` in a lambda when a long synchronous step should stop early.
 - Use `Result.RetryAsync` and `CombineAsync` when you want the library to pass the token. See [concurrency and resilience](concurrency-and-resilience.md) and [streams](streams.md).
 

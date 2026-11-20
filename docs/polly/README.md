@@ -42,9 +42,8 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 | --- | --- |
 | the operation returns an Ok result | that result |
 | the operation returns an error result | that result, after the strategies ran |
-| the operation returns an empty result | empty |
 | the operation or a strategy throws | error holding the exception |
-| the token is cancelled | error holding an `OperationCanceledException` |
+| the token is cancelled | `OperationCanceledException` is thrown |
 
 | Member | On |
 | --- | --- |
@@ -92,9 +91,9 @@ CallResult<Payment> payment = await pipeline
 ## Rules
 
 - **Only the result state is read.** `HandleError` looks at the error in the result. Thrown exceptions stay with Polly's `Handle<TException>()`, which you can add to the same builder.
-- **Empty is not handled.** An empty result is never retried, like `Result.Retry`.
+- **Cancellation is not an error.** A cancelled token throws `OperationCanceledException`, as everywhere in .NET.
 - **The predicate is a lambda.** `HandleError(error => error is TimeoutException)` takes a `Func<Exception, bool>`. For a custom type it takes a `Func<TError, bool>`.
-- **Exceptions are captured.** `ExecuteResultAsync` does not throw for an operation or strategy failure. Use `ToResult` on an `Outcome` for the same rule in your own callbacks.
+- **Exceptions are captured.** `ExecuteResultAsync` does not throw for an operation or strategy failure, except for cancellation. Use `ToResult` on an `Outcome` for the same rule in your own callbacks.
 - **No sync form yet.** Only the async `ExecuteResultAsync` exists.
 
 ---

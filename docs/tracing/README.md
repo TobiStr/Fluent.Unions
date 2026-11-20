@@ -1,6 +1,6 @@
 # Tracing
 
-`RecordResult` (namespace `Fluent.Unions.Extensions`, in the core package) copies the outcome of a result onto a `System.Diagnostics.Activity`, so a span shows whether an operation worked and why it failed. It needs no extra package.
+`RecordResult` (namespace `Fluent.Unions`, in the core package) copies the outcome of a result onto a `System.Diagnostics.Activity`, so a span shows whether an operation worked and why it failed. It needs no extra package.
 
 ## In this section
 
@@ -38,7 +38,7 @@ activity.RecordResult(order);
 | error | `Error` | the exception message | yes, through `AddException` |
 | `Result<T, TError>` error that is an exception | `Error` | the exception message | yes |
 | `Result<T, TError>` error that is not an exception | `Error` | the message of a `ResultErrorException` holding the error | yes, as `ResultErrorException` |
-| empty result | `Error` | `Result is empty` | no |
+| `default` result | `Error` | the message of the `InvalidOperationException` it holds | yes |
 | `null` activity | nothing | | no |
 
 `RecordResult` has overloads for `Result`, `Result<T>` and `Result<T, TError>`.
@@ -47,6 +47,5 @@ activity.RecordResult(order);
 
 - Your operations return results and you want the span status to follow without a `try`/`catch`.
 - You want failed spans to carry the exception type and message in tracing tools.
-- You treat an empty result as a failure worth seeing in a trace.
 
 Back to index: [Docs index](../README.md)

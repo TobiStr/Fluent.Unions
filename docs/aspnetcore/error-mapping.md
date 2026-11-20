@@ -8,25 +8,26 @@ The status code comes from the type of the exception. Without configuration:
 
 | Exception | Status |
 | --- | --- |
-| `ArgumentException` (and subclasses such as `ArgumentNullException`) | 400 |
-| `AggregateException`, as produced by `Validate` | 400, with every message under `errors` |
+| `ValidationError`, `ValidationErrors` | 400, as `ValidationProblemDetails` with every message under `errors` |
 | `KeyNotFoundException` | 404 |
 | `UnauthorizedAccessException` | 403 |
 | `TimeoutException` | 504 |
 | anything else | 500 |
 
+The defaults are deliberately narrow. `ArgumentException`, `InvalidOperationException` and `AggregateException` are not mapped, because they usually signal a bug or an infrastructure failure, not a bad request: an exception thrown inside a lambda becomes the error, and it must not turn into a 400 that shows internal text to the client.
+
 `ToHttpResult` and the [endpoint filter](endpoint-filter.md) both use this table.
 
 ## Changing the mapping
 
-`ResultHttpOptions` is configured with the options pattern. `Map<TException>(statusCode)` returns the options, so calls chain:
+`ResultHttpOptions` is configured with the options pattern. `Map<TException>(statusCode, exposeMessage)` returns the options, so calls chain:
 
 ```csharp
 using Fluent.Unions.AspNetCore;
 
 builder.Services.Configure<ResultHttpOptions>(o => o
-    .Map<OrderShippedException>(StatusCodes.Status409Conflict)
-    .Map<ValidationException>(StatusCodes.Status422UnprocessableEntity));
+    .Map<OrderShippedException>(StatusCodes.Status409Conflict, exposeMessage: true)
+    .Map<ValidationErrors>(StatusCodes.Status422UnprocessableEntity));
 ```
 
 A new mapping applies to the exception type and all its subclasses. Mapping an exception that already has a default replaces the default.
@@ -43,24 +44,29 @@ If `ResultHttpOptions` is not configured, the defaults above apply. `GetStatusCo
 The lookup starts at the exception's own type and walks up its base types. The first mapping it finds wins. A mapping for a subclass overrides the mapping for its base:
 
 ```csharp
-builder.Services.Configure<ResultHttpOptions>(o => o.Map<ArgumentNullException>(422));
+builder.Services.Configure<ResultHttpOptions>(o => o
+    .Map<DomainException>(400, exposeMessage: true)
+    .Map<OrderNotFoundException>(404, exposeMessage: true));
 ```
 
 | Error | Status |
 | --- | --- |
-| `ArgumentNullException` | 422, the specific mapping |
-| `ArgumentOutOfRangeException` | 400, the mapping of `ArgumentException` |
+| `OrderNotFoundException : DomainException` | 404, the specific mapping |
+| `CreditLimitExceededException : DomainException` | 400, the mapping of `DomainException` |
 
 ## What the response contains
 
 An error becomes `ProblemDetails` with the mapped status code as `status`.
 
-- **`detail` for 4xx only.** The exception message is written to `detail` when the mapped status is 400 to 499. For any other status, including every 500 and 504, the message is not exposed. This depends on the status code, not on the exception type: an exception that you map to 409 exposes its message, and an `ArgumentException` that you map to 500 does not.
+- **`detail` only when you allow it.** The exception message is written to `detail` only for a type mapped with `exposeMessage: true`. The built-in mappings for 404, 403 and 504 do not expose it, and unmapped errors (500) never do. Validation errors always list their messages, because they are written for the client.
 - **No stack trace, ever.** Neither the stack trace nor the exception type is written.
 
 ```csharp
 ((Result<int>)new KeyNotFoundException("No order 7")).ToHttpResult();
-// 404, "detail": "No order 7"
+// 404, no "detail"
+
+((Result<int>)new OrderShippedException("Order 7 has shipped.")).ToHttpResult();
+// 409, "detail": "Order 7 has shipped." (mapped with exposeMessage: true)
 
 ((Result<int>)new InvalidOperationException("Connection string secret")).ToHttpResult();
 // 500, no "detail"
@@ -74,24 +80,25 @@ LoadOrderAsync(id).OnErrorDo(e => logger.LogError(e, "Loading order {Id} failed"
 
 ## Validation errors
 
-`Validate` runs every rule and collects the failures in one `AggregateException`, so there is always the same error type. The mapping is on the `AggregateException`, so the status is 400 by default. Each inner exception message is listed under `errors`:
+`Ensure(predicate, message)` and the ready-made rules fail with a `ValidationError`, and `Validate` collects every failure in one `ValidationErrors`. Both become a `ValidationProblemDetails` with the messages grouped by member name:
 
 ```csharp
-var result = ((Result<int>)1).Validate(
-    _ => new ValidationException("A"),
-    _ => new ValidationException("B"));
+Result<SignUp> result = Result.From(form).Validate(
+    f => f.Email.EnsureMatchesEmail(),
+    f => f.Age.EnsureInRange(18, 120));
 
 result.ToHttpResult();
-// 400, "detail": "One or more errors occurred. (A) (B)", "errors": ["A", "B"]
+// 400, "errors": { "Email": ["Email must be a valid email address."], "Age": ["Age must be between 18 and 120."] }
 ```
 
-- **Map `AggregateException`, not the inner type.** `Map<ValidationException>(422)` does not change a `Validate` response, because the error is the aggregate. To change the status of validation failures, map `AggregateException`.
-- **`errors` follows the status.** The list is written only when the mapped status is 4xx. If you map `AggregateException` to 500, neither `detail` nor `errors` appear.
-- **`detail` repeats the messages.** It holds the aggregate's own message, which includes every inner message. Clients should read `errors`.
+- **One shape for one failure or many.** A single `ValidationError` gives the same body with one entry.
+- **Messages without a member** use the key `""`.
+- **Change the status** with `Map<ValidationErrors>(422)` and `Map<ValidationError>(422)`; the body stays a validation problem.
+- **A mixed failure is not a validation problem.** When a rule throws another exception, `Validate` returns an `AggregateException`, which gives 500 without details.
 
 ## ProblemDetails integration
 
-The response is written with ASP.NET Core's `TypedResults.Problem`. When you call `AddProblemDetails()`, the body goes through `IProblemDetailsService`, so its customization applies to the errors too:
+The response is written with ASP.NET Core's `Results.Problem` and `Results.ValidationProblem`. When you call `AddProblemDetails()`, the body goes through `IProblemDetailsService`, so its customization applies to the errors too:
 
 ```csharp
 builder.Services.AddProblemDetails(o =>
@@ -136,16 +143,16 @@ Add a case to `CheckoutError` and the `switch` no longer compiles until you map 
 
 ## Pitfalls
 
-- **Messages of 4xx errors are public.** Do not put internal details into the message of an exception you map to 4xx.
+- **Exposed messages are public.** Only pass `exposeMessage: true` for exception types whose messages you write for clients.
 - **The mapping is by exception type, not by `Result` type.** A custom `DomainException` hierarchy is mapped with one `Map<DomainException>` call and refined with `Map<NotFoundException>`.
-- **Map `AggregateException`, not `ValidationException`,** to change what `Validate` returns.
+- **Validation messages are public.** The messages of `ValidationError` reach the client. The built-in rules never echo the value itself.
 - **Errors as data bypass the options in `ToHttpResult(onError)`.** `Configure<ResultHttpOptions>` has no effect there. The [endpoint filter](endpoint-filter.md#custom-result-types) wraps such an error in a `ResultErrorException`, which the options map.
 
 ## See also
 
 - [HTTP results](http-results.md): where `ToHttpResult` is called.
 - [Custom error types](../errors/custom-error-types.md): a `DomainException` hierarchy to map.
-- `test/Fluent.Unions.AspNetCore.Tests/HttpResultTests.cs` in the repo: the status codes and the `errors` list as tests.
+- `test/Fluent.Unions.AspNetCore.Tests/HttpResultTests.cs` in the repo: the status codes and the validation problems as tests.
 
 ---
 

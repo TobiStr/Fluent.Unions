@@ -4,17 +4,16 @@ This page covers the operators on `IEnumerable<Result<T>>` that turn a batch of 
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 IEnumerable<Result<Customer>> customers = ids.Select(GetCustomer);
 ```
 
-All five operators skip empty results. None of them counts an empty result as a value or an error.
+A `default` result in the sequence counts as an error.
 
 | Operator | Returns | On errors |
 | --- | --- | --- |
 | `Combine()` | `Result<IReadOnlyList<T>>` | The first error wins. |
-| `CombineAll()` | `Result<IReadOnlyList<T>>` | Every error, in an `AggregateException`. |
+| `CombineAll()` | `Result<IReadOnlyList<T>>` | Every error, in a `ValidationErrors` or an `AggregateException`. |
 | `Partition()` | `(Values, Errors)` | Collects them, no failure. |
 | `Values()` | `IEnumerable<T>` | Ignores them. |
 | `Errors()` | `IEnumerable<Exception>` | Returns only them. |
@@ -39,13 +38,12 @@ Like `Combine`, but reports every failure. Use it for input validation, where th
 Result<IReadOnlyList<Customer>> allErrors = customers.CombineAll();
 ```
 
-On failure, the error is an `AggregateException` that holds all errors, flattened. For the example ids it holds two inner exceptions. A single failure is wrapped as well, so you can always catch one type:
+On failure, the error holds every error, flattened. When all of them are validation failures it is a `ValidationErrors`, so it maps to a 400 response; otherwise it is an `AggregateException`. A single failure is wrapped as well, so you can always match one type:
 
 ```csharp
 string summary = allErrors.Match(
     list => $"{list.Count} customers loaded",
-    e => e is AggregateException agg ? $"{agg.InnerExceptions.Count} failed" : e.Message,
-    () => "nothing");
+    e => e is AggregateException agg ? $"{agg.InnerExceptions.Count} failed" : e.Message);
 ```
 
 ## Partition
@@ -102,7 +100,6 @@ Result<IReadOnlyList<Order>> collected = await StreamOrders(ids).CombineAsync();
 
 ## Pitfalls
 
-- `Combine` and `CombineAll` skip empty results. A batch where every result is empty gives an ok result with an empty list.
 - `Result.WhenAll` reports the first error in sequence order, not the error that happened first in time.
 - Tasks started by `ids.Select(LoadOrderAsync)` begin when you enumerate. Pass the sequence straight to `Result.WhenAll` so that all of them start together, instead of awaiting inside a loop.
 

@@ -3,8 +3,8 @@
 Every public type and operator, grouped by what you do with it. Each row links to the page that explains it with examples.
 
 ```csharp
-using Fluent.Unions;               // Result, Result<T>, Option<T>, Loadable<T>, Result<T, TError>, Captured<T>
-using Fluent.Unions.Extensions;    // all operators
+using Fluent.Unions;               // Result, Result<T>, Option<T>, Loadable<T>, Result<T, TError>, ValidationError(s), and all operators
+using Fluent.Unions.Validation;    // Is and the EnsureXxx rules
 using Fluent.Unions.Abstractions;  // IResult, IErrorResult, IFromException (custom error types)
 using Fluent.Unions.Serialization; // OptionJsonConverter, ResultJsonConverter, UnionJsonConverter
 using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHttpOptions (Fluent.Unions.AspNetCore)
@@ -14,14 +14,15 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 
 | Type | Cases | Docs |
 | --- | --- | --- |
-| `Result` | `Ok` or `Exception`; `default` is empty | [Result core concepts](result/core-concepts.md) |
-| `Result<T>` | `T` or `Exception`; `default` is empty | [Result core concepts](result/core-concepts.md) |
+| `Result` | `Ok` or `Exception`; `default` counts as an error | [Result core concepts](result/core-concepts.md) |
+| `Result<T>` | `T` or `Exception`; `default` and `null` count as an error | [Result core concepts](result/core-concepts.md) |
 | `Result<T, TError>` | `T` or `TError`, where `TError` implements `IFromException<TError>` | [Errors as data](errors/errors-as-data.md) |
 | `Option<T>` | `T` or `None`; `default` holds no value either | [Option core concepts](option/core-concepts.md) |
 | `Loadable<T>` | `NotLoaded`, `Loading`, `T` or `Exception` | [Loadable](unions/loadable.md) |
 | `Captured<T>` | Holder filled by `Out(out var value)` | [Result operations](result/operations.md) |
 | `Ok`, `None`, `NotLoaded`, `Loading` | Marker structs used as cases | |
 | `ResultErrorException` | Thrown by `Check()` for errors that are not exceptions | [Errors as data](errors/errors-as-data.md) |
+| `ValidationError`, `ValidationErrors` | A failed rule with `MemberName`, and every failed rule of a value | [Validation](validation/README.md#errors) |
 
 ## Creating
 
@@ -39,7 +40,8 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `Success`, `Message`, `GetOk()`, `GetError()` | `Result`, `Result<T>`, `Result<T, TError>` (no `Message`) | [Result core concepts](result/core-concepts.md) |
+| `IsSuccess`, `IsError`, `TryGetError(out error)`, `GetError()` | `Result`, `Result<T>`, `Result<T, TError>`, and `TryGetError` on custom result types | [Result core concepts](result/core-concepts.md) |
+| `TryGetValue(out value)`, `GetValue()` | `Result<T>`, `Result<T, TError>` | [Result core concepts](result/core-concepts.md) |
 | `HasValue`, `TryGetValue(out value)`, `GetValue()` | `Option<T>` | [Option core concepts](option/core-concepts.md) |
 | `IsNotLoaded`, `IsLoading`, `HasValue`, `IsFaulted`, `TryGetValue` | `Loadable<T>` | [Loadable](unions/loadable.md) |
 | `var (value, error) = result` | `Result<T>` | [Result core concepts](result/core-concepts.md) |
@@ -51,7 +53,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | --- | --- | --- | --- | --- |
 | `Select` | yes | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Chain` / `SelectMany` | yes | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
-| `Where` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
+| `Where` | `Option<T>` | yes | yes | [Option](option/operations.md) |
 | `Zip` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Ensure(predicate, message)`, `Ensure(predicate, v => exception)`, `EnsureAwait(...)` | `Result<T>` | | yes | [Result](result/operations.md) |
 | `Result.CombineAll(a, b[, c[, d]])`, `Result.CombineAllAsync(...)` | `Result<T>` | | tasks | [Result](result/operations.md) |
@@ -123,9 +125,9 @@ Namespace `Fluent.Unions.Validation`.
 
 | Operator | On | Docs |
 | --- | --- | --- |
-| `Match(...)` | results (three callbacks), options (two), `Loadable<T>` (four), custom types | [Result](result/operations.md), [Option](option/operations.md) |
+| `Match(...)` | results and options (two callbacks), `Loadable<T>` (four), custom types | [Result](result/operations.md), [Option](option/operations.md) |
 | `GetValueOrDefault()`, `GetValueOrDefault(fallback)`, `GetValueOrDefault(() => ...)` | results, options | [Result](result/operations.md), [Option](option/operations.md) |
-| `DefaultIfEmpty(fallback)`, `DefaultIfEmpty(() => ...)` | results, options | [Result](result/operations.md), [Option](option/operations.md) |
+| `DefaultIfEmpty(fallback)`, `DefaultIfEmpty(() => ...)` | options | [Option](option/operations.md) |
 | `Check()` | results, custom types | [Error handling](result/error-handling.md) |
 | `ToNullable()` | `Option<T>` of a struct | [Option conversions](option/conversions.md) |
 
@@ -206,8 +208,8 @@ Package `Fluent.Unions.AwesomeAssertions`, namespace `Fluent.Unions.AwesomeAsser
 | --- | --- | --- |
 | `Should()` | `Result`, `Result<T>`, `Option<T>`, custom types | [AwesomeAssertions](awesome-assertions/README.md) |
 | `BeOk()`, `BeError()`, `BeError<TException>()`, `BeError<TException>(predicate)`, `BeAggregateError()` | `ResultAssertions`, `ResultAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
-| `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeOkSatisfying(assertion)`, `BeEmpty()` | `ResultAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
-| `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeError()` (with `Which`), `BeError<TCase>()`, `BeError<TCase>(predicate)`, `BeEmpty()` | `CustomResultAssertions<TSelf, T, TError>` | [AwesomeAssertions](awesome-assertions/README.md#custom-result-types) |
+| `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeOkSatisfying(assertion)` | `ResultAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
+| `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeError()` (with `Which`), `BeError<TCase>()`, `BeError<TCase>(predicate)` | `CustomResultAssertions<TSelf, T, TError>` | [AwesomeAssertions](awesome-assertions/README.md#custom-result-types) |
 | `BeSome()` (with `Which`), `BeSomeWithValue(value)`, `NotBeSomeWithValue(value)`, `BeSomeMatching(predicate)`, `BeSomeSatisfying(assertion)`, `BeNone()` | `OptionAssertions<T>` | [AwesomeAssertions](awesome-assertions/README.md) |
 | `WithMessage(pattern)`, `WithMessageContaining(text)` | `ErrorAssertions<TException>` | [AwesomeAssertions](awesome-assertions/README.md) |
 | `WithInnerCount(count)`, `WithInner<TException>()`, `WithInnerMessage(pattern)` | `AggregateErrorAssertions` | [AwesomeAssertions](awesome-assertions/README.md) |

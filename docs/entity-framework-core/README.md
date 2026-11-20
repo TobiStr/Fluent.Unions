@@ -46,7 +46,6 @@ Keep a nullable field that EF maps to the column, and expose the option as a pro
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 public class Customer
 {

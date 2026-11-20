@@ -4,7 +4,6 @@ This page covers how errors flow through a chain, how to handle them, and the fe
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## Chains never throw
@@ -23,7 +22,7 @@ You never need a `try`/`catch` around a chain. Only [`Check()`](#check) throws, 
 
 ## Catch
 
-`Catch` runs only for an error. Ok and empty results pass through. Because the union converts both values and exceptions implicitly, one operator does two jobs: recover with a value, or translate the error into another exception.
+`Catch` runs only for an error. Ok results pass through. Because the union converts both values and exceptions implicitly, one operator does two jobs: recover with a value, or translate the error into another exception.
 
 Recover with a value:
 
@@ -64,7 +63,7 @@ On a `Result`, return `Result.Ok` to recover:
 Result saved = Save(known).Catch(e => Result.Ok);
 ```
 
-An exception thrown inside the handler becomes the new error. `Catch` does not run for an empty result. Use [`DefaultIfEmpty`](operations.md#defaultifempty) for that. For asynchronous handlers use `CatchAwait`.
+An exception thrown inside the handler becomes the new error. For asynchronous handlers use `CatchAwait`.
 
 ## OnErrorDo
 
@@ -77,7 +76,7 @@ Result<Customer> logged = GetCustomer(id)
 
 ## Do with two callbacks
 
-`Do(onNext, onError)` handles both sides in one step:
+`Do(onSuccess, onError)` handles both sides in one step:
 
 ```csharp
 Result<Customer> both = GetCustomer(id).Do(
@@ -85,7 +84,7 @@ Result<Customer> both = GetCustomer(id).Do(
     e => log.LogWarning("fail"));
 ```
 
-`OnErrorDo` and `Do(onNext, onError)` count as handling the error for analyzer FLU0001. A chain ending in `Do(onNext)` does not.
+`OnErrorDo` and `Do(onSuccess, onError)` count as handling the error for analyzer FLU0001. A chain ending in `Do(onSuccess)` does not.
 
 ## Check
 
@@ -94,7 +93,7 @@ Result<Customer> both = GetCustomer(id).Do(
 ```csharp
 try
 {
-    Customer c = GetCustomer(id).Check().GetOk();
+    Customer c = GetCustomer(id).Check().GetValue();
 }
 catch (KeyNotFoundException ex)
 {
@@ -102,15 +101,15 @@ catch (KeyNotFoundException ex)
 }
 ```
 
-Use it at a boundary where an exception is the right signal, such as a handler that must throw. An empty result also throws, as `InvalidOperationException`.
+Use it at a boundary where an exception is the right signal, such as a handler that must throw.
 
 ## Try and TryAsync
 
-The way into a chain from code that throws. A thrown exception becomes the error. A `null` value gives an empty result, as in every operator.
+The way into a chain from code that throws. A thrown exception becomes the error, except `OperationCanceledException`, which propagates. A `null` value gives an error, as in every operator.
 
 ```csharp
 Result<int> quantity = Result.Try(() => int.Parse(input));
-Result<Payment> tried = await Result.TryAsync(async () => (await ChargeAsync(known)).GetOk());
+Result<Payment> tried = await Result.TryAsync(async () => (await ChargeAsync(known)).GetValue());
 ```
 
 | Body | `Try` returns | `TryAsync` body |
@@ -144,26 +143,26 @@ Result<Payment> retriedAsync = await Result.RetryAsync(
     cancellationToken: ct);
 ```
 
-An error that `shouldRetry` rejects ends the loop after one attempt. Cancellation stops retrying and gives an error holding the `OperationCanceledException`. A `maxAttempts` below 1 throws `ArgumentOutOfRangeException`. Only retry operations that are safe to repeat, such as an idempotent payment call. See [Async](../async/README.md) for timeouts and cancellation.
+An error that `shouldRetry` rejects ends the loop after one attempt. Cancellation stops retrying and throws `OperationCanceledException`. A `maxAttempts` below 1 throws `ArgumentOutOfRangeException`. Only retry operations that are safe to repeat, such as an idempotent payment call. See [Async](../async/README.md) for timeouts and cancellation.
 
 ## What still throws
 
 | Call | Throws |
 | --- | --- |
 | Any operator with a `null` lambda | `ArgumentNullException`, immediately |
-| `Check()` | the stored exception, or `InvalidOperationException` when empty |
-| `GetOk()` | `InvalidOperationException` for error and empty |
+| `Check()` | the stored exception |
+| `GetValue()` | `InvalidOperationException` for an error, with the error as `InnerException` |
 | `GetError()` | `InvalidOperationException` when the result holds no exception |
 | `Match` callbacks | whatever your callback throws |
 | `GetValueOrDefault(() => ...)` factory | whatever your factory throws |
 | `Result<T>.Ok(null)` | `ArgumentNullException` |
-| `switch` over an empty result | `SwitchExpressionException` |
+| `switch` over a `default` result | `SwitchExpressionException` |
+| Any operator whose lambda is cancelled | `OperationCanceledException` |
 
 Operators that leave the chain, `Match` and the `GetValueOrDefault` factory, do not catch because there is no result left to hold the error.
 
 ## Pitfalls
 
-- `Catch` and `OnErrorDo` do not see empty results. A `Where` that filters a value out leaves the chain empty, not failed.
 - `Catch` with an exception type needs the type on the lambda parameter: `(KeyNotFoundException e) => ...`.
 - Translating to a general `Exception` hides the cause for callers that match on type. Keep the original as the inner exception.
 

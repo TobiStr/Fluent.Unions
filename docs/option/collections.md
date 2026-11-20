@@ -4,7 +4,6 @@ This page covers the operators between sequences, dictionaries and options. They
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## FirstOrNone and LastOrNone
@@ -80,7 +79,7 @@ Option<IReadOnlyList<Product>> products = order.Skus.Select(FindProduct).Combine
 ## Pitfalls
 
 - `SingleOrNone` throws for several matches.
-- `Combine()` on options gives `None` as soon as one item is missing. On `Result<T>` sequences, empty results are skipped instead.
+- `Combine()` on options gives `None` as soon as one item is missing. On `Result<T>` sequences, `Combine()` gives the first error instead.
 - `Values()` and `Combine()` enumerate the sequence once per call. Materialize it first when enumerating twice is expensive.
 
 ## See also

@@ -11,7 +11,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 
 | Folder | What it covers |
 | --- | --- |
-| [Result](result/README.md) | `Result` and `Result<T>`: the three states, creating results, operators, error handling, collections, patterns. |
+| [Result](result/README.md) | `Result` and `Result<T>`: the two states, creating results, operators, error handling, collections, patterns. |
 | [Option](option/README.md) | `Option<T>`: values that may be missing, operators, collections, conversions, patterns. |
 | [Async](async/README.md) | `Task` pipelines, the `...Await` operators, `WhenAll`, retries, timeouts, async streams. |
 | [Validation](validation/README.md) | Running every rule and collecting every error with `Validate` and `CombineAll`, plus the rule catalogue. |

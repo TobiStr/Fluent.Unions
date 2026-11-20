@@ -4,7 +4,6 @@ This page shows how the operators combine in real code, and when a result is the
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## Railway-style pipelines
@@ -23,7 +22,7 @@ Put side effects in `Do`, transformations in `Select`, and steps that can fail i
 
 ## Query syntax
 
-`Select`, `SelectMany` and `Where` follow the LINQ query pattern, so `from` clauses work. Every earlier variable stays in scope, and `let` adds computed values:
+`Select` and `SelectMany` follow the LINQ query pattern, so `from` clauses work. A result has no `where` clause; use `Ensure` in the method chain to turn a failed check into an error. Every earlier variable stays in scope, and `let` adds computed values:
 
 ```csharp
 Result<string> label =
@@ -68,18 +67,16 @@ Deconstruction fits when you have loops or branches. See the next section.
 
 ## Early returns
 
-Deconstruct a result, check the error first, and return it. A result converts implicitly, so `return error;` is enough. Return `default` for the empty case:
+Deconstruct a result, check the error first, and return it. A result converts implicitly, so `return error;` is enough:
 
 ```csharp
 static Result<Order> Place(Guid id)
 {
     var (customer, error) = GetCustomer(id);
     if (error is not null) return error;
-    if (customer is null) return default;
 
     var (cart, cartError) = GetCart(customer);
     if (cartError is not null) return cartError;
-    if (cart is null) return default;
 
     return PlaceOrder(cart);
 }
@@ -96,7 +93,7 @@ Option<Customer> found = GetCustomer(id).ToOption();
 Result<Customer> required = Cached(id).ToResult(() => new KeyNotFoundException($"Customer {id} not found."));
 ```
 
-`ToOption()` keeps the value of an ok result and drops errors and empty results, so the error is lost. `ToResult` turns `None` into the error from the factory. `Transpose()` swaps `Option<Result<T>>` and `Result<Option<T>>`:
+`ToOption()` keeps the value of an ok result and drops the error, so the error is lost. `ToResult` turns `None` into the error from the factory. `Transpose()` swaps `Option<Result<T>>` and `Result<Option<T>>`:
 
 ```csharp
 Option<Result<Customer>> optionalResult = Cached(id).Select(c => GetCustomer(c.Id));
@@ -126,7 +123,7 @@ public class CustomerRepository : ICustomerRepository
             await Task.Delay(1);
             return store.GetValueOrNone(id)
                 .ToResult(() => new KeyNotFoundException($"Customer {id} not found."))
-                .GetOk();
+                .GetValue();
         });
 
     public Task<Result> SaveAsync(Customer customer) =>
@@ -150,7 +147,7 @@ public class CheckoutService(ICustomerRepository customers)
 }
 ```
 
-The `GetOk()` in the repository sits inside `TryAsync`, so a failed `ToResult` is turned back into an error. The `Task.Delay` stands in for a real database call. Log an error once, at the boundary where you handle it, not in every layer.
+The `GetValue()` in the repository sits inside `TryAsync`, so a failed `ToResult` is turned back into an error. The `Task.Delay` stands in for a real database call. Log an error once, at the boundary where you handle it, not in every layer.
 
 ## When not to use results
 
@@ -163,8 +160,8 @@ The `GetOk()` in the repository sits inside `TryAsync`, so a failed `ToResult` i
 ## Pitfalls
 
 - Ending a pipeline without looking at the result gives warning FLU0001. Assign it, return it or finish with `Check()`.
-- A `switch` on a result that can be empty throws at runtime. Use `Match` when empty is possible.
-- Mixing `Out` with a chain that may be empty: read `HasValue` before `.Value` outside the chain.
+- A `switch` on a `default` result throws at runtime. Always return an initialized result.
+- Mixing `Out` with a chain that may fail: read `HasValue` before `.Value` outside the chain.
 
 ## See also
 

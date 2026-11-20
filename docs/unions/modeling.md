@@ -30,7 +30,6 @@ A `Draft` has no amount and no tracking number, so no code can read one before i
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 public static Result<OrderState> Apply(OrderState state, OrderCommand command) => (state, command) switch
 {
@@ -159,7 +158,7 @@ CheckOut(Replay([new CartOpened(cartId)]));
 // error: An empty cart cannot be checked out.
 ```
 
-Reading the event out of the result works with `As`: `checkedOut.GetOk().As<CartCheckedOut>()` gives an `Option<CartCheckedOut>`.
+Reading the event out of the result works with `As`: `checkedOut.GetValue().As<CartCheckedOut>()` gives an `Option<CartCheckedOut>`.
 
 ## Commands and results in a handler
 

@@ -17,7 +17,6 @@ A `default(Loadable<T>)` counts as not loaded, so a field you forgot to initiali
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 Loadable<Order> order = Loadable.NotLoaded;
 order = Loadable.Loading;
@@ -34,10 +33,10 @@ order = new TimeoutException("The shop did not answer.");
 | `IsNotLoaded`, `IsLoading`, `HasValue`, `IsFaulted` | The current state. `IsNotLoaded` is also `true` for `default`. |
 | `TryGetValue(out value)` | `true` and the value in the loaded state only. |
 | `Select(v => ...)` | Projects the loaded value. Not loaded, loading and failed pass through. A projection that returns `null` gives not loaded. |
-| `Match(onNotLoaded, onLoading, onNext, onError)` | One callback per state, in that order. Returns a value. |
+| `Match(onNotLoaded, onLoading, onLoaded, onError)` | One callback per state, in that order. Returns a value. |
 | `GetValueOrDefault(fallback)` | The loaded value, or the fallback in every other state. |
 | `ToOption()` | The loaded value as `Option<T>`, or `None`. |
-| `result.ToLoadable()` | From a `Result<T>`: loaded for a value, failed for an error, not loaded for an empty result. |
+| `result.ToLoadable()` | From a `Result<T>`: loaded for a value, failed for an error. |
 | `await task.ToLoadable()` | From a `Task<Result<T>>`: the same, and a faulted task counts as failed. |
 
 ```csharp
@@ -64,7 +63,6 @@ Set the state to loading before the call and replace it with the outcome when th
 
 ```razor
 @using Fluent.Unions
-@using Fluent.Unions.Extensions
 
 @(order switch
 {

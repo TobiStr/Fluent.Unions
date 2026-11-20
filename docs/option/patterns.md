@@ -4,7 +4,6 @@ This page shows how options replace `null` in everyday code, and when to choose 
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## Replacing null returns
@@ -38,7 +37,7 @@ static Option<Customer> FindCustomer(Guid id) =>
         .Do(customer => cache.Store(customer));
 ```
 
-Because `Do(onNext)` runs only with a value, a miss in both sources does not store anything. This also stores a customer that was already in the cache. To store only after a database hit, put the `Do` inside the alternative:
+Because `Do(onSome)` runs only with a value, a miss in both sources does not store anything. This also stores a customer that was already in the cache. To store only after a database hit, put the `Do` inside the alternative:
 
 ```csharp
 static Option<Customer> FindCustomer(Guid id) =>

@@ -22,14 +22,12 @@ This folder has one page. The topics are below.
 ## Quick example
 
 ```csharp
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 Result<PlaceOrder> command = ParseCommand(dto).Validate(
-    c => c.Quantity > 0 ? Result.Ok : new ValidationException("Quantity must be positive."),
-    c => c.Email.Contains('@') ? Result.Ok : new ValidationException("Email is invalid."));
-// error: AggregateException with both messages, when both rules fail
+    c => c.Quantity > 0 ? Result.Ok : new ValidationError("Quantity must be positive."),
+    c => c.Email.Contains('@') ? Result.Ok : new ValidationError("Email is invalid."));
+// error: ValidationErrors with both messages, when both rules fail
 ```
 
 ## When to use
@@ -43,9 +41,9 @@ Use `Chain` instead when a step depends on the previous one, such as loading a c
 ## How Validate behaves
 
 - Every rule runs. There is no short circuit.
-- A failed validation is always an `AggregateException`, even when only one rule failed. Catch that one type.
-- A rule that throws, or returns an empty result, counts as a failure.
-- Errors and empty results pass through without running the rules.
+- A failed validation is always a `ValidationErrors`, even when only one rule failed. Match that one type.
+- A rule that throws counts as a failure. When a failure is not a `ValidationError`, the error is an `AggregateException` instead, because it is not the client's fault.
+- An error passes through without running the rules.
 
 ## Validate
 
@@ -53,8 +51,8 @@ Use `Chain` instead when a step depends on the previous one, such as loading a c
 
 ```csharp
 Result<PlaceOrder> validated = Result<PlaceOrder>.Ok(command).Validate(
-    c => c.Lines.Count > 0 ? Result.Ok : new ValidationException("The order needs a line."),
-    c => c.Email.Contains('@') ? Result.Ok : new ValidationException("Email is invalid."));
+    c => c.Lines.Count > 0 ? Result.Ok : new ValidationError("The order needs a line."),
+    c => c.Email.Contains('@') ? Result.Ok : new ValidationError("Email is invalid."));
 ```
 
 What you get back:
@@ -62,38 +60,38 @@ What you get back:
 | Input | Output |
 | --- | --- |
 | ok, every rule passes | the same result |
-| ok, one or more rules fail | error: `AggregateException` with every failure |
+| ok, one or more rules fail | error: `ValidationErrors` with every failure |
+| ok, a rule fails with another exception | error: `AggregateException` with every failure |
 | error | the same error, rules not run |
-| empty | empty, rules not run |
 
-Because the type is always `AggregateException`, one handler works for one failure or many:
+Because the type is always `ValidationErrors`, one handler works for one failure or many:
 
 ```csharp
-validated.Catch((AggregateException e) => LogAndTranslate(e.InnerExceptions));
+validated.OnErrorDo(e => { if (e is ValidationErrors v) Log(v.ToDictionary()); });
 ```
 
-**Flattening.** Nested `AggregateException`s are flattened into one list. A rule can itself return a failed validation of a sub-object, and its errors join the list.
+**Flattening.** Nested `ValidationErrors` and `AggregateException`s are flattened into one list. A rule can itself return a failed validation of a sub-object, and its errors join the list.
 
 ```csharp
 Result<PlaceOrder> validated = Result<PlaceOrder>.Ok(command).Validate(
     c => Result<Address>.Ok(c.Address).Validate(CityIsSet, ZipIsSet), // Result<Address> converts to Result
-    c => c.Lines.Count > 0 ? Result.Ok : new ValidationException("The order needs a line."));
-// one AggregateException, holding the address errors and the line error side by side
+    c => c.Lines.Count > 0 ? Result.Ok : new ValidationError("The order needs a line."));
+// one ValidationErrors, holding the address errors and the line error side by side
 ```
 
 To reuse rules, pass named methods:
 
 ```csharp
 static Result HasLines(PlaceOrder c) =>
-    c.Lines.Count > 0 ? Result.Ok : new ValidationException("The order needs a line.");
+    c.Lines.Count > 0 ? Result.Ok : new ValidationError("The order needs a line.");
 
 static Result HasValidEmail(PlaceOrder c) =>
-    c.Email.Contains('@') ? Result.Ok : new ValidationException("Email is invalid.");
+    c.Email.Contains('@') ? Result.Ok : new ValidationError("Email is invalid.");
 
 Result<PlaceOrder> validated = Result<PlaceOrder>.Ok(command).Validate(HasLines, HasValidEmail);
 ```
 
-**Throwing and empty rules.** A rule that throws is a failure, and its exception is added to the list. A rule that returns `default` (an empty result) is a failure too, with an `InvalidOperationException("A validation rule returned an empty result.")`.
+**Throwing rules.** A rule that throws is a failure, and its exception is added to the list. A rule that returns `default` is a failure too, because a `default` result is an error.
 
 **Null rules.** Passing `null` as the rules array, or a `null` rule, throws `ArgumentNullException`.
 
@@ -111,14 +109,13 @@ Result<PlaceOrder> order = await ParseCommandAsync(request).Validate(HasLines, H
 - `Ensure<Name>` methods wrap those predicates and return a `Result<T>` with a message and a member name.
 
 ```csharp
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 Result<Customer> validated = Result<Customer>.Ok(customer).Validate(
     c => c.Name.EnsureNotEmpty(),
     c => c.Email.EnsureMatchesEmail(),
     c => c.Nickname.EnsureShorterThan(30));
-// error: AggregateException, "Name must not be empty." and "Email must be a valid email address."
+// error: ValidationErrors, Name: "Name must not be empty.", Email: "Email must be a valid email address."
 ```
 
 A rule returns `Result<string>`, and `Validate` takes `Func<T, Result>`. The implicit conversion from `Result<T>` to `Result` makes the lambda fit.
@@ -139,24 +136,24 @@ Result<string> name = Result<string>.Ok(input).Ensure(Is.ShorterThan(50), "The n
 | On the value | `c.Name.EnsureNotEmpty()` | captured from the argument expression |
 | On a `Result<string>` | `Result<string>.Ok(input).EnsureNotEmpty()` | `Value`, or the `name` argument |
 
-The value form returns a `Result<string>` for the value and treats `null` as an error. The `Result<T>` form is for chains: an error or empty result passes through unchanged and the rule does not run. On a `Result<T>` receiver the `Result<T>` form always wins.
+The value form returns a `Result<string>` for the value and treats `null` as an error. The `Result<T>` form is for chains: an error passes through unchanged and the rule does not run. On a `Result<T>` receiver the `Result<T>` form always wins.
 
 Both forms take `string? message = null` and `string? name = null`. Rules with arguments take them first, for example `EnsureShorterThan(30, message: "Too long.")`.
 
 **Messages.** Every rule has a default template such as `"{Name} must not be empty."`. Rule arguments are formatted with the invariant culture, and the value itself is never echoed. Passing `message` replaces the template word for word, so `{Name}` is not substituted. It also replaces the `null` message.
 
-**Names.** The value form captures the argument expression and keeps the last member: `c.Age` becomes `Age`, `customer.Address.Zip` becomes `Zip`, `c.Name!` becomes `Name`, a local `age` stays `age`. Anything that is not an identifier, such as `GetAge()` or a literal, becomes `Value`. The same trimming applies to an explicit `name`. A captured name also fills `ValidationResult.MemberNames`. The fallback `Value` leaves `MemberNames` empty.
+**Names.** The value form captures the argument expression and keeps the last member: `c.Age` becomes `Age`, `customer.Address.Zip` becomes `Zip`, `c.Name!` becomes `Name`, a local `age` stays `age`. Anything that is not an identifier, such as `GetAge()` or a literal, becomes `Value`. The same trimming applies to an explicit `name`. A captured name also fills `ValidationError.MemberName`. The fallback `Value` leaves `MemberName` as `null`.
 
-**Errors.** A failed rule is a `System.ComponentModel.DataAnnotations.ValidationException`. A predicate that throws, such as a regular expression that times out, becomes the error as is. A `null` value is the error `"{Name} must not be null."`.
+<a id="errors"></a>**Errors.** A failed rule is a `Fluent.Unions.ValidationError` with `Message` and `MemberName`. Several of them are collected in a `ValidationErrors`, whose `Errors` lists them and whose `ToDictionary()` groups the messages by member, the shape ASP.NET Core uses for validation problems. A predicate that throws, such as a regular expression that times out, becomes the error as is. A `null` value is the error `"{Name} must not be null."`.
 
 **Any value.** For a rule that is not in the catalogue, `Ensure` also works on a plain value:
 
 ```csharp
 Result<int> quantity = request.Quantity.Ensure(q => q % 6 == 0, "Quantity must be a multiple of six.");
-// error: ValidationException, MemberNames = ["Quantity"]
+// error: ValidationError, MemberName = "Quantity"
 ```
 
-`Ensure(predicate, v => exception)` returns your own exception. There is no default message: you supply the message or the exception. The captured name only fills `MemberNames`.
+`Ensure(predicate, v => exception)` returns your own exception. There is no default message: you supply the message or the exception. The captured name only fills `MemberName` of the message form.
 
 Named rules are synchronous. In a `Task<Result<T>>` pipeline, use `.Ensure(Is.X, message)` from [Result operations](../result/operations.md).
 
@@ -228,7 +225,7 @@ Every row has both forms, `Ensure<Name>` on a value and on a `Result<T>`, and th
 
 ```csharp
 Result<int> age = customer.Age.EnsureInRange(18, 120);
-// error: ValidationException "Age must be between 18 and 120.", MemberNames = ["Age"]
+// error: ValidationError "Age must be between 18 and 120.", MemberName = "Age"
 ```
 
 ## General rules
@@ -250,10 +247,10 @@ These rules work on any `T`. On a `Result<T>` receiver the `Result<T>` form wins
 
 ```csharp
 Result<string> status = order.Status.EnsureIn(["PAID", "SHIPPED"]);
-// error: ValidationException "Status must be one of the allowed values."
+// error: ValidationError "Status must be one of the allowed values."
 
 Result<Option<int>> stock = Result<Option<int>>.Ok(Option.None).EnsureSome(name: "Stock");
-// error: ValidationException "Stock must have a value."
+// error: ValidationError "Stock must have a value."
 ```
 
 ## Collection rules
@@ -277,7 +274,7 @@ Every row has both forms and the predicate `Is.<Name>`. The receiver keeps its c
 
 ```csharp
 Result<List<OrderLine>> lines = order.Lines.EnsureNotEmpty().EnsureHasMaxCount(50);
-// error: ValidationException "Lines must not be empty."
+// error: ValidationError "Lines must not be empty."
 ```
 
 ## Date, time and other value rules
@@ -327,24 +324,24 @@ Every row has both forms, `Ensure<Name>` on a value and on a `Result<T>`, and th
 
 ```csharp
 Result<DateTimeOffset> placedAt = order.PlacedAt.EnsureInPastOrPresent(timeProvider);
-// error: ValidationException "PlacedAt must be in the past or present."
+// error: ValidationError "PlacedAt must be in the past or present."
 
 Result<Guid> id = order.Id.EnsureNotEmpty();
-// error: ValidationException "Id must not be empty."
+// error: ValidationError "Id must not be empty."
 ```
 
 ## CombineAll for many inputs
 
-`Validate` checks one value against many rules. `CombineAll` checks many results. It gives all values when every result is ok, or every error in an `AggregateException`. Empty results are skipped.
+`Validate` checks one value against many rules. `CombineAll` checks many results. It gives all values when every result is ok, or every error: a `ValidationErrors` when all of them are validation failures, otherwise an `AggregateException`.
 
 ```csharp
 Result<IReadOnlyList<OrderLine>> lines = dto.Lines
     .Select(ParseLine)          // Result<OrderLine> for each
     .CombineAll();
-// ok with all lines, or an AggregateException with an error per bad line
+// ok with all lines, or a ValidationErrors with an error per bad line
 ```
 
-Nested `AggregateException`s are flattened here as well.
+Nested `ValidationErrors` and `AggregateException`s are flattened here as well.
 
 ## Partition for reporting
 
@@ -359,8 +356,6 @@ if (errors.Count > 0)
 await orders.SaveAsync(lines);
 ```
 
-Empty results are skipped.
-
 ## A realistic command
 
 A handler that parses a request, validates it as a whole, and only then runs the business logic:
@@ -371,21 +366,21 @@ public record OrderLine(string Sku, int Quantity);
 
 static Result<PlaceOrder> ValidateCommand(PlaceOrder command) =>
     Result<PlaceOrder>.Ok(command).Validate(
-        c => c.CustomerId != Guid.Empty ? Result.Ok : new ValidationException("Customer is required."),
-        c => c.Email.Contains('@') ? Result.Ok : new ValidationException("Email is invalid."),
-        c => c.Lines.Count > 0 ? Result.Ok : new ValidationException("The order needs at least one line."),
-        c => c.Lines.All(l => l.Quantity > 0) ? Result.Ok : new ValidationException("Every quantity must be positive."));
+        c => c.CustomerId != Guid.Empty ? Result.Ok : new ValidationError("Customer is required."),
+        c => c.Email.Contains('@') ? Result.Ok : new ValidationError("Email is invalid."),
+        c => c.Lines.Count > 0 ? Result.Ok : new ValidationError("The order needs at least one line."),
+        c => c.Lines.All(l => l.Quantity > 0) ? Result.Ok : new ValidationError("Every quantity must be positive."));
 
 static Task<Result<Receipt>> HandleAsync(PlaceOrder command) =>
     ValidateCommand(command)
         .ChainAwait(valid => PlaceOrderAsync(valid));
 ```
 
-If the command has an invalid email and no lines, `HandleAsync` returns an error whose `AggregateException` holds two `ValidationException`s. `PlaceOrderAsync` does not run.
+If the command has an invalid email and no lines, `HandleAsync` returns a `ValidationErrors` holding two `ValidationError`s. `PlaceOrderAsync` does not run.
 
 ## HTTP 400 with an errors list
 
-With the `Fluent.Unions.AspNetCore` package, an `AggregateException` maps to status 400 by default. The response is ProblemDetails with every message in an `errors` array.
+With the `Fluent.Unions.AspNetCore` package, `ValidationError` and `ValidationErrors` map to status 400 by default. The response is a `ValidationProblemDetails` with the messages grouped by member. Messages without a member use the key `""`.
 
 ```csharp
 app.MapPost("/orders", (PlaceOrder command) => HandleAsync(command).ToHttpResult());
@@ -394,30 +389,32 @@ app.MapPost("/orders", (PlaceOrder command) => HandleAsync(command).ToHttpResult
 ```json
 {
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "Bad Request",
+  "title": "One or more validation errors occurred.",
   "status": 400,
-  "detail": "One or more errors occurred. (Email is invalid.) (The order needs at least one line.)",
-  "errors": [ "Email is invalid.", "The order needs at least one line." ],
+  "errors": {
+    "Email": [ "Email must be a valid email address." ],
+    "Lines": [ "Lines must not be empty." ]
+  },
   "traceId": "0HNQ5NHDL69CD"
 }
 ```
 
-The `errors` array exists only for client errors (4xx) whose error is an `AggregateException`. If you remap `AggregateException` to a 5xx status, the messages are not exposed. See [ASP.NET Core](../aspnetcore/README.md) for the mapping options.
+Map `ValidationErrors` to another status, such as 422, with `ResultHttpOptions`; the body stays a validation problem. See [ASP.NET Core](../aspnetcore/error-mapping.md) for the mapping options.
 
 ## Comparison with Combine
 
 | Operator | Input | On failure |
 | --- | --- | --- |
-| `Validate(rules)` | one `Result<T>` | `AggregateException` with every failed rule |
-| `CombineAll()` | many results | `AggregateException` with every error |
+| `Validate(rules)` | one `Result<T>` | `ValidationErrors` with every failed rule |
+| `CombineAll()` | many results | `ValidationErrors` (or `AggregateException`) with every error |
 | `Combine()` | many results | the first error, as is |
 | `Chain(next)` | one result | the first error, as is, later steps skipped |
 
-`Combine` is the right choice when the first error is enough, for example when loading dependencies that cannot work without each other. It returns the original exception, not an `AggregateException`. `Validate` and `CombineAll` are for reporting.
+`Combine` is the right choice when the first error is enough, for example when loading dependencies that cannot work without each other. It returns the original exception, not a collection. `Validate` and `CombineAll` are for reporting.
 
 ## Pitfalls
 
-- A validation failure is an `AggregateException` even for one rule. Code that catches `ValidationException` directly will not see it. Use `Catch((AggregateException e) => ...)` and read `InnerExceptions`.
+- A validation failure from `Validate` is a `ValidationErrors` even for one rule. Read `Errors` or `ToDictionary()`. A single `Ensure(predicate, message)` gives one `ValidationError`.
 - Rules run on the same value, in order, without short circuit. Do not write a rule that depends on an earlier rule having passed. Guard against `null` inside the rule, or validate in two steps.
 - A rule that throws is reported, not rethrown.
 - `Is` clashes with `NUnit.Framework.Is` in a test file. Add `using Is = Fluent.Unions.Validation.Is;` and write NUnit constraints as `NUnit.Framework.Is.EqualTo(...)`.

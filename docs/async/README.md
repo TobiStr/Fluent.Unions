@@ -12,10 +12,9 @@ Every operator also works on `Task<Result<T>>`, `Task<Result>` and `Task<Option<
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 Result<string> label = await LoadOrderAsync(id)
-    .Where(order => order.Items.Count > 0)
+    .Ensure(order => order.Items.Count > 0, "The order has no items.")
     .ChainAwait(order => LoadCustomerAsync(order.CustomerId))
     .Select(customer => customer.Name)
     .Catch((KeyNotFoundException _) => "unknown customer");

@@ -30,7 +30,7 @@ Cases may be any type, not only records. Use records when each case carries data
 
 ## Is and As
 
-Both helpers live in `Fluent.Unions.Extensions` and work on every union, including `Result<T>` and `Option<T>`, because every union implements .NET's `IUnion`.
+Both helpers live in `Fluent.Unions` and work on every union, including `Result<T>` and `Option<T>`, because every union implements .NET's `IUnion`.
 
 | Helper | Returns |
 | --- | --- |
@@ -39,7 +39,6 @@ Both helpers live in `Fluent.Unions.Extensions` and work on every union, includi
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 
 bool isCard = method.Is<Card>();                          // true
 Option<BankTransfer> transfer = method.As<BankTransfer>(); // None

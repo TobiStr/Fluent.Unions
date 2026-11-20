@@ -4,7 +4,6 @@ This page covers how options convert to and from nullable types, results and `Lo
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## ToOption
@@ -15,7 +14,7 @@ using Fluent.Unions.Extensions;
 | --- | --- |
 | nullable reference (`T?` where `T : class`) | `null` gives `None` |
 | nullable struct (`T?` where `T : struct`) | `null` gives `None` |
-| `Result<T>` | an error or an empty result gives `None` |
+| `Result<T>` | an error gives `None` |
 | `Loadable<T>` | anything but a loaded value gives `None` |
 
 ```csharp
@@ -86,7 +85,6 @@ Result<int> available = stock.ToResult(() => new KeyNotFoundException($"No stock
 | `None` | ok with `None` |
 | ok with a value | ok with the value |
 | error | error |
-| empty result | empty result |
 
 `Result<Option<T>>` to `Option<Result<T>>`:
 
@@ -95,7 +93,6 @@ Result<int> available = stock.ToResult(() => new KeyNotFoundException($"No stock
 | ok with `None` | `None` |
 | ok with a value | the ok result |
 | error | the error result |
-| empty result | the empty result |
 
 Transposing twice gives back the original state.
 

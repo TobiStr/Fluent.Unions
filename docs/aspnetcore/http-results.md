@@ -4,13 +4,13 @@ This page covers `ToHttpResult`, the extension methods in `Fluent.Unions.AspNetC
 
 ## Overloads
 
-| Receiver | Value | Error | Empty or `None` |
-| --- | --- | --- | --- |
-| `Result<T>` | 200 with the value | `ProblemDetails`, status from [error mapping](error-mapping.md) | 404 |
-| `Result` | 204 | `ProblemDetails` | 404 |
-| `Option<T>` | 200 with the value | not applicable | 404 |
-| `Result<T, TError>` with `onError` | 200 with the value | the response from `onError` | 404 |
-| a custom type that implements `IResult<TSelf, T, TError>`, with `onError` | 200 with the value | the response from `onError` | 404 |
+| Receiver | Value | Error or `None` |
+| --- | --- | --- |
+| `Result<T>` | 200 with the value | `ProblemDetails`, status from [error mapping](error-mapping.md) |
+| `Result` | 204 | `ProblemDetails` |
+| `Option<T>` | 200 with the value | 404 for `None` |
+| `Result<T, TError>` with `onError` | 200 with the value | the response from `onError` |
+| a custom type that implements `IResult<TSelf, T, TError>`, with `onError` | 200 with the value | the response from `onError` |
 
 Each of them has a `Task` overload, so a pipeline stays one expression:
 
@@ -21,7 +21,7 @@ Each of them has a `Task` overload, so a pipeline stays one expression:
 | `Task<Option<T>>` | `ToHttpResult()` |
 | `Task<Result<T, TError>>` | `ToHttpResult(onError)` |
 
-The value is written as JSON with `TypedResults.Ok`. The 404 for an empty result has no body.
+The value is written as JSON with `TypedResults.Ok`. The 404 for `None` has no body.
 
 ## Result and Option
 
@@ -33,7 +33,7 @@ app.MapDelete("/orders/{id}", (Guid id, IOrders orders) => orders.CancelAsync(id
 app.MapGet("/products/{id}", (int id, IOrders orders) => orders.FindProductAsync(id).ToHttpResult());
 ```
 
-- `LoadOrderAsync` returns `Task<Result<Order>>`. A found order is 200, a `KeyNotFoundException` error is 404 with `ProblemDetails`.
+- `LoadOrderAsync` returns `Task<Result<Order>>`. A found order is 200, a `KeyNotFoundException` error is 404 with `ProblemDetails` (without the message, unless you map it with `exposeMessage: true`).
 - `CancelAsync` returns `Task<Result>`. Success is 204 with no body.
 - `FindProductAsync` returns `Task<Option<Product>>`. `None` is 404. An option has no error state, so it never gives `ProblemDetails`.
 
@@ -82,7 +82,7 @@ static IResult ToResponse(CheckoutError error) => error switch
 
 ## Custom result types
 
-`ToHttpResult(onError)` also works on a type that implements `IResult<TSelf, T, TError>`, such as the `Result<T>` from [custom error types](../errors/custom-error-types.md). It follows the same rules as for `Result<T, TError>`: a value gives 200, an error gives the response from `onError`, and an empty result gives 404.
+`ToHttpResult(onError)` also works on a type that implements `IResult<TSelf, T, TError>`, such as the `Result<T>` from [custom error types](../errors/custom-error-types.md). It follows the same rules as for `Result<T, TError>`: a value gives 200 and an error gives the response from `onError`.
 
 ```csharp
 app.MapGet("/customers/{id}", (Guid id) => GetCustomer(id).ToHttpResult(error => error switch
@@ -102,7 +102,6 @@ ASP.NET Core MVC executes an `IResult` returned from an action, so the same exte
 using Microsoft.AspNetCore.Mvc;
 using Fluent.Unions;
 using Fluent.Unions.AspNetCore;
-using Fluent.Unions.Extensions;
 
 [ApiController]
 [Route("api/orders")]
@@ -114,21 +113,21 @@ public class OrdersController(IOrders orders) : ControllerBase
     [HttpPost]
     public IResult Create([FromBody] string input) => orders.Parse(input)
         .Validate(
-            o => o.Number.Length > 0 ? Result.Ok : new ValidationException("Number is required."),
-            o => o.Number.Length < 20 ? Result.Ok : new ValidationException("Number is too long."))
+            o => o.Number.Length > 0 ? Result.Ok : new ValidationError("Number is required.", "Number"),
+            o => o.Number.Length < 20 ? Result.Ok : new ValidationError("Number is too long.", "Number"))
         .ToHttpResult();
 }
 ```
 
-An empty `input` makes `Validate` fail with an `AggregateException`, which gives 400 with the messages under `errors`. See [Error mapping](error-mapping.md#validation-errors).
+An empty `input` makes `Validate` fail with a `ValidationErrors`, which gives 400 with a `ValidationProblemDetails` that lists the messages under `errors.Number`. See [Error mapping](error-mapping.md#validation-errors).
 
 ## Pitfalls
 
 - **A result is not serializable.** Do not return a `Result<T>` from a minimal API without `ToHttpResult` or the [endpoint filter](endpoint-filter.md). `JsonSerializer` throws for it.
-- **Empty is 404.** A `Where` that filters the value out gives an empty result, and so a 404 and not an error.
+- **Only `None` is 404.** A result never gives 404 by itself. Return a `KeyNotFoundException` error, or use `Option<T>`, for "not found".
 - **`Task<Result<T, TError>>` needs `onError` as well.** There is no overload without it.
 - **Custom result types have no `Task` overload.** Await the task and call `ToHttpResult(onError)` on the result.
-- **Only 4xx messages are exposed.** A `500` never shows the exception message, so log the error before you convert it, for example with `OnErrorDo`.
+- **Messages are hidden by default.** Only validation errors and types mapped with `exposeMessage: true` show their message, so log the error before you convert it, for example with `OnErrorDo`.
 
 ## See also
 

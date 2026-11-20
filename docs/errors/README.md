@@ -12,7 +12,6 @@ There are three ways to model a failure with Fluent.Unions. They differ in what 
 ```csharp
 using Fluent.Unions;
 using Fluent.Unions.Abstractions;
-using Fluent.Unions.Extensions;
 
 // 1. Any exception: the library's Result<T>.
 static Result<Customer> GetCustomer(Guid id) =>
@@ -42,7 +41,7 @@ Pick by who consumes the error:
 - If the type must say "this is a domain failure and nothing else", restrict it with your own result type.
 - If a caller branches on the reason and each reason carries its own data, make the reasons records.
 
-All three forms share the same operators: `Chain`, `Catch`, `Do`, `OnErrorDo`, `Finally`, `Where`, `Match` and `Check`. Some are not available on custom types, see the pages for the list.
+All three forms share the same operators: `Chain`, `Catch`, `Do`, `OnErrorDo`, `Finally`, `Ensure`, `Match` and `Check`. Some are not available on custom types, see the pages for the list.
 
 ## Rules
 

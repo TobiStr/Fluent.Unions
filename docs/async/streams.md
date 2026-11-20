@@ -4,12 +4,11 @@ This page covers the operators on `IAsyncEnumerable<Result<T>>` and `IAsyncEnume
 
 ```csharp
 using Fluent.Unions;
-using Fluent.Unions.Extensions;
 ```
 
 ## Values and Errors
 
-`Values()` streams the values of the ok results. `Errors()` streams the exceptions of the error results. Empty results appear in neither. Both are lazy and pass the cancellation token of the enumeration on.
+`Values()` streams the values of the ok results. `Errors()` streams the exceptions of the error results. A `default` result counts as an error. Both are lazy and pass the cancellation token of the enumeration on.
 
 ```csharp
 IAsyncEnumerable<Result<Product>> imports = ImportProductsAsync(file);
@@ -44,8 +43,6 @@ There is no `Errors()` or `CombineAsync()` for options.
 Result<IReadOnlyList<Product>> products = await imports.CombineAsync(cancellationToken);
 ```
 
-Empty results are skipped.
-
 ## Streaming import example
 
 An import that should keep going after bad rows, and report them at the end. Read the stream once, and split values from errors yourself:
@@ -78,7 +75,7 @@ static async Task<Result<int>> ImportAsync(Channel<string> rows, CancellationTok
         }
     }
 
-    return errors.Count == 0 ? imported : new AggregateException(errors).Flatten();
+    return errors.Count == 0 ? imported : new AggregateException(errors);
 }
 ```
 
