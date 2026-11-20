@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.Mediator</PackageId>
     <Description>Mediator integration for Fluent.Unions: pipeline behaviors that turn an exception or an invalid request into a failed Result&lt;T&gt; instead of throwing.</Description>
     <PackageTags>result;option;union;mediator;cqrs;pipeline;validation</PackageTags>
-    <PackageValidationBaselineVersion />
   </PropertyGroup>
 
   <ItemGroup>

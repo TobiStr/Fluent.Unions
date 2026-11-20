@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.MongoDB</PackageId>
     <Description>MongoDB integration for Fluent.Unions: store Option&lt;T&gt; as a value or BSON null with a BSON serializer, and refuse to serialize results.</Description>
     <PackageTags>result;option;union;mongodb;bson</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

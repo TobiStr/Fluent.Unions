@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.HotChocolate</PackageId>
     <Description>HotChocolate integration for Fluent.Unions: resolvers can return Result&lt;T&gt;, Task&lt;Result&lt;T&gt;&gt; and Option&lt;T&gt;, and an error becomes a GraphQL error or a mutation convention error.</Description>
     <PackageTags>result;option;union;hotchocolate;graphql</PackageTags>
-    <PackageValidationBaselineVersion />
   </PropertyGroup>
 
   <ItemGroup>

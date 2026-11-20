@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.NUnit</PackageId>
     <Description>NUnit integration for Fluent.Unions: constraints for the state of a Result, Result&lt;T&gt; and Option&lt;T&gt;.</Description>
     <PackageTags>result;option;union;nunit;assertions;testing</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

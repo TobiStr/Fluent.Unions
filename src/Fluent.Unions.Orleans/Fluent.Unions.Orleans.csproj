@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.Orleans</PackageId>
     <Description>Orleans integration for Fluent.Unions: serialize an Option&lt;T&gt; in grain calls and state, and refuse to serialize results.</Description>
     <PackageTags>result;option;union;orleans;serialization</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

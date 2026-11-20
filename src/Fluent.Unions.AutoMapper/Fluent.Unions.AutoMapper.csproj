@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.AutoMapper</PackageId>
     <Description>AutoMapper integration for Fluent.Unions: map Option&lt;T&gt; to and from T? and Option&lt;TSource&gt; to Option&lt;TDestination&gt;. AutoMapper is dual licensed (RPL-1.5 or commercial).</Description>
     <PackageTags>result;option;union;automapper;mapping</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

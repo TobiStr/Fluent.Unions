@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.Serilog</PackageId>
     <Description>Serilog integration for Fluent.Unions: a destructuring policy that logs results, options and loadables as structured values instead of opaque objects.</Description>
     <PackageTags>result;option;union;serilog;logging;structured-logging</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

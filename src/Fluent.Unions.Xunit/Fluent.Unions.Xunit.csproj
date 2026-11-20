@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.Xunit</PackageId>
     <Description>xUnit v3 integration for Fluent.Unions: ResultAssert and OptionAssert for Result, Result&lt;T&gt; and Option&lt;T&gt;.</Description>
     <PackageTags>result;option;union;xunit;assertions;testing</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

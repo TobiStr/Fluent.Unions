@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.Verify</PackageId>
     <Description>Verify integration for Fluent.Unions: snapshot a Result, a Result&lt;T&gt;, an Option&lt;T&gt; or a Loadable&lt;T&gt; as readable text, with the error as data and no stack trace.</Description>
     <PackageTags>result;option;union;verify;snapshot;testing</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.Grpc</PackageId>
     <Description>gRPC integration for Fluent.Unions: convert a call to a Result&lt;T&gt; so an RpcException becomes an error, and map errors to RpcException status codes on the server.</Description>
     <PackageTags>result;option;union;grpc;rpc</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

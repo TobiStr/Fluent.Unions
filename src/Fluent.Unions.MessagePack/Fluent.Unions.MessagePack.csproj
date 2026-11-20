@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.MessagePack</PackageId>
     <Description>MessagePack integration for Fluent.Unions: a formatter and resolver that write an Option&lt;T&gt; as its value or nil, and refuse to serialize results.</Description>
     <PackageTags>result;option;union;messagepack;serialization</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.Dapper</PackageId>
     <Description>Dapper integration for Fluent.Unions: map Option&lt;T&gt; to and from database NULL with Dapper type handlers.</Description>
     <PackageTags>result;option;union;dapper;sql;null</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

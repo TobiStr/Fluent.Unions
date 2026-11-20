@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.Shouldly</PackageId>
     <Description>Shouldly integration for Fluent.Unions: ShouldBeOk, ShouldBeError, ShouldBeSome and ShouldBeNone for Result, Result&lt;T&gt; and Option&lt;T&gt;.</Description>
     <PackageTags>result;option;union;shouldly;assertions;testing</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>

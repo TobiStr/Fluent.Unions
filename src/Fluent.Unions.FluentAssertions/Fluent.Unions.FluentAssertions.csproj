@@ -9,7 +9,6 @@
   <PropertyGroup>
     <PackageId>Fluent.Unions.FluentAssertions</PackageId>
     <Description>FluentAssertions integration for Fluent.Unions: assert on the state of a Result, Result&lt;T&gt; and Option&lt;T&gt;, and on the exception inside an error.</Description>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
     <PackageTags>result;option;union;fluentassertions;assertions;testing</PackageTags>
   </PropertyGroup>
 

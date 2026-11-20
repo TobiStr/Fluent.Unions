@@ -10,7 +10,6 @@
     <PackageId>Fluent.Unions.TUnit</PackageId>
     <Description>TUnit integration for Fluent.Unions: IsOk, IsError, IsSome and IsNone assertions for Result, Result&lt;T&gt; and Option&lt;T&gt;.</Description>
     <PackageTags>result;option;union;tunit;assertions;testing</PackageTags>
-    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>
