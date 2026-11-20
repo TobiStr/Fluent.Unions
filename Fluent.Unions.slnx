@@ -10,6 +10,7 @@
     <Project Path="src/Fluent.Unions.AwesomeAssertions/Fluent.Unions.AwesomeAssertions.csproj" />
     <Project Path="src/Fluent.Unions.Dapper/Fluent.Unions.Dapper.csproj" />
     <Project Path="src/Fluent.Unions.Refit/Fluent.Unions.Refit.csproj" />
+    <Project Path="src/Fluent.Unions.FluentAssertions/Fluent.Unions.FluentAssertions.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -21,5 +22,6 @@
     <Project Path="test/Fluent.Unions.AwesomeAssertions.Tests/Fluent.Unions.AwesomeAssertions.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Dapper.Tests/Fluent.Unions.Dapper.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Refit.Tests/Fluent.Unions.Refit.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.FluentAssertions.Tests/Fluent.Unions.FluentAssertions.Tests.csproj" />
   </Folder>
 </Solution>

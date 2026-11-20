@@ -25,6 +25,7 @@ dotnet add package Fluent.Unions.OpenApi   # optional: Option<T> as nullable T i
 dotnet add package Fluent.Unions.AwesomeAssertions   # optional: AwesomeAssertions for results and options
 dotnet add package Fluent.Unions.Dapper   # optional: map Option<T> to and from database NULL with Dapper
 dotnet add package Fluent.Unions.Refit   # optional: Refit API responses as Result, Result<T> and Result<Option<T>>
+dotnet add package Fluent.Unions.FluentAssertions   # optional: FluentAssertions 8 for results and options (commercial license for commercial use)
 ```
 
 Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed.
@@ -194,6 +195,7 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **AwesomeAssertions:** `Should().BeOk()`, `BeNone()` and assertions on the error.
   - **Dapper:** `Option<T>` maps to and from database `NULL`.
   - **Refit:** API responses become results, with a 404 as `None` when you ask for it.
+  - **FluentAssertions:** the same assertions for FluentAssertions 8.
   - **OpenTelemetry:** `Activity.RecordResult` sets the status and records the exception.
 
 ## Documentation
@@ -242,6 +244,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | AwesomeAssertions     | [AwesomeAssertions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/awesome-assertions/README.md)                 | Assertions for `Result`, `Result<T>`, `Option<T>` and the error inside                                                      |
 | Dapper | [Dapper](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/dapper/README.md) | `OptionHandlers.Register<T>()` maps `Option<T>` to and from database `NULL` |
 | Refit | [Refit](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/refit/README.md) | Refit API responses as `Result`, `Result<T>` and `Result<Option<T>>` |
+| FluentAssertions | [FluentAssertions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/fluent-assertions/README.md) | Assertions for `Result`, `Result<T>`, `Option<T>` and the error inside, for FluentAssertions 8 |
 | Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                                     |
 | Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013`: ignored results, async lambdas, overlapping cases and more, with code fixes                     |
 
@@ -264,6 +267,7 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions.AwesomeAssertions` | The `Fluent.Unions.AwesomeAssertions` package                                                        |
 | `src/Fluent.Unions.Dapper` | The `Fluent.Unions.Dapper` package |
 | `src/Fluent.Unions.Refit` | The `Fluent.Unions.Refit` package |
+| `src/Fluent.Unions.FluentAssertions` | The `Fluent.Unions.FluentAssertions` package |
 | `test/`                               | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/`                               | The documentation                                                                                    |
 | `assets/`                             | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |

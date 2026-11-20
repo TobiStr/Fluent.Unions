@@ -96,4 +96,5 @@ nav:
       - AwesomeAssertions: awesome-assertions/README.md
       - Dapper: dapper/README.md
       - Refit: refit/README.md
+      - FluentAssertions: fluent-assertions/README.md
   - Reference: reference.md

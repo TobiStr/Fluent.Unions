@@ -236,6 +236,20 @@ Package `Fluent.Unions.Refit`, namespace `Fluent.Unions.Refit`.
 | `ToResult<T>()` | `IApiResponse<T>`, `Task<IApiResponse<T>>`, `Task<ApiResponse<T>>` | [Refit](refit/README.md) |
 | `ToOptionalResult<T>()` | `IApiResponse<T>`, `Task<IApiResponse<T>>`, `Task<ApiResponse<T>>` | [Refit](refit/README.md) |
 
+## FluentAssertions
+
+Package `Fluent.Unions.FluentAssertions`, namespace `Fluent.Unions.FluentAssertions`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `Should()` | `Result`, `Result<T>`, `Option<T>`, custom types | [FluentAssertions](fluent-assertions/README.md) |
+| `BeOk()`, `BeError()`, `BeError<TException>()`, `BeError<TException>(predicate)`, `BeAggregateError()` | `ResultAssertions`, `ResultAssertions<T>` | [FluentAssertions](fluent-assertions/README.md) |
+| `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeOkSatisfying(assertion)` | `ResultAssertions<T>` | [FluentAssertions](fluent-assertions/README.md) |
+| `BeOk()` (with `Which`), `BeOkWithValue(value)`, `BeOkMatching(predicate)`, `BeError()` (with `Which`), `BeError<TCase>()`, `BeError<TCase>(predicate)` | `CustomResultAssertions<TSelf, T, TError>` | [FluentAssertions](fluent-assertions/README.md#custom-result-types) |
+| `BeSome()` (with `Which`), `BeSomeWithValue(value)`, `NotBeSomeWithValue(value)`, `BeSomeMatching(predicate)`, `BeSomeSatisfying(assertion)`, `BeNone()` | `OptionAssertions<T>` | [FluentAssertions](fluent-assertions/README.md) |
+| `WithMessage(pattern)`, `WithMessageContaining(text)` | `ErrorAssertions<TException>` | [FluentAssertions](fluent-assertions/README.md) |
+| `WithInnerCount(count)`, `WithInner<TException>()`, `WithInnerMessage(pattern)` | `AggregateErrorAssertions` | [FluentAssertions](fluent-assertions/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |
