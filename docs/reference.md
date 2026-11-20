@@ -270,6 +270,24 @@ Package `Fluent.Unions.NewtonsoftJson`, namespace `Fluent.Unions.NewtonsoftJson`
 | `ResultJsonConverter` | `Result`, `Result<T>`, `Result<T, TError>` | [Newtonsoft.Json](newtonsoft-json/README.md#results-refuse-to-serialize) |
 | `UnionJsonConverter` | your own unions | [Newtonsoft.Json](newtonsoft-json/README.md#your-own-unions) |
 
+## Mediator
+
+Package `Fluent.Unions.Mediator`, namespace `Fluent.Unions.Mediator`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `ExceptionToResultBehavior<TMessage, TResponse>` | pipeline behavior, `TResponse` implements `IErrorResult<TResponse, Exception>` | [Mediator and MediatR](mediator/README.md#the-behaviors) |
+| `ValidationToResultBehavior<TMessage, TResponse>` | pipeline behavior, same constraint | [Mediator and MediatR](mediator/README.md#the-behaviors) |
+
+## MediatR
+
+Package `Fluent.Unions.MediatR`, namespace `Fluent.Unions.MediatR`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `ExceptionToResultBehavior<TRequest, TResponse>` | pipeline behavior, `TResponse` implements `IErrorResult<TResponse, Exception>` | [Mediator and MediatR](mediator/README.md#the-behaviors) |
+| `ValidationToResultBehavior<TRequest, TResponse>` | pipeline behavior, same constraint | [Mediator and MediatR](mediator/README.md#the-behaviors) |
+
 ## Tracing
 
 | Member | On | Docs |

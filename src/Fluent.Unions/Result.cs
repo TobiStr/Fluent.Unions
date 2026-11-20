@@ -15,8 +15,12 @@ public readonly record struct Ok;
 /// A <c>default</c> result counts as an error.
 /// </summary>
 [JsonConverter(typeof(ResultJsonConverter))]
-public union Result(Ok, Exception)
+public union Result(Ok, Exception) : Abstractions.IErrorResult<Result, Exception>
 {
+    static Result Abstractions.IErrorResult<Result, Exception>.FromError(Exception error) => error;
+
+    static Exception Abstractions.IErrorResult<Result, Exception>.FromException(Exception exception) => exception;
+
     /// <summary>
     /// Indicates whether the result is <see cref="Ok"/>.
     /// </summary>

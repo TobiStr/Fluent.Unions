@@ -99,4 +99,5 @@ nav:
       - FluentAssertions: fluent-assertions/README.md
       - Serilog: serilog/README.md
       - Newtonsoft.Json: newtonsoft-json/README.md
+      - Mediator and MediatR: mediator/README.md
   - Reference: reference.md

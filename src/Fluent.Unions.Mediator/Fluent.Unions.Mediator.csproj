@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Fluent.Unions.Mediator</PackageId>
+    <Description>Mediator integration for Fluent.Unions: pipeline behaviors that turn an exception or an invalid request into a failed Result&lt;T&gt; instead of throwing.</Description>
+    <PackageTags>result;option;union;mediator;cqrs;pipeline;validation</PackageTags>
+    <PackageValidationBaselineVersion />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" Version="3.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluent.Unions\Fluent.Unions.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+</Project>
