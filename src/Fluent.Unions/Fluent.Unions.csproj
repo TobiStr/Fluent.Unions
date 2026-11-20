@@ -8,12 +8,13 @@
 
   <PropertyGroup>
     <PackageId>Fluent.Unions</PackageId>
-    <Description>Result, Result&lt;T&gt; and Option&lt;T&gt; built on C# unions, with fluent LINQ and Rx style operators, async support, validation, JSON support for options, custom error types, and an analyzer for unused results.</Description>
+    <Description>Result, Result&lt;T&gt; and Option&lt;T&gt; built on C# unions, with fluent LINQ and Rx style operators, async support, validation, JSON support for options, custom error types, and analyzers with code fixes for common mistakes.</Description>
     <PackageTags>result;option;maybe;union;discriminated-union;fluent;linq;rx;error-handling;railway</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <ProjectReference Include="..\Fluent.Unions.Analyzers.CodeFixes\Fluent.Unions.Analyzers.CodeFixes.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -21,7 +22,7 @@
   </PropertyGroup>
 
   <Target Name="IncludeAnalyzerInPackage">
-    <MSBuild Projects="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+    <MSBuild Projects="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj;..\Fluent.Unions.Analyzers.CodeFixes\Fluent.Unions.Analyzers.CodeFixes.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
       <Output TaskParameter="TargetOutputs" ItemName="AnalyzerAssembly" />
     </MSBuild>
     <ItemGroup>

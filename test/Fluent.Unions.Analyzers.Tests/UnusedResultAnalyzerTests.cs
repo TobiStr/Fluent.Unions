@@ -32,7 +32,7 @@ public class UnusedResultAnalyzerTests
     {
         var descriptor = new UnusedResultAnalyzer().SupportedDiagnostics.Single(d => d.Id == UnusedResultAnalyzer.DiagnosticId);
 
-        Assert.That(descriptor.HelpLinkUri, Is.EqualTo("https://tobistr.github.io/Fluent.Unions/analyzer/"));
+        Assert.That(descriptor.HelpLinkUri, Is.EqualTo("https://tobistr.github.io/Fluent.Unions/analyzer/#flu0001"));
     }
 
     [TestCase("void M(Service s) { _ = s.Save(); }")]

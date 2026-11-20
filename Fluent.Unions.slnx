@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Fluent.Unions/Fluent.Unions.csproj" />
     <Project Path="src/Fluent.Unions.Analyzers/Fluent.Unions.Analyzers.csproj" />
+    <Project Path="src/Fluent.Unions.Analyzers.CodeFixes/Fluent.Unions.Analyzers.CodeFixes.csproj" />
     <Project Path="src/Fluent.Unions.AspNetCore/Fluent.Unions.AspNetCore.csproj" />
     <Project Path="src/Fluent.Unions.FluentValidation/Fluent.Unions.FluentValidation.csproj" />
     <Project Path="src/Fluent.Unions.Polly/Fluent.Unions.Polly.csproj" />

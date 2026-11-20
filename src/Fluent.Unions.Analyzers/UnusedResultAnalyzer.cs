@@ -17,15 +17,7 @@ public sealed class UnusedResultAnalyzer : DiagnosticAnalyzer
     /// </summary>
     public const string DiagnosticId = "FLU0001";
 
-    private static readonly DiagnosticDescriptor Rule = new(
-        DiagnosticId,
-        title: "Result is not used",
-        messageFormat: "The result of '{0}' is not used",
-        category: "Usage",
-        defaultSeverity: DiagnosticSeverity.Warning,
-        isEnabledByDefault: true,
-        description: "An ignored result hides its error. Handle it, or discard it explicitly with '_ = ...'.",
-        helpLinkUri: "https://tobistr.github.io/Fluent.Unions/analyzer/");
+    private static readonly DiagnosticDescriptor Rule = Descriptors.UnusedResult;
 
     private static readonly ImmutableHashSet<string> HandlingOperators = ImmutableHashSet.Create("Check", "OnErrorDo");
 
@@ -107,58 +99,4 @@ public sealed class UnusedResultAnalyzer : DiagnosticAnalyzer
 
     private static void Report(OperationAnalysisContext context, IOperation operation, string name) =>
         context.ReportDiagnostic(Diagnostic.Create(Rule, operation.Syntax.GetLocation(), name));
-
-    private sealed class KnownTypes
-    {
-        private readonly INamedTypeSymbol result;
-        private readonly INamedTypeSymbol resultOfT;
-        private readonly INamedTypeSymbol? errorResult;
-        private readonly INamedTypeSymbol? task;
-        private readonly INamedTypeSymbol? valueTask;
-
-        private KnownTypes(Compilation compilation, INamedTypeSymbol result, INamedTypeSymbol resultOfT)
-        {
-            this.result = result;
-            this.resultOfT = resultOfT;
-            errorResult = compilation.GetTypeByMetadataName("Fluent.Unions.Abstractions.IErrorResult`2");
-            task = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task`1");
-            valueTask = compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask`1");
-        }
-
-        public IAssemblySymbol Library => result.ContainingAssembly;
-
-        public static KnownTypes? Create(Compilation compilation)
-        {
-            var result = compilation.GetTypeByMetadataName("Fluent.Unions.Result");
-            var resultOfT = compilation.GetTypeByMetadataName("Fluent.Unions.Result`1");
-
-            return result is null || resultOfT is null ? null : new KnownTypes(compilation, result, resultOfT);
-        }
-
-        public bool IsMustUse(ITypeSymbol? type)
-        {
-            type = UnwrapNullable(type);
-
-            return type switch
-            {
-                null => false,
-                ITypeParameterSymbol parameter => parameter.ConstraintTypes.Any(IsMustUse),
-                _ => Is(type, result) || Is(type, resultOfT) || errorResult is not null
-                    && (Is(type, errorResult) || type.AllInterfaces.Any(i => Is(i, errorResult)))
-            };
-        }
-
-        public bool IsTaskOfMustUse(ITypeSymbol? type) =>
-            type is INamedTypeSymbol { TypeArguments.Length: 1 } named
-            && (Is(named, task) || Is(named, valueTask))
-            && IsMustUse(named.TypeArguments[0]);
-
-        private static ITypeSymbol? UnwrapNullable(ITypeSymbol? type) =>
-            type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
-                ? nullable.TypeArguments[0]
-                : type;
-
-        private static bool Is(ITypeSymbol type, INamedTypeSymbol? definition) =>
-            definition is not null && SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, definition);
-    }
 }
