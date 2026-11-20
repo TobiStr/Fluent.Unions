@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option csharp_namespace = "Fluent.Unions.Grpc.Tests.Protos";
+
+package tests;
+
+service Lookup {
+  rpc Get (LookupRequest) returns (LookupReply);
+  rpc Upload (stream LookupRequest) returns (LookupReply);
+  rpc Watch (LookupRequest) returns (stream LookupReply);
+  rpc Chat (stream LookupRequest) returns (stream LookupReply);
+}
+
+message LookupRequest {
+  string name = 1;
+}
+
+message LookupReply {
+  string value = 1;
+}

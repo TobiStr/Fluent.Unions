@@ -107,4 +107,7 @@ nav:
       - Testing: testing/README.md
       - Mapping: mapping/README.md
       - HotChocolate: hotchocolate/README.md
+      - MessagePack: messagepack/README.md
+      - Orleans: orleans/README.md
+      - gRPC: grpc/README.md
   - Reference: reference.md

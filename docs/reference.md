@@ -343,6 +343,36 @@ Package `Fluent.Unions.HotChocolate`, namespace `Fluent.Unions.HotChocolate`.
 | --- | --- | --- |
 | `AddFluentUnions()` | `IRequestExecutorBuilder` | [HotChocolate](hotchocolate/README.md) |
 
+## MessagePack
+
+Package `Fluent.Unions.MessagePack`, namespace `Fluent.Unions.MessagePack`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `WithUnions()` | `MessagePackSerializerOptions` | [MessagePack](messagepack/README.md) |
+| `UnionsResolver.Instance` | `IFormatterResolver` | [MessagePack](messagepack/README.md) |
+| `OptionFormatter<T>` | `Option<T>` members | [MessagePack](messagepack/README.md) |
+
+## Orleans
+
+Package `Fluent.Unions.Orleans`, namespace `Fluent.Unions.Orleans`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `AddUnions()` | `ISerializerBuilder` | [Orleans](orleans/README.md) |
+| `OptionConverter<T>`, `OptionSurrogate<T>` | `Option<T>` | [Orleans](orleans/README.md) |
+
+## gRPC
+
+Package `Fluent.Unions.Grpc`, namespace `Fluent.Unions.Grpc`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `ToResult()` | `AsyncUnaryCall<T>`, `AsyncClientStreamingCall<TRequest, TResponse>` | [gRPC](grpc/README.md) |
+| `ToRpcException(options)` | `Exception` | [gRPC](grpc/README.md) |
+| `Map<T>(statusCode, exposeMessage)` | `ResultGrpcOptions` | [gRPC](grpc/README.md) |
+| `ResultServerInterceptor` | gRPC server interceptor | [gRPC](grpc/README.md) |
+
 ## Tracing
 
 | Member | On | Docs |
