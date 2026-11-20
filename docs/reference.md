@@ -216,6 +216,16 @@ Package `Fluent.Unions.AwesomeAssertions`, namespace `Fluent.Unions.AwesomeAsser
 | `WithMessage(pattern)`, `WithMessageContaining(text)` | `ErrorAssertions<TException>` | [AwesomeAssertions](awesome-assertions/README.md) |
 | `WithInnerCount(count)`, `WithInner<TException>()`, `WithInnerMessage(pattern)` | `AggregateErrorAssertions` | [AwesomeAssertions](awesome-assertions/README.md) |
 
+## Dapper
+
+Package `Fluent.Unions.Dapper`, namespace `Fluent.Unions.Dapper`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `Register<T>()` | `OptionHandlers`, registers `Option<T>` | [Dapper](dapper/README.md#registering-handlers) |
+| `RegisterCommon()` | `OptionHandlers`, registers `Option<T>` for the common database types | [Dapper](dapper/README.md#registering-handlers) |
+| `OptionTypeHandler<T>` | `SqlMapper.TypeHandler<Option<T>>` | [Dapper](dapper/README.md#what-is-mapped) |
+
 ## Tracing
 
 | Member | On | Docs |

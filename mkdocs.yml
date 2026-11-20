@@ -94,4 +94,5 @@ nav:
       - Polly: polly/README.md
       - OpenAPI: openapi/README.md
       - AwesomeAssertions: awesome-assertions/README.md
+      - Dapper: dapper/README.md
   - Reference: reference.md

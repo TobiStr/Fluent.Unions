@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Fluent.Unions.Dapper</PackageId>
+    <Description>Dapper integration for Fluent.Unions: map Option&lt;T&gt; to and from database NULL with Dapper type handlers.</Description>
+    <PackageTags>result;option;union;dapper;sql;null</PackageTags>
+    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluent.Unions\Fluent.Unions.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.100" />
+  </ItemGroup>
+
+</Project>

@@ -8,6 +8,7 @@
     <Project Path="src/Fluent.Unions.Polly/Fluent.Unions.Polly.csproj" />
     <Project Path="src/Fluent.Unions.OpenApi/Fluent.Unions.OpenApi.csproj" />
     <Project Path="src/Fluent.Unions.AwesomeAssertions/Fluent.Unions.AwesomeAssertions.csproj" />
+    <Project Path="src/Fluent.Unions.Dapper/Fluent.Unions.Dapper.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -17,5 +18,6 @@
     <Project Path="test/Fluent.Unions.Polly.Tests/Fluent.Unions.Polly.Tests.csproj" />
     <Project Path="test/Fluent.Unions.OpenApi.Tests/Fluent.Unions.OpenApi.Tests.csproj" />
     <Project Path="test/Fluent.Unions.AwesomeAssertions.Tests/Fluent.Unions.AwesomeAssertions.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Dapper.Tests/Fluent.Unions.Dapper.Tests.csproj" />
   </Folder>
 </Solution>

@@ -29,6 +29,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | [FluentValidation](fluent-validation/README.md) | The `Fluent.Unions.FluentValidation` package: run a validator and get every failure as a `Result<T>`. |
 | [OpenAPI](openapi/README.md) | The `Fluent.Unions.OpenApi` package: describe `Option<T>` as a nullable `T` in the generated OpenAPI document. |
 | [Polly](polly/README.md) | The `Fluent.Unions.Polly` package: handle a `Result<T>` error in a Polly strategy and run a pipeline that returns a result. |
+| [Dapper](dapper/README.md) | The `Fluent.Unions.Dapper` package: map `Option<T>` to and from database `NULL` with Dapper type handlers. |
 | [Tracing](tracing/README.md) | `RecordResult` copies a result onto a `System.Diagnostics.Activity`: status and exception event. |
 | [Analyzer](analyzer/README.md) | Rules for ignored results, async lambdas that escape a result, overlapping cases and more. |
 
