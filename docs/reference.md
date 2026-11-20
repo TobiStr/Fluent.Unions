@@ -326,6 +326,15 @@ Packages `Fluent.Unions.Shouldly`, `.TUnit`, `.NUnit` and `.Xunit`, namespaces o
 | `IsResult.Ok`, `Error`, `OkWith`, `ErrorWith`, `ErrorOfType<TException>()`; `IsOption.Some`, `None`, `SomeWith` | `UnionConstraint` (NUnit) | [Testing](testing/README.md#nunit) |
 | `ResultAssert.Ok`, `Error`, `Error<TException>`; `OptionAssert.Some`, `None` | `Result`, `Result<T>`, `Option<T>` (xUnit v3) | [Testing](testing/README.md#xunit) |
 
+## Mapping
+
+Packages `Fluent.Unions.Mapster` and `Fluent.Unions.AutoMapper`, namespaces `Fluent.Unions.Mapster` and `Fluent.Unions.AutoMapper`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `AddFluentUnions()` | `TypeAdapterConfig` (Mapster) | [Mapping](mapping/README.md#mapster) |
+| `AddFluentUnions()` | `IMapperConfigurationExpression` (AutoMapper) | [Mapping](mapping/README.md#automapper) |
+
 ## Tracing
 
 | Member | On | Docs |

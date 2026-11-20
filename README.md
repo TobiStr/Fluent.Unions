@@ -37,6 +37,8 @@ dotnet add package Fluent.Unions.Shouldly   # optional: ShouldBeOk and ShouldBeN
 dotnet add package Fluent.Unions.TUnit   # optional: IsOk and IsNone assertions for TUnit
 dotnet add package Fluent.Unions.NUnit   # optional: IsResult and IsOption constraints for NUnit
 dotnet add package Fluent.Unions.Xunit   # optional: ResultAssert and OptionAssert for xUnit v3
+dotnet add package Fluent.Unions.Mapster   # optional: map Option<T> to and from T? with Mapster
+dotnet add package Fluent.Unions.AutoMapper   # optional: map Option<T> to and from T? with AutoMapper (AutoMapper: RPL-1.5 or commercial)
 ```
 
 Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed.
@@ -212,6 +214,7 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **Mediator and MediatR:** pipeline behaviors that return a failed result for an exception or an invalid request.
   - **MongoDB:** `Option<T>` as a value or BSON null; results refuse to serialize.
   - **Shouldly, TUnit, NUnit and xUnit:** assertions for results and options in each test library's style.
+  - **Mapster and AutoMapper:** `Option<T>` maps to and from `T?` and between option types.
   - **OpenTelemetry:** `Activity.RecordResult` sets the status and records the exception.
 
 ## Documentation
@@ -268,6 +271,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | Swashbuckle | [Swashbuckle](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/swashbuckle.md) | `options.AddFluentUnions()` describes `Option<T>` as a nullable `T` in Swashbuckle documents |
 | NSwag | [NSwag](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/nswag.md) | `settings.AddFluentUnions()` describes `Option<T>` as a nullable `T` in NSwag documents |
 | Testing | [Testing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/testing/README.md) | Assertions for Shouldly, TUnit, NUnit and xUnit v3 |
+| Mapping | [Mapping](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mapping/README.md) | Map `Option<T>` with Mapster and AutoMapper |
 | Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                                     |
 | Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013`: ignored results, async lambdas, overlapping cases and more, with code fixes                     |
 
@@ -302,6 +306,8 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions.TUnit` | The `Fluent.Unions.TUnit` package |
 | `src/Fluent.Unions.NUnit` | The `Fluent.Unions.NUnit` package |
 | `src/Fluent.Unions.Xunit` | The `Fluent.Unions.Xunit` package |
+| `src/Fluent.Unions.Mapster` | The `Fluent.Unions.Mapster` package |
+| `src/Fluent.Unions.AutoMapper` | The `Fluent.Unions.AutoMapper` package |
 | `test/`                               | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/`                               | The documentation                                                                                    |
 | `assets/`                             | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |
