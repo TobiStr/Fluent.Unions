@@ -30,7 +30,7 @@ order = new TimeoutException("The shop did not answer.");
 
 | Member | Behavior |
 | --- | --- |
-| `IsNotLoaded`, `IsLoading`, `HasValue`, `IsFaulted` | The current state. `IsNotLoaded` is also `true` for `default`. |
+| `IsNotLoaded`, `IsLoading`, `IsLoaded`, `IsFaulted` | The current state. `IsNotLoaded` is also `true` for `default`. |
 | `TryGetValue(out value)` | `true` and the value in the loaded state only. |
 | `Select(v => ...)` | Projects the loaded value. Not loaded, loading and failed pass through. A projection that returns `null` gives not loaded. |
 | `Match(onNotLoaded, onLoading, onLoaded, onError)` | One callback per state, in that order. Returns a value. |

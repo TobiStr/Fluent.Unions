@@ -390,7 +390,6 @@ Pitfalls:
 - **Check that the answer is still wanted.** The `State.Coupon == coupon.Code` test drops a late reply for a coupon that was replaced or cleared. Without it, an old answer overwrites a newer state.
 - **Keep I/O out of `Reduce`.** A reducer that awaits cannot be replayed or tested without the service.
 - **Mutate nothing.** `Reduce` returns a new `Basket`. Use records with `with` and immutable collections.
-- **Prefer `Match` over `switch` for a `Loadable`.** In the sample build, a `switch` whose first arm is `NotLoaded or null` also caught the loading and failed states, so the later arms never ran. `Match` has no such trap.
 - **The store is not thread-safe.** It assumes one dispatcher, as in a Blazor component. Serialize calls if you share it.
 
 ## Configuration variants

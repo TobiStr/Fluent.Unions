@@ -37,7 +37,7 @@ public union Loadable<T>(NotLoaded, Loading, T, Exception)
     /// <summary>
     /// Indicates whether the data is loaded.
     /// </summary>
-    public bool HasValue => TryGetValue(out _);
+    public bool IsLoaded => TryGetValue(out _);
 
     /// <summary>
     /// Gets the loaded value, if there is one.

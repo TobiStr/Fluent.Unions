@@ -12,10 +12,10 @@ public class LoadableTests
         Loadable<int> loaded = 5;
         Loadable<int> failed = Failure;
 
-        Assert.That((notLoaded.IsNotLoaded, notLoaded.IsLoading, notLoaded.HasValue, notLoaded.IsFaulted), Is.EqualTo((true, false, false, false)));
-        Assert.That((loading.IsNotLoaded, loading.IsLoading, loading.HasValue, loading.IsFaulted), Is.EqualTo((false, true, false, false)));
-        Assert.That((loaded.IsNotLoaded, loaded.IsLoading, loaded.HasValue, loaded.IsFaulted), Is.EqualTo((false, false, true, false)));
-        Assert.That((failed.IsNotLoaded, failed.IsLoading, failed.HasValue, failed.IsFaulted), Is.EqualTo((false, false, false, true)));
+        Assert.That((notLoaded.IsNotLoaded, notLoaded.IsLoading, notLoaded.IsLoaded, notLoaded.IsFaulted), Is.EqualTo((true, false, false, false)));
+        Assert.That((loading.IsNotLoaded, loading.IsLoading, loading.IsLoaded, loading.IsFaulted), Is.EqualTo((false, true, false, false)));
+        Assert.That((loaded.IsNotLoaded, loaded.IsLoading, loaded.IsLoaded, loaded.IsFaulted), Is.EqualTo((false, false, true, false)));
+        Assert.That((failed.IsNotLoaded, failed.IsLoading, failed.IsLoaded, failed.IsFaulted), Is.EqualTo((false, false, false, true)));
         Assert.True(default(Loadable<int>).IsNotLoaded);
     }
 
@@ -81,5 +81,32 @@ public class LoadableTests
         Assert.That(((Loadable<int>)5).ToOption().GetValue(), Is.EqualTo(5));
         Assert.That(((Loadable<int>)Loadable.Loading).ToOption().Value, Is.TypeOf<None>());
         Assert.That(((Loadable<int>)5).ToString(), Is.EqualTo("5"));
+    }
+
+    [TestCase(0, "not loaded")]
+    [TestCase(1, "loading")]
+    [TestCase(2, "loaded 5")]
+    [TestCase(3, "failed")]
+    [TestCase(4, "not loaded")]
+    public void ASwitchWithANullArmFirstMatchesEveryState(int state, string expected)
+    {
+        Loadable<int> loadable = state switch
+        {
+            0 => Loadable.NotLoaded,
+            1 => Loadable.Loading,
+            2 => 5,
+            3 => new TimeoutException(),
+            _ => default
+        };
+
+        var text = loadable switch
+        {
+            NotLoaded or null => "not loaded",
+            Loading => "loading",
+            int value => $"loaded {value}",
+            Exception => "failed"
+        };
+
+        Assert.That(text, Is.EqualTo(expected));
     }
 }

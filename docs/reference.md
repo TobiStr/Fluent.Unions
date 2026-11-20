@@ -43,7 +43,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `IsSuccess`, `IsError`, `TryGetError(out error)`, `GetError()` | `Result`, `Result<T>`, `Result<T, TError>`, and `TryGetError` on custom result types | [Result core concepts](result/core-concepts.md) |
 | `TryGetValue(out value)`, `GetValue()` | `Result<T>`, `Result<T, TError>` | [Result core concepts](result/core-concepts.md) |
 | `HasValue`, `TryGetValue(out value)`, `GetValue()` | `Option<T>` | [Option core concepts](option/core-concepts.md) |
-| `IsNotLoaded`, `IsLoading`, `HasValue`, `IsFaulted`, `TryGetValue` | `Loadable<T>` | [Loadable](unions/loadable.md) |
+| `IsNotLoaded`, `IsLoading`, `IsLoaded`, `IsFaulted`, `TryGetValue` | `Loadable<T>` | [Loadable](unions/loadable.md) |
 | `var (value, error) = result` | `Result<T>` | [Result core concepts](result/core-concepts.md) |
 | `Value` | every union, from .NET's `IUnion` | [Your own unions](unions/your-own-unions.md) |
 

@@ -106,6 +106,7 @@ The converter uses reflection, like the option converter. Trimming and AOT are n
 - A `default` union reaches a `switch` without a matching arm and throws. Initialize fields and properties of union type.
 - Without `[JsonConverter(typeof(UnionJsonConverter))]`, the case name is not written.
 - `Is` and `As` check the held value's type. A subclass of `TCase` counts as a `TCase`.
+- **Do not add a `HasValue` property with another meaning.** The compiler uses a union's `HasValue` for the `null` pattern. A `HasValue` that is `false` for some cases makes `null` match those cases too. Name such a property after its meaning, as `Loadable<T>.IsLoaded` does.
 
 ## See also
 
