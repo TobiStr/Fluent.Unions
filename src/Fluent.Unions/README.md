@@ -72,13 +72,36 @@ Result<decimal> total = await LoadCustomerAsync(id)
 
 ## Integrations
 
-| Package | Purpose |
-| --- | --- |
-| [Fluent.Unions.AspNetCore](https://www.nuget.org/packages/Fluent.Unions.AspNetCore) | HTTP responses with ProblemDetails |
-| [Fluent.Unions.FluentValidation](https://www.nuget.org/packages/Fluent.Unions.FluentValidation) | FluentValidation validators as results |
-| [Fluent.Unions.Polly](https://www.nuget.org/packages/Fluent.Unions.Polly) | Polly strategies that handle results |
-| [Fluent.Unions.OpenApi](https://www.nuget.org/packages/Fluent.Unions.OpenApi) | `Option<T>` as nullable `T` in OpenAPI documents |
-| [Fluent.Unions.AwesomeAssertions](https://www.nuget.org/packages/Fluent.Unions.AwesomeAssertions) | Assertions for results and options |
+Each integration is its own package. Add only the ones you use.
+
+| Area | Package | Purpose |
+| --- | --- | --- |
+| Web APIs | [Fluent.Unions.AspNetCore](https://www.nuget.org/packages/Fluent.Unions.AspNetCore) | HTTP responses with ProblemDetails, validation errors as 400 |
+|  | [Fluent.Unions.OpenApi](https://www.nuget.org/packages/Fluent.Unions.OpenApi) | `Option<T>` as nullable `T` in Microsoft.AspNetCore.OpenApi documents |
+|  | [Fluent.Unions.Swashbuckle](https://www.nuget.org/packages/Fluent.Unions.Swashbuckle) | `Option<T>` as nullable `T` in Swashbuckle documents |
+|  | [Fluent.Unions.NSwag](https://www.nuget.org/packages/Fluent.Unions.NSwag) | `Option<T>` as nullable `T` in NSwag documents |
+|  | [Fluent.Unions.HotChocolate](https://www.nuget.org/packages/Fluent.Unions.HotChocolate) | GraphQL resolvers that return `Result<T>` and `Option<T>` |
+|  | [Fluent.Unions.Grpc](https://www.nuget.org/packages/Fluent.Unions.Grpc) | gRPC calls as results, errors as status codes |
+|  | [Fluent.Unions.Refit](https://www.nuget.org/packages/Fluent.Unions.Refit) | Refit API responses as results, a 404 as `None` |
+| Validation and messaging | [Fluent.Unions.FluentValidation](https://www.nuget.org/packages/Fluent.Unions.FluentValidation) | FluentValidation validators as results, rules for options |
+|  | [Fluent.Unions.Mediator](https://www.nuget.org/packages/Fluent.Unions.Mediator) | Mediator pipeline behaviors that return a failed result |
+|  | [Fluent.Unions.MediatR](https://www.nuget.org/packages/Fluent.Unions.MediatR) | MediatR pipeline behaviors that return a failed result |
+|  | [Fluent.Unions.Polly](https://www.nuget.org/packages/Fluent.Unions.Polly) | Polly strategies that handle results |
+| Data and serialization | [Fluent.Unions.Dapper](https://www.nuget.org/packages/Fluent.Unions.Dapper) | `Option<T>` to and from database `NULL` |
+|  | [Fluent.Unions.MongoDB](https://www.nuget.org/packages/Fluent.Unions.MongoDB) | `Option<T>` as a value or BSON null |
+|  | [Fluent.Unions.NewtonsoftJson](https://www.nuget.org/packages/Fluent.Unions.NewtonsoftJson) | Newtonsoft.Json converters for options, unions and results |
+|  | [Fluent.Unions.MessagePack](https://www.nuget.org/packages/Fluent.Unions.MessagePack) | MessagePack formatter and resolver for `Option<T>` |
+|  | [Fluent.Unions.Orleans](https://www.nuget.org/packages/Fluent.Unions.Orleans) | `Option<T>` in Orleans grain calls and state |
+|  | [Fluent.Unions.Mapster](https://www.nuget.org/packages/Fluent.Unions.Mapster) | Mapster mappings between `Option<T>` and `T?` |
+|  | [Fluent.Unions.AutoMapper](https://www.nuget.org/packages/Fluent.Unions.AutoMapper) | AutoMapper mappings between `Option<T>` and `T?` |
+| Logging | [Fluent.Unions.Serilog](https://www.nuget.org/packages/Fluent.Unions.Serilog) | Results, options and loadables as structured log values |
+| Testing | [Fluent.Unions.AwesomeAssertions](https://www.nuget.org/packages/Fluent.Unions.AwesomeAssertions) | AwesomeAssertions for results and options |
+|  | [Fluent.Unions.FluentAssertions](https://www.nuget.org/packages/Fluent.Unions.FluentAssertions) | FluentAssertions 8 for results and options |
+|  | [Fluent.Unions.Shouldly](https://www.nuget.org/packages/Fluent.Unions.Shouldly) | Shouldly assertions for results and options |
+|  | [Fluent.Unions.NUnit](https://www.nuget.org/packages/Fluent.Unions.NUnit) | NUnit constraints for results and options |
+|  | [Fluent.Unions.Xunit](https://www.nuget.org/packages/Fluent.Unions.Xunit) | xUnit v3 assertions for results and options |
+|  | [Fluent.Unions.TUnit](https://www.nuget.org/packages/Fluent.Unions.TUnit) | TUnit assertions for results and options |
+|  | [Fluent.Unions.Verify](https://www.nuget.org/packages/Fluent.Unions.Verify) | Readable Verify snapshots of results, options and loadables |
 
 ## Documentation
 
