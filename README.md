@@ -326,6 +326,7 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions.Orleans` | The `Fluent.Unions.Orleans` package |
 | `src/Fluent.Unions.Grpc` | The `Fluent.Unions.Grpc` package |
 | `src/Fluent.Unions.Verify` | The `Fluent.Unions.Verify` package |
+| `test/Fluent.Unions.Scenarios.Tests` | Real-world scenarios that show the core library end to end |
 | `test/`                               | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/`                               | The documentation                                                                                    |
 | `assets/`                             | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |

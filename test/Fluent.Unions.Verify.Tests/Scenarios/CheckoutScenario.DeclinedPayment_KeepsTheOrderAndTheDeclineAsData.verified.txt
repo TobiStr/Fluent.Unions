@@ -1,0 +1,12 @@
+﻿{
+  Ok: {
+    OrderId: 1,
+    Total: 125.0,
+    GiftNote: None,
+    Payment: {
+      Error: {
+        Reason: insufficient funds
+      }
+    }
+  }
+}

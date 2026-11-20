@@ -1,0 +1,23 @@
+﻿{
+  Error: {
+    Type: ValidationErrors,
+    Message: Email must be a valid email address. Quantity must be between 1 and 10. GiftNote must be at most 20 characters long.,
+    Errors: [
+      {
+        Type: ValidationError,
+        Message: Email must be a valid email address.,
+        MemberName: Email
+      },
+      {
+        Type: ValidationError,
+        Message: Quantity must be between 1 and 10.,
+        MemberName: Quantity
+      },
+      {
+        Type: ValidationError,
+        Message: GiftNote must be at most 20 characters long.,
+        MemberName: GiftNote
+      }
+    ]
+  }
+}

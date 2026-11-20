@@ -1,0 +1,12 @@
+﻿{
+  Ok: {
+    OrderId: 1,
+    Total: 25.0,
+    GiftNote: {
+      Some: Happy birthday
+    },
+    Payment: {
+      Ok: PAY-1
+    }
+  }
+}
