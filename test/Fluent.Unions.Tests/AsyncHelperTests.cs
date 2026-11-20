@@ -7,11 +7,11 @@ public class AsyncHelperTests
     [Test]
     public async Task WhenAllCombinesValuesInOrder()
     {
-        Task<Result<int>>[] tasks = [DelayedAsync(3, 30), DelayedAsync(1, 10), Task.FromResult(default(Result<int>))];
+        Task<Result<int>>[] tasks = [DelayedAsync(3, 30), DelayedAsync(1, 10)];
 
         var result = await Result.WhenAll(tasks);
 
-        Assert.That(result.GetOk(), Is.EqualTo(new[] { 3, 1 }));
+        Assert.That(result.GetValue(), Is.EqualTo(new[] { 3, 1 }));
     }
 
     [Test]
@@ -31,7 +31,7 @@ public class AsyncHelperTests
         Task<Result>[] ok = [Task.FromResult(Result.Ok), Task.FromResult(Result.Ok)];
         Task<Result>[] failed = [Task.FromResult(Result.Ok), Task.FromResult(Result.Error(Failure))];
 
-        Assert.True((await Result.WhenAll(ok)).Success);
+        Assert.True((await Result.WhenAll(ok)).IsSuccess);
         Assert.That((await Result.WhenAll(failed)).GetError(), Is.SameAs(Failure));
     }
 
@@ -40,7 +40,7 @@ public class AsyncHelperTests
     {
         Assert.That(await ToListAsync(Stream(1, Failure, 2).Values()), Is.EqualTo(new[] { 1, 2 }));
         Assert.That(await ToListAsync(Stream(1, Failure, 2).Errors()), Is.EqualTo(new[] { Failure }));
-        Assert.That((await Stream(1, 2).CombineAsync()).GetOk(), Is.EqualTo(new[] { 1, 2 }));
+        Assert.That((await Stream(1, 2).CombineAsync()).GetValue(), Is.EqualTo(new[] { 1, 2 }));
         Assert.That((await Stream(1, Failure, 2).CombineAsync()).GetError(), Is.SameAs(Failure));
         Assert.That(await ToListAsync(OptionStream().Values()), Is.EqualTo(new[] { 1, 3 }));
     }
@@ -60,7 +60,7 @@ public class AsyncHelperTests
 
         var result = Result.Retry<int>(() => ++calls < 3 ? Failure : calls, maxAttempts: 5);
 
-        Assert.That(result.GetOk(), Is.EqualTo(3));
+        Assert.That(result.GetValue(), Is.EqualTo(3));
         Assert.That(calls, Is.EqualTo(3));
     }
 
@@ -106,24 +106,23 @@ public class AsyncHelperTests
             return ++calls < 2 ? new TimeoutException() : calls;
         }, maxAttempts: 3, delay: TimeSpan.FromMilliseconds(1));
 
-        Assert.That(result.GetOk(), Is.EqualTo(2));
+        Assert.That(result.GetValue(), Is.EqualTo(2));
         Assert.That(calls, Is.EqualTo(2));
     }
 
     [Test]
-    public async Task RetryAsyncStopsOnCancellation()
+    public void RetryAsyncThrowsOnCancellation()
     {
         using var cancellation = new CancellationTokenSource();
         var calls = 0;
 
-        var result = await Result.RetryAsync<int>(_ =>
+        Assert.CatchAsync<OperationCanceledException>(async () => await Result.RetryAsync<int>(_ =>
         {
             calls++;
             cancellation.Cancel();
             return Task.FromResult<Result<int>>(Failure);
-        }, maxAttempts: 5, cancellationToken: cancellation.Token);
+        }, maxAttempts: 5, cancellationToken: cancellation.Token));
 
-        Assert.That(result.GetError(), Is.SameAs(Failure));
         Assert.That(calls, Is.EqualTo(1));
     }
 
@@ -137,8 +136,8 @@ public class AsyncHelperTests
         var plain = await Task.FromResult(Result.Ok).Timeout(TimeSpan.FromSeconds(5));
 
         Assert.That(timedOut.GetError(), Is.TypeOf<TimeoutException>());
-        Assert.That(inTime.GetOk(), Is.EqualTo(2));
-        Assert.True(plain.Success);
+        Assert.That(inTime.GetValue(), Is.EqualTo(2));
+        Assert.True(plain.IsSuccess);
     }
 
     private static async Task<Result<int>> DelayedAsync(int value, int milliseconds)

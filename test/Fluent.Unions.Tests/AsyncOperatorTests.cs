@@ -8,11 +8,11 @@ public class AsyncOperatorTests
     public async Task TaskPipelineStaysOneExpression()
     {
         var length = await GetNameAsync("Ada")
-            .Where(name => name.Length > 0)
+            .Ensure(name => name.Length > 0, "empty")
             .Select(name => name.Length)
             .Catch(_ => -1);
 
-        Assert.That(length.GetOk(), Is.EqualTo(3));
+        Assert.That(length.GetValue(), Is.EqualTo(3));
     }
 
     [Test]
@@ -43,10 +43,9 @@ public class AsyncOperatorTests
         var greeting = await (
             from name in GetNameAsync("Ada")
             from age in GetAgeAsync(name)
-            where age > 18
             select $"{name} ({age})");
 
-        Assert.That(greeting.GetOk(), Is.EqualTo("Ada (36)"));
+        Assert.That(greeting.GetValue(), Is.EqualTo("Ada (36)"));
     }
 
     [Test]
@@ -71,7 +70,7 @@ public class AsyncOperatorTests
             return name.Length * 12;
         });
 
-        Assert.That(age.GetOk(), Is.EqualTo(36));
+        Assert.That(age.GetValue(), Is.EqualTo(36));
     }
 
     [Test]
@@ -93,7 +92,7 @@ public class AsyncOperatorTests
     {
         var age = await GetNameAsync("Ada").SelectManyAwait(GetAgeAsync);
 
-        Assert.That(age.GetOk(), Is.EqualTo(36));
+        Assert.That(age.GetValue(), Is.EqualTo(36));
     }
 
     [Test]
@@ -101,7 +100,7 @@ public class AsyncOperatorTests
     {
         var saved = await GetNameAsync("Ada").SelectManyAwait(SaveAsync);
 
-        Assert.True(saved.Success);
+        Assert.True(saved.IsSuccess);
     }
 
     [Test]
@@ -110,7 +109,7 @@ public class AsyncOperatorTests
         var length = await GetNameAsync("Ada").Chain(name => (Result<int>)name.Length);
         var failed = await GetNameAsync(null).Chain(name => (Result<int>)name.Length);
 
-        Assert.That(length.GetOk(), Is.EqualTo(3));
+        Assert.That(length.GetValue(), Is.EqualTo(3));
         Assert.That(failed.GetError(), Is.SameAs(Failure));
     }
 
@@ -123,21 +122,9 @@ public class AsyncOperatorTests
         var saved = await GetNameAsync("Ada").ChainAwait(SaveAsync);
         var failed = await GetNameAsync(null).ChainAwait(GetAgeAsync);
 
-        Assert.That(age.GetOk(), Is.EqualTo(36));
-        Assert.True(saved.Success);
+        Assert.That(age.GetValue(), Is.EqualTo(36));
+        Assert.True(saved.IsSuccess);
         Assert.That(failed.GetError(), Is.SameAs(Failure));
-    }
-
-    [Test]
-    public async Task WhereAwaitFiltersValue()
-    {
-        Result<int> result = 5;
-
-        var kept = await result.WhereAwait(value => Task.FromResult(value > 3));
-        var dropped = await result.WhereAwait(value => Task.FromResult(value > 10));
-
-        Assert.That(kept.GetOk(), Is.EqualTo(5));
-        Assert.That(dropped.Value, Is.Null);
     }
 
     [Test]
@@ -157,7 +144,7 @@ public class AsyncOperatorTests
                 log.Add("finally");
             });
 
-        Assert.That(result.GetOk(), Is.EqualTo("Ada"));
+        Assert.That(result.GetValue(), Is.EqualTo("Ada"));
         Assert.That(log, Is.EqualTo(new[] { "next Ada", "finally" }));
     }
 
@@ -171,7 +158,7 @@ public class AsyncOperatorTests
         });
         var typed = await GetNameAsync(null).CatchAwait((IOException _) => Task.FromResult<Result<string>>("x"));
 
-        Assert.That(recovered.GetOk(), Is.EqualTo("Anonymous"));
+        Assert.That(recovered.GetValue(), Is.EqualTo("Anonymous"));
         Assert.That(typed.GetError(), Is.SameAs(Failure));
     }
 
@@ -190,8 +177,8 @@ public class AsyncOperatorTests
         var recovered = await Task.FromResult(Result.Error(Failure))
             .CatchAwait(_ => Task.FromResult(Result.Ok));
 
-        Assert.That(value.GetOk(), Is.EqualTo(42));
-        Assert.True(recovered.Success);
+        Assert.That(value.GetValue(), Is.EqualTo(42));
+        Assert.True(recovered.IsSuccess);
         Assert.That(log, Is.EqualTo(new[] { "saved" }));
     }
 
@@ -208,7 +195,7 @@ public class AsyncOperatorTests
     {
         var result = await GetNameAsync("Ada").Check();
 
-        Assert.That(result.GetOk(), Is.EqualTo("Ada"));
+        Assert.That(result.GetValue(), Is.EqualTo("Ada"));
     }
 
     private static async Task<Result<string>> GetNameAsync(string? name)

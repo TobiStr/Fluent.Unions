@@ -9,7 +9,7 @@ public class CollectionOperatorTests
     {
         Result<int>[] results = [1, 2, 3];
 
-        Assert.That(results.Combine().GetOk(), Is.EqualTo(new[] { 1, 2, 3 }));
+        Assert.That(results.Combine().GetValue(), Is.EqualTo(new[] { 1, 2, 3 }));
     }
 
     [Test]
@@ -22,21 +22,11 @@ public class CollectionOperatorTests
     }
 
     [Test]
-    public void CombineSkipsEmptyResults()
+    public void CombineTreatsDefaultResultsAsErrors()
     {
         Result<int>[] results = [1, default, 3];
 
-        Assert.That(results.Combine().GetOk(), Is.EqualTo(new[] { 1, 3 }));
-    }
-
-    [Test]
-    public void CombineSkipsValuesFilteredByWhere()
-    {
-        var evens = Enumerable.Range(1, 6)
-            .Select(number => new Result<int>(number).Where(value => value % 2 == 0))
-            .Combine();
-
-        Assert.That(evens.GetOk(), Is.EqualTo(new[] { 2, 4, 6 }));
+        Assert.That(results.Combine().GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -44,8 +34,8 @@ public class CollectionOperatorTests
     {
         var combined = Array.Empty<Result<int>>().Combine();
 
-        Assert.True(combined.Success);
-        Assert.That(combined.GetOk(), Is.Empty);
+        Assert.True(combined.IsSuccess);
+        Assert.That(combined.GetValue(), Is.Empty);
     }
 
     [Test]
@@ -68,7 +58,10 @@ public class CollectionOperatorTests
         Result<int>[] results = [1, Failure, default, 4];
 
         Assert.That(results.Values(), Is.EqualTo(new[] { 1, 4 }));
-        Assert.That(results.Errors(), Is.EqualTo(new[] { Failure }));
+        var errors = results.Errors().ToList();
+        Assert.That(errors, Has.Count.EqualTo(2));
+        Assert.That(errors[0], Is.SameAs(Failure));
+        Assert.That(errors[1].Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]

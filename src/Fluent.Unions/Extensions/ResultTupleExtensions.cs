@@ -1,4 +1,6 @@
-namespace Fluent.Unions.Extensions;
+using System.Diagnostics;
+
+namespace Fluent.Unions;
 
 /// <summary>
 /// Operators that append a value to a tuple, and that attach or discard the value of a result.
@@ -6,7 +8,7 @@ namespace Fluent.Unions.Extensions;
 public static class ResultTupleExtensions
 {
     /// <summary>
-    /// Runs a dependent step and keeps both values as a tuple. An error or empty result passes through and the
+    /// Runs a dependent step and keeps both values as a tuple. An error passes through and the
     /// selector does not run. An empty selector result makes the result empty.
     /// </summary>
     public static Result<(T, TNext)> BindAppend<T, TNext>(this Result<T> result, Func<T, Result<TNext>> selector)
@@ -51,11 +53,11 @@ public static class ResultTupleExtensions
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => error,
-            Ok => new Result<T>(value),
-            _ => default
+            Ok => Result<T>.Of(value),
+            _ => throw new UnreachableException()
         };
     }
 

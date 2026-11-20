@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using Fluent.Unions.Extensions;
 
 namespace Fluent.Unions.Validation;
 
@@ -34,9 +32,7 @@ internal static class RuleFailure
         var text = message ?? (template.StartsWith(NamePlaceholder, StringComparison.Ordinal)
             ? string.Concat(member ?? FallbackName, template.AsSpan(NamePlaceholder.Length))
             : template);
-        string[] memberNames = member is null ? [] : [member];
-
-        return new ValidationException(new ValidationResult(text, memberNames), null, null);
+        return new ValidationError(text, member);
     }
 
     internal static Result<T> Lift<T>(T? value, string? message, string? name) =>
@@ -46,7 +42,7 @@ internal static class RuleFailure
         result.Ensure(rule, _ => Create(template, message, name));
 
     internal static Result<T> Check<T>(Result<T> result, Func<Func<T, bool>> ruleFactory, string template, string? message, string? name) =>
-        result.Value is Exception or not T ? result : Check(result, ruleFactory(), template, message, name);
+        result.IsError ? result : Check(result, ruleFactory(), template, message, name);
 
     private static bool IsIdentifier(ReadOnlySpan<char> text)
     {

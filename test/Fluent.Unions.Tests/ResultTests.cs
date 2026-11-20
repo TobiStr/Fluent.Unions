@@ -7,8 +7,9 @@ public class ResultTests
     {
         var okResult = Result.Ok;
 
-        Assert.True(okResult.Success);
-        Assert.That(okResult.Message, Is.EqualTo(""));
+        Assert.True(okResult.IsSuccess);
+        Assert.False(okResult.IsError);
+        Assert.False(okResult.TryGetError(out _));
     }
 
     [Test]
@@ -18,12 +19,12 @@ public class ResultTests
         var errorResult = Result.Error(exception);
         var okResult = Result.Ok;
 
-        Assert.False(errorResult.Success);
+        Assert.False(errorResult.IsSuccess);
         Assert.That(errorResult.GetError(), Is.SameAs(exception));
-        Assert.That(errorResult.Message, Is.EqualTo("Test"));
+        Assert.That(errorResult.GetError().Message, Is.EqualTo("Test"));
 
         var ex = Assert.Throws<InvalidOperationException>(() => okResult.GetError());
-        Assert.That(ex!.Message, Is.EqualTo("Error property for this Result not set."));
+        Assert.That(ex!.Message, Is.EqualTo("The Result is successful and holds no error."));
     }
 
     [Test]
@@ -33,8 +34,8 @@ public class ResultTests
         Result errorResult = exception;
         Result okResult = new Ok();
 
-        Assert.False(errorResult.Success);
-        Assert.True(okResult.Success);
+        Assert.False(errorResult.IsSuccess);
+        Assert.True(okResult.IsSuccess);
     }
 
     [Test]
@@ -52,24 +53,26 @@ public class ResultTests
     {
         var result = default(Result);
 
-        Assert.False(result.Success);
-        Assert.That(result.Message, Is.EqualTo(""));
-        Assert.Throws<InvalidOperationException>(() => result.GetError());
+        Assert.False(result.IsSuccess);
+        Assert.True(result.IsError);
+        Assert.That(result.GetError(), Is.TypeOf<InvalidOperationException>());
+        Assert.That(result.GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
-    public void GenericGetOkTest()
+    public void GenericGetValueTest()
     {
         var okResult = Result<string>.Ok("Test");
         var errorResult = Result<string>.Error(new Exception("Test"));
 
-        Assert.True(okResult.Success);
-        Assert.That(okResult.GetOk(), Is.EqualTo("Test"));
+        Assert.True(okResult.IsSuccess);
+        Assert.That(okResult.GetValue(), Is.EqualTo("Test"));
 
-        Assert.False(errorResult.Success);
-        Assert.That(errorResult.Message, Is.EqualTo("Test"));
-        var ex = Assert.Throws<InvalidOperationException>(() => errorResult.GetOk());
-        Assert.That(ex!.Message, Does.StartWith("Operation for Result<System.String> was not successful"));
+        Assert.False(errorResult.IsSuccess);
+        Assert.That(errorResult.GetError().Message, Is.EqualTo("Test"));
+        var ex = Assert.Throws<InvalidOperationException>(() => errorResult.GetValue());
+        Assert.That(ex!.Message, Is.EqualTo("Result<String> holds an error, not a value: Test"));
+        Assert.That(ex.InnerException, Is.SameAs(errorResult.GetError()));
     }
 
     [Test]
@@ -81,7 +84,7 @@ public class ResultTests
 
         Assert.That(errorResult.GetError(), Is.SameAs(exception));
         var ex = Assert.Throws<InvalidOperationException>(() => okResult.GetError());
-        Assert.That(ex!.Message, Is.EqualTo("Error property for Result<System.String> not set."));
+        Assert.That(ex!.Message, Is.EqualTo("Result<String> holds a value, not an error."));
     }
 
     [Test]
@@ -91,9 +94,9 @@ public class ResultTests
         Result<string> errorResult = exception;
         Result<string> okResult = "Test";
 
-        Assert.False(errorResult.Success);
-        Assert.True(okResult.Success);
-        Assert.That(okResult.GetOk(), Is.EqualTo("Test"));
+        Assert.False(errorResult.IsSuccess);
+        Assert.True(okResult.IsSuccess);
+        Assert.That(okResult.GetValue(), Is.EqualTo("Test"));
     }
 
     [Test]
@@ -107,7 +110,7 @@ public class ResultTests
     {
         Result<string> name = Result.From("Ada");
 
-        Assert.That(name.GetOk(), Is.EqualTo("Ada"));
+        Assert.That(name.GetValue(), Is.EqualTo("Ada"));
         Assert.Throws<ArgumentNullException>(() => Result.From<string>(null!));
     }
 
@@ -116,9 +119,9 @@ public class ResultTests
     {
         Result<string> result = (string)null!;
 
-        Assert.False(result.Success);
-        var ex = Assert.Throws<InvalidOperationException>(() => result.GetOk());
-        Assert.That(ex!.Message, Is.EqualTo("Payload for Result<System.String> was not set."));
+        Assert.True(result.IsError);
+        Assert.That(result.GetError().Message, Does.Contain("holds neither a value nor an error"));
+        Assert.Throws<InvalidOperationException>(() => result.GetValue());
     }
 
     [Test]
@@ -126,11 +129,11 @@ public class ResultTests
     {
         var result = default(Result<string>);
 
-        Assert.False(result.Success);
-        Assert.That(result.Message, Is.EqualTo(""));
-        Assert.Throws<InvalidOperationException>(() => result.GetOk());
-        var ex = Assert.Throws<InvalidOperationException>(() => result.GetError());
-        Assert.That(ex!.Message, Is.EqualTo("Error property for Result<System.String> not set."));
+        Assert.False(result.IsSuccess);
+        Assert.True(result.IsError);
+        Assert.That(result.GetError().Message, Does.Contain("holds neither a value nor an error"));
+        var ex = Assert.Throws<InvalidOperationException>(() => result.GetValue());
+        Assert.That(ex!.InnerException!.Message, Is.EqualTo(result.GetError().Message));
     }
 
     [Test]
@@ -139,9 +142,9 @@ public class ResultTests
         Result<int> okResult = 5;
         Result<int> errorResult = new Exception("Test");
 
-        Assert.True(okResult.Success);
-        Assert.That(okResult.GetOk(), Is.EqualTo(5));
-        Assert.False(errorResult.Success);
+        Assert.True(okResult.IsSuccess);
+        Assert.That(okResult.GetValue(), Is.EqualTo(5));
+        Assert.False(errorResult.IsSuccess);
     }
 
     [Test]
@@ -177,12 +180,12 @@ public class ResultTests
         Result errorResult = errorGeneric;
         Result defaultResult = default(Result<string>);
 
-        Assert.True(okResult.Success);
-        Assert.That(okResult.Message, Is.EqualTo(""));
-        Assert.False(errorResult.Success);
-        Assert.That(errorResult.Message, Is.EqualTo("Failed"));
+        Assert.True(okResult.IsSuccess);
+        Assert.False(errorResult.IsSuccess);
+        Assert.That(errorResult.GetError().Message, Is.EqualTo("Failed"));
         Assert.That(errorResult.GetError(), Is.SameAs(errorGeneric.GetError()));
-        Assert.False(defaultResult.Success);
+        Assert.True(defaultResult.IsError);
+        Assert.That(defaultResult.GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -219,11 +222,11 @@ public class ResultTests
     }
 
     [Test]
-    public void DefaultGenericGetOkMessageTest()
+    public void DefaultGenericGetValueMessageTest()
     {
-        var ex = Assert.Throws<InvalidOperationException>(() => default(Result<string>).GetOk());
+        var ex = Assert.Throws<InvalidOperationException>(() => default(Result<string>).GetValue());
 
-        Assert.That(ex!.Message, Is.EqualTo("Payload for Result<System.String> was not set."));
+        Assert.That(ex!.InnerException!.Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -231,9 +234,9 @@ public class ResultTests
     {
         var result = default(Result<int>);
 
-        Assert.False(result.Success);
-        var ex = Assert.Throws<InvalidOperationException>(() => result.GetOk());
-        Assert.That(ex!.Message, Is.EqualTo("Payload for Result<System.Int32> was not set."));
+        Assert.True(result.IsError);
+        var ex = Assert.Throws<InvalidOperationException>(() => result.GetValue());
+        Assert.That(ex!.InnerException!.Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -241,8 +244,8 @@ public class ResultTests
     {
         Result<int> result = 0;
 
-        Assert.True(result.Success);
-        Assert.That(result.GetOk(), Is.EqualTo(0));
+        Assert.True(result.IsSuccess);
+        Assert.That(result.GetValue(), Is.EqualTo(0));
     }
 
     [Test]
@@ -264,8 +267,8 @@ public class ResultTests
         Result okResult = okGeneric;
         Result errorResult = errorGeneric;
 
-        Assert.True(okResult.Success);
-        Assert.False(errorResult.Success);
+        Assert.True(okResult.IsSuccess);
+        Assert.False(errorResult.IsSuccess);
         Assert.That(errorResult.GetError(), Is.SameAs(errorGeneric.GetError()));
     }
 
@@ -275,17 +278,18 @@ public class ResultTests
         Result<int> okResult = 5;
         Result<int> errorResult = new ArgumentException("Failed");
 
-        Assert.That(okResult.Check().GetOk(), Is.EqualTo(5));
+        Assert.That(okResult.Check().GetValue(), Is.EqualTo(5));
         Assert.Throws<ArgumentException>(() => errorResult.Check());
         Assert.Throws<InvalidOperationException>(() => default(Result<int>).Check());
     }
 
     [Test]
-    public void GenericGetErrorOnDefaultMessageTest()
+    public void GenericGetErrorOnDefaultNamesTheResultTypeTest()
     {
-        var ex = Assert.Throws<InvalidOperationException>(() => default(Result<int>).GetError());
+        var error = default(Result<int>).GetError();
 
-        Assert.That(ex!.Message, Is.EqualTo("Error property for Result<System.Int32> not set."));
+        Assert.That(error, Is.TypeOf<InvalidOperationException>());
+        Assert.That(error.Message, Does.StartWith("Result<Int32> holds neither a value nor an error"));
     }
 
     [Test]
@@ -294,8 +298,8 @@ public class ResultTests
         var okResult = Result.Ok;
         Result<string> okGeneric = "Test";
 
-        Assert.True(okResult.Check().Success);
-        Assert.That(okGeneric.Check().GetOk(), Is.EqualTo("Test"));
+        Assert.True(okResult.Check().IsSuccess);
+        Assert.That(okGeneric.Check().GetValue(), Is.EqualTo("Test"));
     }
 
     private static string Describe(Result<int> result) => result switch

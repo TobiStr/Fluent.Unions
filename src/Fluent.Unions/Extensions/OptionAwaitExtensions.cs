@@ -1,4 +1,4 @@
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Fluent operators on options that take asynchronous lambdas, named after System.Linq.Async (<c>SelectAwait</c>, ...).
@@ -51,15 +51,15 @@ public static class OptionAwaitExtensions
     /// <summary>
     /// Runs an asynchronous side effect with the value and returns the same option.
     /// </summary>
-    public static Task<Option<T>> DoAwait<T>(this Option<T> option, Func<T, Task> onNext)
+    public static Task<Option<T>> DoAwait<T>(this Option<T> option, Func<T, Task> onSome)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSome);
 
-        return option.TryGetValue(out var value) ? Run(option, value, onNext) : Task.FromResult(Option<T>.NoValue);
+        return option.TryGetValue(out var value) ? Run(option, value, onSome) : Task.FromResult(Option<T>.NoValue);
 
-        static async Task<Option<T>> Run(Option<T> option, T value, Func<T, Task> onNext)
+        static async Task<Option<T>> Run(Option<T> option, T value, Func<T, Task> onSome)
         {
-            await onNext(value).ConfigureAwait(false);
+            await onSome(value).ConfigureAwait(false);
             return option;
         }
     }
@@ -81,8 +81,8 @@ public static class OptionAwaitExtensions
         ThenAwait(task, option => option.WhereAwait(predicate));
 
     /// <inheritdoc cref="DoAwait{T}(Option{T}, Func{T, Task})"/>
-    public static Task<Option<T>> DoAwait<T>(this Task<Option<T>> task, Func<T, Task> onNext) =>
-        ThenAwait(task, option => option.DoAwait(onNext));
+    public static Task<Option<T>> DoAwait<T>(this Task<Option<T>> task, Func<T, Task> onSome) =>
+        ThenAwait(task, option => option.DoAwait(onSome));
 
     private static Task<TOut> ThenAwait<TIn, TOut>(Task<TIn> task, Func<TIn, Task<TOut>> next)
     {

@@ -1,48 +1,61 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using Fluent.Unions.Abstractions;
-using Fluent.Unions.Extensions;
 using Fluent.Unions.Serialization;
 
 namespace Fluent.Unions;
 
 /// <summary>
-/// Marks a successful <see cref="Result"/>.
+/// The success case of a <see cref="Result"/>.
 /// </summary>
 public readonly record struct Ok;
 
 /// <summary>
-/// Used to determine, whether a method executes successfully or not. Has implicit cast implemented:
-/// Return <see cref="Exception"/> (or inherited type) to return a Result with Success set to 'false'.
+/// The outcome of an operation without a value: <see cref="Ok"/> or an <see cref="Exception"/>.
+/// A <c>default</c> result counts as an error.
 /// </summary>
 [JsonConverter(typeof(ResultJsonConverter))]
 public union Result(Ok, Exception)
 {
     /// <summary>
-    /// Indicates if the operation was successful.
+    /// Indicates whether the result is <see cref="Ok"/>.
     /// </summary>
-    public bool Success => Value is Ok;
+    public bool IsSuccess => Value is Ok;
 
     /// <summary>
-    /// Gets the message of the Exception, if available.
+    /// Indicates whether the result holds an error.
     /// </summary>
-    public string Message => (Value as Exception)?.Message ?? "";
+    public bool IsError => !IsSuccess;
 
     /// <summary>
-    /// Gets the error payload of the failed result.
+    /// Gets the error.
     /// </summary>
-    /// <exception cref="InvalidOperationException"></exception>
-    public Exception GetError() => Value as Exception
-        ?? throw new InvalidOperationException("Error property for this Result not set.");
+    /// <exception cref="InvalidOperationException">The result is <see cref="Ok"/>.</exception>
+    public Exception GetError() => TryGetError(out var error)
+        ? error
+        : throw new InvalidOperationException("The Result is successful and holds no error.");
 
     /// <summary>
-    /// Returns a positive Result.
+    /// Gets the error, if the result holds one.
+    /// </summary>
+    public bool TryGetError([NotNullWhen(true)] out Exception? error)
+    {
+        error = Case as Exception;
+        return error is not null;
+    }
+
+    internal object Case => Value ?? ResultErrors.Uninitialized(typeof(Result));
+
+    /// <summary>
+    /// A successful result.
     /// </summary>
     public static Result Ok => new Ok();
 
     /// <summary>
-    /// Returns a negative Result with an Exception as payload.
+    /// A failed result.
     /// </summary>
-    public static Result Error(Exception error) => error;
+    /// <exception cref="ArgumentNullException"><paramref name="error"/> is <c>null</c>.</exception>
+    public static Result Error(Exception error) => error ?? throw new ArgumentNullException(nameof(error));
 
     /// <summary>
     /// Starts a successful result from a value, with the type inferred.
@@ -57,7 +70,7 @@ public union Result(Ok, Exception)
     {
         ArgumentNullException.ThrowIfNull(body);
 
-        return Capture.Run(() => new Result<T>(body()));
+        return Capture.Run(() => Result<T>.Of(body()));
     }
 
     /// <summary>
@@ -101,7 +114,7 @@ public union Result(Ok, Exception)
     {
         ArgumentNullException.ThrowIfNull(body);
 
-        return Capture.RunAsync(async () => new Result<T>(await body().ConfigureAwait(false)));
+        return Capture.RunAsync(async () => Result<T>.Of(await body().ConfigureAwait(false)));
     }
 
     /// <summary>
@@ -140,7 +153,7 @@ public union Result(Ok, Exception)
 
     /// <summary>
     /// Awaits all tasks and combines their values like <c>Combine()</c>: the first error in sequence order wins,
-    /// a faulted task counts as an error, and empty results are skipped.
+    /// and a faulted task counts as an error.
     /// </summary>
     public static Task<Result<IReadOnlyList<T>>> WhenAll<T>(IEnumerable<Task<Result<T>>> tasks)
     {
@@ -158,9 +171,7 @@ public union Result(Ok, Exception)
 
         return Capture.Then(
             Task.WhenAll(tasks.Select(Capture.Settle)),
-            results => results.FirstOrDefault(result => result.Value is Exception) is { Value: Exception error }
-                ? Error(error)
-                : Ok);
+            results => results.FirstOrDefault(result => result.IsError, Ok));
     }
 
     /// <summary>
@@ -178,7 +189,7 @@ public union Result(Ok, Exception)
             {
                 var result = Capture.Run(operation);
 
-                if (result.Value is not Exception error || attempt == maxAttempts || !(shouldRetry?.Invoke(error) ?? true))
+                if (!result.TryGetError(out var error) || attempt == maxAttempts || !(shouldRetry?.Invoke(error) ?? true))
                     return result;
             }
         });
@@ -187,7 +198,7 @@ public union Result(Ok, Exception)
     /// <summary>
     /// Runs <paramref name="operation"/> until it does not fail, at most <paramref name="maxAttempts"/> times, waiting
     /// <paramref name="delay"/> between attempts, and returns the last result. Thrown exceptions count as failures.
-    /// Cancellation stops retrying and gives an error holding the <see cref="OperationCanceledException"/>.
+    /// Cancellation throws <see cref="OperationCanceledException"/>.
     /// </summary>
     public static Task<Result<T>> RetryAsync<T>(
         Func<CancellationToken, Task<Result<T>>> operation,
@@ -205,11 +216,10 @@ public union Result(Ok, Exception)
             {
                 var result = await Capture.RunAsync(() => operation(cancellationToken)).ConfigureAwait(false);
 
-                if (result.Value is not Exception error
-                    || attempt == maxAttempts
-                    || cancellationToken.IsCancellationRequested
-                    || !(shouldRetry?.Invoke(error) ?? true))
+                if (!result.TryGetError(out var error) || attempt == maxAttempts || !(shouldRetry?.Invoke(error) ?? true))
                     return result;
+
+                cancellationToken.ThrowIfCancellationRequested();
 
                 if (delay > TimeSpan.Zero)
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
@@ -217,39 +227,35 @@ public union Result(Ok, Exception)
         });
     }
 
-    /// <summary>Combines two results into a tuple, or collects every error. An empty side makes it empty.</summary>
+    /// <summary>Combines two results into a tuple, or collects every error like <c>CombineAll()</c> on a sequence.</summary>
     public static Result<(T1, T2)> CombineAll<T1, T2>(Result<T1> first, Result<T2> second)
     {
-        if (CollectErrors(first.Value, second.Value) is { } error)
+        if (CollectErrors(first.Case, second.Case) is { } error)
             return error;
 
-        return (first.Value, second.Value) is (T1 a, T2 b) ? new Result<(T1, T2)>((a, b)) : default;
+        return (first.GetValue(), second.GetValue());
     }
 
-    /// <summary>Combines three results into a tuple, or collects every error. An empty side makes it empty.</summary>
+    /// <summary>Combines three results into a tuple, or collects every error.</summary>
     public static Result<(T1, T2, T3)> CombineAll<T1, T2, T3>(Result<T1> first, Result<T2> second, Result<T3> third)
     {
-        if (CollectErrors(first.Value, second.Value, third.Value) is { } error)
+        if (CollectErrors(first.Case, second.Case, third.Case) is { } error)
             return error;
 
-        return (first.Value, second.Value, third.Value) is (T1 a, T2 b, T3 c)
-            ? new Result<(T1, T2, T3)>((a, b, c))
-            : default;
+        return (first.GetValue(), second.GetValue(), third.GetValue());
     }
 
-    /// <summary>Combines four results into a tuple, or collects every error. An empty side makes it empty.</summary>
+    /// <summary>Combines four results into a tuple, or collects every error.</summary>
     public static Result<(T1, T2, T3, T4)> CombineAll<T1, T2, T3, T4>(
         Result<T1> first,
         Result<T2> second,
         Result<T3> third,
         Result<T4> fourth)
     {
-        if (CollectErrors(first.Value, second.Value, third.Value, fourth.Value) is { } error)
+        if (CollectErrors(first.Case, second.Case, third.Case, fourth.Case) is { } error)
             return error;
 
-        return (first.Value, second.Value, third.Value, fourth.Value) is (T1 a, T2 b, T3 c, T4 d)
-            ? new Result<(T1, T2, T3, T4)>((a, b, c, d))
-            : default;
+        return (first.GetValue(), second.GetValue(), third.GetValue(), fourth.GetValue());
     }
 
     /// <summary>
@@ -318,99 +324,114 @@ public union Result(Ok, Exception)
         }
     }
 
-    private static AggregateException? CollectErrors(params object?[] values)
+    private static Exception? CollectErrors(params object[] values)
     {
         var errors = values.OfType<Exception>().ToList();
 
-        return errors.Count == 0 ? null : new AggregateException(errors).Flatten();
+        return errors.Count == 0 ? null : ValidationErrors.Combine(errors);
     }
 }
 
 /// <summary>
-/// Used to determine, whether a method executes successfully or not. Has implicit casts implemented:
-/// Return <typeparamref name="T"/> to return a successful Result with this payload.
-/// Return <see cref="Exception"/> (or inherited type) to return a Result with Success set to 'false'.
+/// The outcome of an operation: a <typeparamref name="T"/> or an <see cref="Exception"/>.
+/// A <c>default</c> result, or one created from <c>null</c>, counts as an error.
 /// </summary>
-/// <typeparam name="T">The type of the payload.</typeparam>
+/// <typeparam name="T">The type of the value.</typeparam>
 [JsonConverter(typeof(ResultJsonConverter))]
 public union Result<T>(T, Exception) : IResult<Result<T>, T, Exception>
 {
-    static Result<T> IResult<Result<T>, T, Exception>.FromValue(T value) => new(value);
+    static Result<T> IResult<Result<T>, T, Exception>.FromValue(T value) => Of(value);
 
     static Result<T> IErrorResult<Result<T>, Exception>.FromError(Exception error) => error;
 
     static Exception IErrorResult<Result<T>, Exception>.FromException(Exception exception) => exception;
 
     /// <summary>
-    /// Indicates if the operation was successful.
+    /// Indicates whether the result holds a value.
     /// </summary>
-    public bool Success => Value is T;
+    public bool IsSuccess => Value is not (null or Exception);
 
     /// <summary>
-    /// Gets the message of the Exception, if available.
+    /// Indicates whether the result holds an error.
     /// </summary>
-    public string Message => (Value as Exception)?.Message ?? "";
+    public bool IsError => !IsSuccess;
 
     /// <summary>
-    /// Gets the underlying payload of the successful result.
+    /// Gets the value.
     /// </summary>
-    /// <exception cref="InvalidOperationException"></exception>
-    public T GetOk() => Value switch
+    /// <exception cref="InvalidOperationException">The result holds an error, which becomes the inner exception.</exception>
+    public T GetValue() => Case switch
     {
-        T payload => payload,
-        Exception => throw new InvalidOperationException($"Operation for Result<{typeof(T)}> was not successful."),
-        _ => throw new InvalidOperationException($"Payload for Result<{typeof(T)}> was not set.")
+        Exception error => throw new InvalidOperationException(
+            $"{ResultErrors.Name(typeof(Result<T>))} holds an error, not a value: {error.Message}", error),
+        var value => (T)value
     };
 
     /// <summary>
-    /// Gets the error payload of the failed result.
+    /// Gets the value, if the result holds one.
     /// </summary>
-    /// <exception cref="InvalidOperationException"></exception>
-    public Exception GetError() => Value as Exception
-        ?? throw new InvalidOperationException($"Error property for Result<{typeof(T)}> not set.");
-
-    /// <summary>
-    /// Returns a positive Result with an object as payload.
-    /// </summary>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static Result<T> Ok(T payload) =>
-        new(payload ?? throw new ArgumentNullException(nameof(payload)));
-
-    /// <summary>
-    /// Returns a negative Result with an Exception as payload.
-    /// </summary>
-    public static Result<T> Error(Exception error) => error;
-
-    /// <summary>
-    /// Splits the result Go style: <c>var (value, error) = result;</c>. An empty result gives <c>default</c> and <c>null</c>.
-    /// </summary>
-    public void Deconstruct(out T? value, out Exception? error)
+    public bool TryGetValue([MaybeNullWhen(false)] out T value)
     {
-        switch (Value)
+        if (IsSuccess)
         {
-            case Exception exception:
-                value = default;
-                error = exception;
-                break;
-            case T payload:
-                value = payload;
-                error = null;
-                break;
-            default:
-                value = default;
-                error = null;
-                break;
+            value = (T)Value!;
+            return true;
         }
+
+        value = default;
+        return false;
     }
 
     /// <summary>
-    /// Implicit cast from Result&lt;T&gt; to <see cref="Result"/>, keeping Success and the error.
+    /// Gets the error.
     /// </summary>
-    public static implicit operator Result(Result<T> result) => result.Value switch
+    /// <exception cref="InvalidOperationException">The result holds a value.</exception>
+    public Exception GetError() => TryGetError(out var error)
+        ? error
+        : throw new InvalidOperationException($"{ResultErrors.Name(typeof(Result<T>))} holds a value, not an error.");
+
+    /// <summary>
+    /// Gets the error, if the result holds one.
+    /// </summary>
+    public bool TryGetError([NotNullWhen(true)] out Exception? error)
+    {
+        error = Case as Exception;
+        return error is not null;
+    }
+
+    internal object Case => Value ?? ResultErrors.Uninitialized(typeof(Result<T>));
+
+    internal static Result<T> Of(T? value) =>
+        value is null ? new Result<T>(ResultErrors.Uninitialized(typeof(Result<T>))) : new Result<T>(value);
+
+    /// <summary>
+    /// A successful result.
+    /// </summary>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <c>null</c>.</exception>
+    public static Result<T> Ok(T value) => new(value ?? throw new ArgumentNullException(nameof(value)));
+
+    /// <summary>
+    /// A failed result.
+    /// </summary>
+    /// <exception cref="ArgumentNullException"><paramref name="error"/> is <c>null</c>.</exception>
+    public static Result<T> Error(Exception error) => error ?? throw new ArgumentNullException(nameof(error));
+
+    /// <summary>
+    /// Splits the result Go style: <c>var (value, error) = result;</c>. Exactly one of them is set.
+    /// </summary>
+    public void Deconstruct(out T? value, out Exception? error)
+    {
+        TryGetValue(out value);
+        TryGetError(out error);
+    }
+
+    /// <summary>
+    /// Drops the value and keeps success or the error.
+    /// </summary>
+    public static implicit operator Result(Result<T> result) => result.Case switch
     {
         Exception error => error,
-        T => Result.Ok,
-        _ => default
+        _ => Result.Ok
     };
 
     /// <inheritdoc />

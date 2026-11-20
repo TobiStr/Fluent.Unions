@@ -14,9 +14,9 @@ public class TupleCombinatorTests
         Result<(int, string, bool, char)> four = Result.CombineAll(
             Result<int>.Ok(1), Result<string>.Ok("a"), Result<bool>.Ok(true), Result<char>.Ok('x'));
 
-        Assert.That(two.GetOk(), Is.EqualTo((1, "a")));
-        Assert.That(three.GetOk(), Is.EqualTo((1, "a", true)));
-        Assert.That(four.GetOk(), Is.EqualTo((1, "a", true, 'x')));
+        Assert.That(two.GetValue(), Is.EqualTo((1, "a")));
+        Assert.That(three.GetValue(), Is.EqualTo((1, "a", true)));
+        Assert.That(four.GetValue(), Is.EqualTo((1, "a", true, 'x')));
     }
 
     [Test]
@@ -67,15 +67,15 @@ public class TupleCombinatorTests
     }
 
     [Test]
-    public void CombineAllOfOkAndEmptyIsEmpty()
+    public void CombineAllOfOkAndDefaultIsAnError()
     {
         Result<(int, int)> two = Result.CombineAll(Result<int>.Ok(1), Empty);
         Result<(int, int, int)> three = Result.CombineAll(Result<int>.Ok(1), Result<int>.Ok(2), Empty);
         Result<(int, int, int, int)> four = Result.CombineAll(Empty, Result<int>.Ok(1), Result<int>.Ok(2), Result<int>.Ok(3));
 
-        Assert.That(two.Value, Is.Null);
-        Assert.That(three.Value, Is.Null);
-        Assert.That(four.Value, Is.Null);
+        Assert.That(two.GetError().Message, Does.Contain("holds neither a value nor an error"));
+        Assert.That(three.GetError().Message, Does.Contain("holds neither a value nor an error"));
+        Assert.That(four.GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -91,9 +91,9 @@ public class TupleCombinatorTests
             Task.FromResult(Result<bool>.Ok(true)),
             Task.FromResult(Result<char>.Ok('x')));
 
-        Assert.That(two.GetOk(), Is.EqualTo((1, "a")));
-        Assert.That(three.GetOk(), Is.EqualTo((1, "a", true)));
-        Assert.That(four.GetOk(), Is.EqualTo((1, "a", true, 'x')));
+        Assert.That(two.GetValue(), Is.EqualTo((1, "a")));
+        Assert.That(three.GetValue(), Is.EqualTo((1, "a", true)));
+        Assert.That(four.GetValue(), Is.EqualTo((1, "a", true, 'x')));
     }
 
     [Test]
@@ -109,11 +109,11 @@ public class TupleCombinatorTests
     }
 
     [Test]
-    public async Task CombineAllAsyncKeepsEmpty()
+    public async Task CombineAllAsyncReportsDefaultAsError()
     {
         Result<(int, int)> result = await Result.CombineAllAsync(Task.FromResult(Result<int>.Ok(1)), Task.FromResult(Empty));
 
-        Assert.That(result.Value, Is.Null);
+        Assert.That(result.GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -123,13 +123,13 @@ public class TupleCombinatorTests
         Result<(int, string, bool)> three = two.BindAppend((n, s) => Result<bool>.Ok(s.Length > n));
         Result<(int, string, bool, char)> four = three.BindAppend((n, s, b) => Result<char>.Ok(b ? s[0] : 'x'));
 
-        Assert.That(two.GetOk(), Is.EqualTo((1, "n1")));
-        Assert.That(three.GetOk(), Is.EqualTo((1, "n1", true)));
-        Assert.That(four.GetOk(), Is.EqualTo((1, "n1", true, 'n')));
+        Assert.That(two.GetValue(), Is.EqualTo((1, "n1")));
+        Assert.That(three.GetValue(), Is.EqualTo((1, "n1", true)));
+        Assert.That(four.GetValue(), Is.EqualTo((1, "n1", true, 'n')));
     }
 
     [Test]
-    public void BindAppendPassesErrorAndEmptyThroughWithoutCallingTheSelector()
+    public void BindAppendPassesErrorAndDefaultThroughWithoutCallingTheSelector()
     {
         var calls = 0;
         Result<(int, int)> twoError = new InvalidOperationException("broken");
@@ -144,22 +144,22 @@ public class TupleCombinatorTests
         Result<(int, int, int, int)> e = threeError.BindAppend((x, y, z) => { calls++; return Result<int>.Ok(x); });
         Result<(int, int, int, int)> f = threeEmpty.BindAppend((x, y, z) => { calls++; return Result<int>.Ok(x); });
 
-        Assert.That(a.Message, Is.EqualTo("broken"));
-        Assert.That(c.Message, Is.EqualTo("broken"));
-        Assert.That(e.Message, Is.EqualTo("broken"));
-        Assert.That(new[] { b.Value, d.Value, f.Value }, Is.All.Null);
+        Assert.That(a.GetError().Message, Is.EqualTo("broken"));
+        Assert.That(c.GetError().Message, Is.EqualTo("broken"));
+        Assert.That(e.GetError().Message, Is.EqualTo("broken"));
+        Assert.That(new[] { b.GetError().Message, d.GetError().Message, f.GetError().Message }, Is.All.Contain("holds neither a value nor an error"));
         Assert.That(calls, Is.EqualTo(0));
     }
 
     [Test]
-    public void BindAppendWithAnErrorOrEmptySelectorResult()
+    public void BindAppendWithAnErrorOrDefaultSelectorResult()
     {
         Result<(int, int)> error = Result<int>.Ok(1).BindAppend(_ => Fail("broken"));
         Result<(int, int)> empty = Result<int>.Ok(1).BindAppend(_ => Empty);
         Result<(int, int)> thrown = Result<int>.Ok(1).BindAppend<int, int>(_ => throw new FormatException());
 
-        Assert.That(error.Message, Is.EqualTo("broken"));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(error.GetError().Message, Is.EqualTo("broken"));
+        Assert.That(empty.GetError().Message, Does.Contain("holds neither a value nor an error"));
         Assert.That(thrown.GetError(), Is.TypeOf<FormatException>());
     }
 
@@ -173,7 +173,7 @@ public class TupleCombinatorTests
         Result<(int, int)> faulted = await Task.FromException<Result<int>>(new TimeoutException())
             .BindAppend(v => Result<int>.Ok(v));
 
-        Assert.That(result.GetOk(), Is.EqualTo((1, "n1", true, 'x')));
+        Assert.That(result.GetValue(), Is.EqualTo((1, "n1", true, 'x')));
         Assert.That(faulted.GetError(), Is.TypeOf<TimeoutException>());
     }
 
@@ -185,7 +185,7 @@ public class TupleCombinatorTests
             .BindAppendAwait((n, s) => Task.FromResult(Result<bool>.Ok(true)))
             .BindAppendAwait((n, s, b) => Task.FromResult(Result<char>.Ok('x')));
 
-        Assert.That(result.GetOk(), Is.EqualTo((1, "n1", true, 'x')));
+        Assert.That(result.GetValue(), Is.EqualTo((1, "n1", true, 'x')));
     }
 
     [Test]
@@ -203,9 +203,9 @@ public class TupleCombinatorTests
         Result<(int, int)> faulted = await Result<int>.Ok(1).BindAppendAwait(_ => Task.FromException<Result<int>>(new TimeoutException()));
         Result<(int, int)> emptySelector = await Result<int>.Ok(1).BindAppendAwait(_ => Task.FromResult(Empty));
 
-        Assert.That(error.Message, Is.EqualTo("broken"));
-        Assert.That(three.Message, Is.EqualTo("broken"));
-        Assert.That(new[] { empty.Value, four.Value, emptySelector.Value }, Is.All.Null);
+        Assert.That(error.GetError().Message, Is.EqualTo("broken"));
+        Assert.That(three.GetError().Message, Is.EqualTo("broken"));
+        Assert.That(new[] { empty.GetError().Message, four.GetError().Message, emptySelector.GetError().Message }, Is.All.Contain("holds neither a value nor an error"));
         Assert.That(thrown.GetError(), Is.TypeOf<FormatException>());
         Assert.That(faulted.GetError(), Is.TypeOf<TimeoutException>());
         Assert.That(calls, Is.EqualTo(0));
@@ -221,20 +221,20 @@ public class TupleCombinatorTests
         Result<(int, int)> faulted = await Task.FromException<Result<int>>(new TimeoutException())
             .BindAppendAwait(v => Task.FromResult(Result<int>.Ok(v)));
 
-        Assert.That(result.GetOk(), Is.EqualTo((1, "n1", true, 'x')));
+        Assert.That(result.GetValue(), Is.EqualTo((1, "n1", true, 'x')));
         Assert.That(faulted.GetError(), Is.TypeOf<TimeoutException>());
     }
 
     [Test]
-    public void WithValueHandlesAllThreeStates()
+    public void WithValueHandlesSuccessErrorAndDefault()
     {
         Result<int> ok = Result.Ok.WithValue(7);
         Result<int> error = Result.Error(new InvalidOperationException("broken")).WithValue(7);
         Result<int> empty = default(Result).WithValue(7);
 
-        Assert.That(ok.GetOk(), Is.EqualTo(7));
-        Assert.That(error.Message, Is.EqualTo("broken"));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(ok.GetValue(), Is.EqualTo(7));
+        Assert.That(error.GetError().Message, Is.EqualTo("broken"));
+        Assert.That(empty.GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -250,22 +250,22 @@ public class TupleCombinatorTests
         Result<int> empty = await Task.FromResult(default(Result)).WithValue(7);
         Result<int> faulted = await Task.FromException<Result>(new TimeoutException()).WithValue(7);
 
-        Assert.That(ok.GetOk(), Is.EqualTo(7));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(ok.GetValue(), Is.EqualTo(7));
+        Assert.That(empty.GetError().Message, Does.Contain("holds neither a value nor an error"));
         Assert.That(faulted.GetError(), Is.TypeOf<TimeoutException>());
         Assert.Throws<ArgumentNullException>(() => Task.FromResult(Result.Ok).WithValue<string>(null!));
     }
 
     [Test]
-    public void DiscardValueHandlesAllThreeStates()
+    public void DiscardValueHandlesSuccessErrorAndDefault()
     {
         Result ok = Result<int>.Ok(7).DiscardValue();
         Result error = Fail("broken").DiscardValue();
         Result empty = Empty.DiscardValue();
 
-        Assert.That(ok.Success, Is.True);
-        Assert.That(error.Message, Is.EqualTo("broken"));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(ok.IsSuccess, Is.True);
+        Assert.That(error.GetError().Message, Is.EqualTo("broken"));
+        Assert.That(empty.GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -275,8 +275,8 @@ public class TupleCombinatorTests
         Result empty = await Task.FromResult(Empty).DiscardValue();
         Result faulted = await Task.FromException<Result<int>>(new TimeoutException()).DiscardValue();
 
-        Assert.That(ok.Success, Is.True);
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(ok.IsSuccess, Is.True);
+        Assert.That(empty.GetError().Message, Does.Contain("holds neither a value nor an error"));
         Assert.That(faulted.GetError(), Is.TypeOf<TimeoutException>());
     }
 }

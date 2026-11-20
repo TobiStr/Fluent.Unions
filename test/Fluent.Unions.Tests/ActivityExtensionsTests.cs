@@ -75,7 +75,7 @@ public class ActivityExtensionsTests
     }
 
     [Test]
-    public void EmptyResultsSetErrorWithoutExceptionEvent()
+    public void DefaultResultsSetErrorAndRecordTheException()
     {
         using var first = new Activity("first").Start();
         using var second = new Activity("second").Start();
@@ -88,9 +88,11 @@ public class ActivityExtensionsTests
         foreach (var activity in new[] { first, second, third })
         {
             Assert.That(activity.Status, Is.EqualTo(ActivityStatusCode.Error));
-            Assert.That(activity.StatusDescription, Is.EqualTo("Result is empty"));
-            Assert.That(activity.Events, Is.Empty);
+            Assert.That(activity.Events.Count(), Is.EqualTo(1));
         }
+
+        Assert.That(first.StatusDescription, Does.Contain("holds neither a value nor an error"));
+        Assert.That(second.StatusDescription, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]

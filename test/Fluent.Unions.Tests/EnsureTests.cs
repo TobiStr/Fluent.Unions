@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Fluent.Unions.Tests;
 
 public class EnsureTests
@@ -11,16 +9,16 @@ public class EnsureTests
     {
         Result<int> result = Result<int>.Ok(5).Ensure(v => v > 3, "Too small.");
 
-        Assert.That(result.GetOk(), Is.EqualTo(5));
+        Assert.That(result.GetValue(), Is.EqualTo(5));
     }
 
     [Test]
-    public void FailingPredicateGivesValidationExceptionWithTheMessage()
+    public void FailingPredicateGivesValidationErrorWithTheMessage()
     {
         Result<int> result = Result<int>.Ok(2).Ensure(v => v > 3, "Quantity must be above 3.");
 
-        Assert.That(result.GetError(), Is.TypeOf<ValidationException>());
-        Assert.That(result.Message, Is.EqualTo("Quantity must be above 3."));
+        Assert.That(result.GetError(), Is.TypeOf<ValidationError>());
+        Assert.That(result.GetError().Message, Is.EqualTo("Quantity must be above 3."));
     }
 
     [Test]
@@ -98,8 +96,8 @@ public class EnsureTests
         Result<int> failed = await Task.FromResult(Result<int>.Ok(2)).Ensure(v => v > 3, "Too small.");
         Result<int> custom = await Task.FromResult(Result<int>.Ok(2)).Ensure(v => v > 3, _ => new KeyNotFoundException());
 
-        Assert.That(passed.GetOk(), Is.EqualTo(5));
-        Assert.That(failed.GetError(), Is.TypeOf<ValidationException>());
+        Assert.That(passed.GetValue(), Is.EqualTo(5));
+        Assert.That(failed.GetError(), Is.TypeOf<ValidationError>());
         Assert.That(custom.GetError(), Is.TypeOf<KeyNotFoundException>());
     }
 
@@ -126,9 +124,9 @@ public class EnsureTests
         Result<int> failed = await Result<int>.Ok(2).EnsureAwait(v => Task.FromResult(v > 3), "Too small.");
         Result<int> custom = await Result<int>.Ok(2).EnsureAwait(v => Task.FromResult(v > 3), _ => new KeyNotFoundException());
 
-        Assert.That(passed.GetOk(), Is.EqualTo(5));
-        Assert.That(failed.GetError(), Is.TypeOf<ValidationException>());
-        Assert.That(failed.Message, Is.EqualTo("Too small."));
+        Assert.That(passed.GetValue(), Is.EqualTo(5));
+        Assert.That(failed.GetError(), Is.TypeOf<ValidationError>());
+        Assert.That(failed.GetError().Message, Is.EqualTo("Too small."));
         Assert.That(custom.GetError(), Is.TypeOf<KeyNotFoundException>());
     }
 
@@ -176,8 +174,8 @@ public class EnsureTests
         Result<int> faulted = await Task.FromException<Result<int>>(new TimeoutException())
             .EnsureAwait(_ => Task.FromResult(true), "Unused.");
 
-        Assert.That(passed.GetOk(), Is.EqualTo(5));
-        Assert.That(failed.GetError(), Is.TypeOf<ValidationException>());
+        Assert.That(passed.GetValue(), Is.EqualTo(5));
+        Assert.That(failed.GetError(), Is.TypeOf<ValidationError>());
         Assert.That(custom.GetError(), Is.TypeOf<KeyNotFoundException>());
         Assert.That(empty.Value, Is.Null);
         Assert.That(faulted.GetError(), Is.TypeOf<TimeoutException>());

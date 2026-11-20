@@ -242,7 +242,7 @@ public class OptionTests
         Assert.False(error.ToOption().HasValue);
         Assert.False(default(Result<int>).ToOption().HasValue);
 
-        Assert.That(((Option<int>)5).ToResult(() => Failure).GetOk(), Is.EqualTo(5));
+        Assert.That(((Option<int>)5).ToResult(() => Failure).GetValue(), Is.EqualTo(5));
         Assert.That(default(Option<int>).ToResult(() => Failure).GetError(), Is.SameAs(Failure));
         Assert.That(default(Option<int>).ToResult(() => throw Failure).GetError(), Is.SameAs(Failure));
         Assert.That(default(Option<int>).ToResult(() => null!).GetError(), Is.TypeOf<InvalidOperationException>());
@@ -256,9 +256,9 @@ public class OptionTests
         int? age = 36;
         int? missingAge = null;
 
-        Assert.That(name.ToResult(() => Failure).GetOk(), Is.EqualTo("Ada"));
+        Assert.That(name.ToResult(() => Failure).GetValue(), Is.EqualTo("Ada"));
         Assert.That(missingName.ToResult(() => Failure).GetError(), Is.SameAs(Failure));
-        Assert.That(age.ToResult(() => Failure).GetOk(), Is.EqualTo(36));
+        Assert.That(age.ToResult(() => Failure).GetValue(), Is.EqualTo(36));
         Assert.That(missingAge.ToResult(() => Failure).GetError(), Is.SameAs(Failure));
         Assert.That(missingName.ToResult(() => throw Failure).GetError(), Is.SameAs(Failure));
         Assert.That(missingAge.ToResult(() => null!).GetError(), Is.TypeOf<InvalidOperationException>());

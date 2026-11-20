@@ -11,7 +11,7 @@ public class QueryOperatorTests
 
         var projected = result.Select(value => value.Length);
 
-        Assert.That(projected.GetOk(), Is.EqualTo(3));
+        Assert.That(projected.GetValue(), Is.EqualTo(3));
     }
 
     [Test]
@@ -27,11 +27,11 @@ public class QueryOperatorTests
     }
 
     [Test]
-    public void SelectKeepsEmptyResultEmpty()
+    public void SelectPropagatesTheErrorOfADefaultResult()
     {
         var projected = default(Result<string>).Select(value => value.Length);
 
-        Assert.That(projected.Value, Is.Null);
+        Assert.That(projected.GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -46,14 +46,14 @@ public class QueryOperatorTests
     }
 
     [Test]
-    public void SelectReturningNullGivesEmptyResult()
+    public void SelectReturningNullGivesAnError()
     {
         Result<string> result = "abc";
 
         var projected = result.Select(_ => (string?)null);
 
-        Assert.False(projected.Success);
-        Assert.That(projected.Value, Is.Null);
+        Assert.True(projected.IsError);
+        Assert.That(projected.GetError(), Is.TypeOf<InvalidOperationException>());
     }
 
     [Test]
@@ -63,7 +63,7 @@ public class QueryOperatorTests
 
         var projected = result.Select(value => value + 1);
 
-        Assert.That(projected.GetOk(), Is.EqualTo(1));
+        Assert.That(projected.GetValue(), Is.EqualTo(1));
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class QueryOperatorTests
         var okProjection = Result.Ok.Select(() => 42);
         var errorProjection = Result.Error(Failure).Select(() => 42);
 
-        Assert.That(okProjection.GetOk(), Is.EqualTo(42));
+        Assert.That(okProjection.GetValue(), Is.EqualTo(42));
         Assert.That(errorProjection.GetError(), Is.SameAs(Failure));
     }
 
@@ -92,7 +92,7 @@ public class QueryOperatorTests
         var parsed = result.SelectMany(Parse);
         var failed = ((Result<string>)"x").SelectMany(Parse);
 
-        Assert.That(parsed.GetOk(), Is.EqualTo(42));
+        Assert.That(parsed.GetValue(), Is.EqualTo(42));
         Assert.That(failed.GetError(), Is.TypeOf<FormatException>());
     }
 
@@ -105,7 +105,7 @@ public class QueryOperatorTests
         Result ok = result.SelectMany(_ => Result.Ok);
         Result error = failed.SelectMany(_ => Result.Ok);
 
-        Assert.True(ok.Success);
+        Assert.True(ok.IsSuccess);
         Assert.That(error.GetError(), Is.SameAs(Failure));
     }
 
@@ -116,8 +116,8 @@ public class QueryOperatorTests
         var withValue = Result.Ok.SelectMany(() => Parse("7"));
         var skipped = Result.Error(Failure).SelectMany(() => Parse("7"));
 
-        Assert.True(chained.Success);
-        Assert.That(withValue.GetOk(), Is.EqualTo(7));
+        Assert.True(chained.IsSuccess);
+        Assert.That(withValue.GetValue(), Is.EqualTo(7));
         Assert.That(skipped.GetError(), Is.SameAs(Failure));
     }
 
@@ -136,9 +136,9 @@ public class QueryOperatorTests
         });
         var empty = default(Result<string>).Chain(Parse);
 
-        Assert.That(parsed.GetOk(), Is.EqualTo(42));
+        Assert.That(parsed.GetValue(), Is.EqualTo(42));
         Assert.That(skipped.GetError(), Is.SameAs(Failure));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.GetError().Message, Does.Contain("holds neither a value nor an error"));
         Assert.That(calls, Is.EqualTo(0));
     }
 
@@ -152,9 +152,9 @@ public class QueryOperatorTests
         var withValue = Result.Ok.Chain(() => Parse("7"));
         var skipped = Result.Error(Failure).Chain(() => Parse("7"));
 
-        Assert.True(saved.Success);
-        Assert.True(chained.Success);
-        Assert.That(withValue.GetOk(), Is.EqualTo(7));
+        Assert.True(saved.IsSuccess);
+        Assert.True(chained.IsSuccess);
+        Assert.That(withValue.GetValue(), Is.EqualTo(7));
         Assert.That(skipped.GetError(), Is.SameAs(Failure));
     }
 
@@ -164,10 +164,9 @@ public class QueryOperatorTests
         var sum =
             from a in Parse("20")
             from b in Parse("22")
-            where a < b
             select a + b;
 
-        Assert.That(sum.GetOk(), Is.EqualTo(42));
+        Assert.That(sum.GetValue(), Is.EqualTo(42));
     }
 
     [Test]
@@ -182,43 +181,6 @@ public class QueryOperatorTests
     }
 
     [Test]
-    public void WhereKeepsMatchingValue()
-    {
-        Result<int> result = 5;
-
-        Assert.That(result.Where(value => value > 3).GetOk(), Is.EqualTo(5));
-    }
-
-    [Test]
-    public void WhereMakesNonMatchingValueEmpty()
-    {
-        Result<int> result = 5;
-
-        var filtered = result.Where(value => value > 10);
-
-        Assert.False(filtered.Success);
-        Assert.That(filtered.Value, Is.Null);
-    }
-
-    [Test]
-    public void WherePassesErrorThrough()
-    {
-        Result<int> result = Failure;
-
-        Assert.That(result.Where(_ => true).GetError(), Is.SameAs(Failure));
-    }
-
-    [Test]
-    public void WhereCapturesThrownException()
-    {
-        Result<int> result = 5;
-
-        var filtered = result.Where(_ => throw Failure);
-
-        Assert.That(filtered.GetError(), Is.SameAs(Failure));
-    }
-
-    [Test]
     public void ZipCombinesValues()
     {
         Result<int> first = 1;
@@ -226,8 +188,8 @@ public class QueryOperatorTests
 
         var zipped = first.Zip(second);
 
-        Assert.That(zipped.GetOk(), Is.EqualTo((1, "a")));
-        Assert.That(first.Zip(second, (a, b) => $"{b}{a}").GetOk(), Is.EqualTo("a1"));
+        Assert.That(zipped.GetValue(), Is.EqualTo((1, "a")));
+        Assert.That(first.Zip(second, (a, b) => $"{b}{a}").GetValue(), Is.EqualTo("a1"));
     }
 
     [Test]
@@ -242,19 +204,19 @@ public class QueryOperatorTests
     }
 
     [Test]
-    public void ZipPrefersErrorOverEmpty()
+    public void ZipPrefersADefaultFirstOverALaterError()
     {
         Result<int> second = Failure;
 
-        Assert.That(default(Result<int>).Zip(second).GetError(), Is.SameAs(Failure));
+        Assert.That(default(Result<int>).Zip(second).GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
-    public void ZipWithEmptySideIsEmpty()
+    public void ZipWithADefaultSideIsAnError()
     {
         Result<int> first = 1;
 
-        Assert.That(first.Zip(default(Result<int>)).Value, Is.Null);
+        Assert.That(first.Zip(default(Result<int>)).GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -277,25 +239,6 @@ public class QueryOperatorTests
         Assert.That(ok.GetValueOrDefault(9), Is.EqualTo(5));
         Assert.That(error.GetValueOrDefault(9), Is.EqualTo(9));
         Assert.That(default(Result<int>).GetValueOrDefault(9), Is.EqualTo(9));
-    }
-
-    [Test]
-    public void DefaultIfEmptyReplacesOnlyEmpty()
-    {
-        Result<int> ok = 5;
-        Result<int> error = Failure;
-
-        Assert.That(default(Result<int>).DefaultIfEmpty(9).GetOk(), Is.EqualTo(9));
-        Assert.That(ok.DefaultIfEmpty(9).GetOk(), Is.EqualTo(5));
-        Assert.That(error.DefaultIfEmpty(9).GetError(), Is.SameAs(Failure));
-    }
-
-    [Test]
-    public void WhereThenDefaultIfEmpty()
-    {
-        Result<int> result = 5;
-
-        Assert.That(result.Where(value => value > 10).DefaultIfEmpty(0).GetOk(), Is.EqualTo(0));
     }
 
     private static Result<int> Parse(string text)

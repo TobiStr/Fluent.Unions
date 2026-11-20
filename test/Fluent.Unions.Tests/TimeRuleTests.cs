@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.Tests;
@@ -61,12 +60,12 @@ public class TimeRuleTests
     }
 
     private static IEnumerable<string> Members<T>(Result<T> result) =>
-        ((ValidationException)result.GetError()).ValidationResult.MemberNames;
+        ((ValidationError)result.GetError()).MemberName is { } member ? new[] { member } : Array.Empty<string>();
 
     private static void AssertPassing<T>(RuleCase<T> rule)
     {
-        Assert.That(rule.OnValue(rule.Passing).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
-        Assert.That(rule.OnResult(Result<T>.Ok(rule.Passing)).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnValue(rule.Passing).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnResult(Result<T>.Ok(rule.Passing)).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
     }
 
     private static void AssertFailing<T>(RuleCase<T> rule)
@@ -74,10 +73,10 @@ public class TimeRuleTests
         Result<T> onValue = rule.OnValue(rule.Failing);
         Result<T> onResult = rule.OnResult(Result<T>.Ok(rule.Failing));
 
-        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo(rule.Message));
-        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
         Assert.That(Members(onValue), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
         Assert.That(Members(onResult), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
     }
@@ -128,7 +127,7 @@ public class TimeRuleTests
 
         Result<DateTimeOffset> result = order.PlacedAt.EnsureInPast(Clock);
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("PlacedAt must be in the past."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("PlacedAt must be in the past."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "PlacedAt" }));
     }
 
@@ -137,7 +136,7 @@ public class TimeRuleTests
     {
         Result<DateTimeOffset> result = Result<DateTimeOffset>.Ok(Now).EnsureInFuture(Clock);
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must be in the future."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must be in the future."));
         Assert.That(Members(result), NUnit.Framework.Is.Empty);
     }
 
@@ -146,7 +145,7 @@ public class TimeRuleTests
     {
         Result<DateTimeOffset> result = Now.EnsureInFuture(Clock, "Pick a date after {Name}.", "Field");
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Pick a date after {Name}."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Pick a date after {Name}."));
     }
 
     [Test]
@@ -159,8 +158,8 @@ public class TimeRuleTests
         provider.Now = deadline;
         Result<DateTimeOffset> after = deadline.EnsureInFuture(provider);
 
-        Assert.That(before.Success, NUnit.Framework.Is.True);
-        Assert.That(after.Success, NUnit.Framework.Is.False);
+        Assert.That(before.IsSuccess, NUnit.Framework.Is.True);
+        Assert.That(after.IsSuccess, NUnit.Framework.Is.False);
     }
 
     [Test]
@@ -179,8 +178,8 @@ public class TimeRuleTests
             o => o.PlacedAt.EnsureInPast(Clock),
             o => o.PlacedAt.EnsureInPastOrPresent(Clock));
 
-        var error = (AggregateException)result.GetError();
-        Assert.That(error.InnerExceptions.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
+        var error = (ValidationErrors)result.GetError();
+        Assert.That(error.Errors.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
         {
             "PlacedAt must be in the past.",
             "PlacedAt must be in the past or present."

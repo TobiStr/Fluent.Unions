@@ -29,7 +29,7 @@ public class ErrorsAsDataTests
     [Test]
     public void ChainsReturnTheErrorUnion()
     {
-        Assert.That(Checkout(7, 2).GetOk(), Is.EqualTo(new Order(7, 2)));
+        Assert.That(Checkout(7, 2).GetValue(), Is.EqualTo(new Order(7, 2)));
         Assert.That(Checkout(0, 2).GetError().Value, Is.EqualTo(new CustomerNotFound(0)));
         Assert.That(Checkout(7, 0).GetError().Value, Is.TypeOf<CartEmpty>());
     }
@@ -45,13 +45,12 @@ public class ErrorsAsDataTests
                 CartEmpty => 400,
                 PaymentDeclined => 402,
                 Unexpected => 500
-            },
-            () => 204);
+            });
 
         Assert.That(StatusCode(Checkout(7, 2)), Is.EqualTo(200));
         Assert.That(StatusCode(Checkout(0, 2)), Is.EqualTo(404));
         Assert.That(StatusCode(Checkout(7, 0)), Is.EqualTo(400));
-        Assert.That(StatusCode(default), Is.EqualTo(204));
+        Assert.That(StatusCode(default), Is.EqualTo(500));
     }
 
     [Test]
@@ -70,7 +69,7 @@ public class ErrorsAsDataTests
         var recovered = Checkout(7, 0).Catch((CartEmpty _) => new Order(7, 1));
         var untouched = Checkout(0, 2).Catch((CartEmpty _) => new Order(7, 1));
 
-        Assert.That(recovered.GetOk(), Is.EqualTo(new Order(7, 1)));
+        Assert.That(recovered.GetValue(), Is.EqualTo(new Order(7, 1)));
         Assert.That(untouched.GetError().Value, Is.TypeOf<CustomerNotFound>());
     }
 
@@ -81,15 +80,14 @@ public class ErrorsAsDataTests
         var order =
             from customer in GetCustomer(7)
             from items in CountItems(customer, 3)
-            where items > 1
             select new Order(customer.Id, items);
         var missing =
             from customer in GetCustomer(0)
             from items in CountItems(customer, 3)
             select new Order(customer.Id, items);
 
-        Assert.That(name.GetOk(), Is.EqualTo("Ada"));
-        Assert.That(order.GetOk(), Is.EqualTo(new Order(7, 3)));
+        Assert.That(name.GetValue(), Is.EqualTo("Ada"));
+        Assert.That(order.GetValue(), Is.EqualTo(new Order(7, 3)));
         Assert.That(missing.GetError().Value, Is.TypeOf<CustomerNotFound>());
     }
 
@@ -107,16 +105,16 @@ public class ErrorsAsDataTests
         var ex = Assert.Throws<ResultErrorException>(() => Checkout(7, 0).Check());
 
         Assert.That(((CheckoutError)ex!.Error).Value, Is.TypeOf<CartEmpty>());
-        Assert.That(Checkout(7, 2).Check().GetOk(), Is.EqualTo(new Order(7, 2)));
+        Assert.That(Checkout(7, 2).Check().GetValue(), Is.EqualTo(new Order(7, 2)));
     }
 
     [Test]
     public void SuccessAndGetters()
     {
-        Assert.True(Checkout(7, 2).Success);
-        Assert.False(Checkout(0, 2).Success);
-        Assert.False(default(Result<Order, CheckoutError>).Success);
-        Assert.Throws<InvalidOperationException>(() => Checkout(0, 2).GetOk());
+        Assert.True(Checkout(7, 2).IsSuccess);
+        Assert.False(Checkout(0, 2).IsSuccess);
+        Assert.False(default(Result<Order, CheckoutError>).IsSuccess);
+        Assert.Throws<InvalidOperationException>(() => Checkout(0, 2).GetValue());
         Assert.Throws<InvalidOperationException>(() => Checkout(7, 2).GetError());
     }
 

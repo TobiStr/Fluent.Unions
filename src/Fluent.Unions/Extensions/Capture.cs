@@ -1,9 +1,9 @@
 ﻿using Fluent.Unions.Abstractions;
 
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
-/// Runs user code and turns any thrown exception into an error result.
+/// Runs user code and turns a thrown exception into an error result. Cancellation propagates.
 /// </summary>
 internal static class Capture
 {
@@ -13,7 +13,7 @@ internal static class Capture
         {
             return body();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return ex;
         }
@@ -25,7 +25,7 @@ internal static class Capture
         {
             return body();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return ex;
         }
@@ -37,7 +37,7 @@ internal static class Capture
         {
             return await body().ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return ex;
         }
@@ -49,7 +49,7 @@ internal static class Capture
         {
             return await body().ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return ex;
         }
@@ -63,7 +63,7 @@ internal static class Capture
         {
             return body();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return TResult.FromError(ToError<TResult, TError>(ex));
         }
@@ -77,7 +77,7 @@ internal static class Capture
         {
             return await body().ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return TResult.FromError(ToError<TResult, TError>(ex));
         }

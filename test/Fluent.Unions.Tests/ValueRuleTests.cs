@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.Tests;
@@ -60,12 +59,12 @@ public class ValueRuleTests
     ];
 
     private static IEnumerable<string> Members<T>(Result<T> result) =>
-        ((ValidationException)result.GetError()).ValidationResult.MemberNames;
+        ((ValidationError)result.GetError()).MemberName is { } member ? new[] { member } : Array.Empty<string>();
 
     private static void AssertPassing<T>(RuleCase<T> rule)
     {
-        Assert.That(rule.OnValue(rule.Passing).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
-        Assert.That(rule.OnResult(Result<T>.Ok(rule.Passing)).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnValue(rule.Passing).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnResult(Result<T>.Ok(rule.Passing)).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
     }
 
     private static void AssertFailing<T>(RuleCase<T> rule)
@@ -73,10 +72,10 @@ public class ValueRuleTests
         Result<T> onValue = rule.OnValue(rule.Failing);
         Result<T> onResult = rule.OnResult(Result<T>.Ok(rule.Failing));
 
-        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo(rule.Message));
-        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
         Assert.That(Members(onValue), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
         Assert.That(Members(onResult), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
     }
@@ -137,10 +136,10 @@ public class ValueRuleTests
         Result<Channels> combined = (Channels.Web | Channels.Store).EnsureDefined();
         Result<Channels> web = Result<Channels>.Ok(Channels.Web).EnsureDefined();
 
-        Assert.That(pending.GetOk(), NUnit.Framework.Is.EqualTo(Status.Pending));
-        Assert.That(undefined.Message, NUnit.Framework.Is.EqualTo("Value must be a defined value."));
-        Assert.That(combined.Success, NUnit.Framework.Is.False);
-        Assert.That(web.GetOk(), NUnit.Framework.Is.EqualTo(Channels.Web));
+        Assert.That(pending.GetValue(), NUnit.Framework.Is.EqualTo(Status.Pending));
+        Assert.That(undefined.GetError().Message, NUnit.Framework.Is.EqualTo("Value must be a defined value."));
+        Assert.That(combined.IsSuccess, NUnit.Framework.Is.False);
+        Assert.That(web.GetValue(), NUnit.Framework.Is.EqualTo(Channels.Web));
     }
 
     [Test]
@@ -152,10 +151,10 @@ public class ValueRuleTests
         Result<bool> paid = order.Paid.EnsureTrue();
         Result<Status> status = order.Status.EnsureDefined();
 
-        Assert.That(id.Message, NUnit.Framework.Is.EqualTo("Id must not be empty."));
+        Assert.That(id.GetError().Message, NUnit.Framework.Is.EqualTo("Id must not be empty."));
         Assert.That(Members(id), NUnit.Framework.Is.EqualTo(new[] { "Id" }));
-        Assert.That(paid.Message, NUnit.Framework.Is.EqualTo("Paid must be true."));
-        Assert.That(status.Message, NUnit.Framework.Is.EqualTo("Status must be a defined value."));
+        Assert.That(paid.GetError().Message, NUnit.Framework.Is.EqualTo("Paid must be true."));
+        Assert.That(status.GetError().Message, NUnit.Framework.Is.EqualTo("Status must be a defined value."));
     }
 
     [Test]
@@ -163,7 +162,7 @@ public class ValueRuleTests
     {
         Result<bool> result = Result<bool>.Ok(false).EnsureTrue();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must be true."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must be true."));
         Assert.That(Members(result), NUnit.Framework.Is.Empty);
     }
 
@@ -173,8 +172,8 @@ public class ValueRuleTests
         Result<Guid> onValue = Guid.Empty.EnsureNotEmpty("Pick a {Name}.", "Field");
         Result<Guid> onResult = Result<Guid>.Ok(Guid.Empty).EnsureNotEmpty("Pick a {Name}.", "Field");
 
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo("Pick a {Name}."));
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo("Pick a {Name}."));
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo("Pick a {Name}."));
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo("Pick a {Name}."));
     }
 
     [Test]
@@ -183,8 +182,8 @@ public class ValueRuleTests
         Result<string> text = "".EnsureNotEmpty(name: "Field");
         Result<List<int>> list = new List<int>().EnsureNotEmpty(name: "Field");
 
-        Assert.That(text.Message, NUnit.Framework.Is.EqualTo("Field must not be empty."));
-        Assert.That(list.Success, NUnit.Framework.Is.False);
+        Assert.That(text.GetError().Message, NUnit.Framework.Is.EqualTo("Field must not be empty."));
+        Assert.That(list.IsSuccess, NUnit.Framework.Is.False);
     }
 
     [Test]
@@ -197,8 +196,8 @@ public class ValueRuleTests
             o => o.Paid.EnsureTrue(),
             o => o.Status.EnsureDefined());
 
-        var error = (AggregateException)result.GetError();
-        Assert.That(error.InnerExceptions.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
+        var error = (ValidationErrors)result.GetError();
+        Assert.That(error.Errors.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
         {
             "Id must not be empty.",
             "Paid must be true.",

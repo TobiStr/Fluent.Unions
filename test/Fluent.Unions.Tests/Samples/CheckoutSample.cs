@@ -13,6 +13,8 @@ public record Receipt(string Customer, string Sku, decimal Total, string Payment
 
 public class PaymentDeclinedException(string message) : Exception(message);
 
+public class OutOfStockException(string message) : Exception(message);
+
 public sealed class Shop(IReadOnlyDictionary<Guid, Customer> customers, IReadOnlyDictionary<string, Product> products, decimal cardLimit)
 {
     public List<Receipt> Orders { get; } = [];
@@ -70,12 +72,17 @@ public static class ResultCheckout
             .Validate(
                 r => r.Sku.EnsureNotWhiteSpace(),
                 r => r.Quantity.EnsureInRange(1, 10))
-            .Chain(r => FindCustomer(shop, r.CustomerId)).Out(out var customer)
-            .Chain(_ => FindProduct(shop, request.Sku))
-            .Ensure(p => p.Stock >= request.Quantity, p => new InvalidOperationException($"Only {p.Stock} left of {p.Sku}."))
-            .Select(p => (Product: p, Total: p.Price * request.Quantity))
-            .Select(x => new Receipt(customer.Value.Name, x.Product.Sku, x.Total, shop.Charge(customer, x.Total)))
+            .Chain(r => FindCustomer(shop, r.CustomerId)
+                .Zip(FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
+            .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}."))
+            .Chain(o => Result.Try(() => shop.Charge(o.Customer, o.Total))
+                .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
             .Do(shop.Save);
+
+    private sealed record Order(Customer Customer, Product Product, int Quantity)
+    {
+        public decimal Total => Product.Price * Quantity;
+    }
 
     private static Result<Customer> FindCustomer(Shop shop, Guid id) =>
         shop.FindCustomer(id).ToResult(() => new KeyNotFoundException($"No customer {id}."));
@@ -92,14 +99,13 @@ public static class HttpResponseExtensions
 {
     public static HttpResponse ToHttpResponse<T>(this Result<T> result, int successStatusCode = 200) => result.Match(
         value => new HttpResponse(successStatusCode, value),
-        error => ToHttpResponse(error.ToHttpError()),
-        () => new HttpResponse(204, null));
+        error => ToHttpResponse(error.ToHttpError()));
 
     public static HttpError ToHttpError(this Exception error) => error switch
     {
-        AggregateException validation => new(400, string.Join(" ", validation.InnerExceptions.Select(e => e.Message))),
+        ValidationErrors validation => new(400, validation.Message),
         KeyNotFoundException => new(404, error.Message),
-        InvalidOperationException => new(409, error.Message),
+        OutOfStockException => new(409, error.Message),
         PaymentDeclinedException => new(402, error.Message),
         _ => new(500, "An unexpected error occurred.")
     };
@@ -141,9 +147,9 @@ public class CheckoutSampleTests
         int status = ResultCheckout.PlaceOrder(shop, request) switch
         {
             Receipt => 201,
-            AggregateException => 400,
+            ValidationErrors => 400,
             KeyNotFoundException => 404,
-            InvalidOperationException => 409,
+            OutOfStockException => 409,
             PaymentDeclinedException => 402,
             Exception => 500
         };
@@ -156,11 +162,9 @@ public class CheckoutSampleTests
     {
         var invalid = ResultCheckout.PlaceOrder(NewShop(), new CheckoutRequest(Ada.Id, " ", 0)).ToHttpResponse(201);
         var unexpected = new IOException("Disk C:\\secrets is full.").ToHttpError();
-        var empty = default(Result<Receipt>).ToHttpResponse(201);
 
         Assert.That(invalid.Body, Is.EqualTo(new HttpError(400, "Sku must not be empty or white space. Quantity must be between 1 and 10.")));
         Assert.That(unexpected, Is.EqualTo(new HttpError(500, "An unexpected error occurred.")));
-        Assert.That(empty, Is.EqualTo(new HttpResponse(204, null)));
     }
 
     [Test]
@@ -170,8 +174,8 @@ public class CheckoutSampleTests
 
         var receipt = ResultCheckout.PlaceOrder(shop, new CheckoutRequest(Ada.Id, "TEA", 2));
 
-        Assert.That(receipt.GetOk(), Is.EqualTo(new Receipt("Ada", "TEA", 9m, "PAY-1")));
-        Assert.That(shop.Orders, Is.EqualTo(new[] { receipt.GetOk() }));
+        Assert.That(receipt.GetValue(), Is.EqualTo(new Receipt("Ada", "TEA", 9m, "PAY-1")));
+        Assert.That(shop.Orders, Is.EqualTo(new[] { receipt.GetValue() }));
     }
 
     [Test]
@@ -179,8 +183,9 @@ public class CheckoutSampleTests
     {
         var result = ResultCheckout.PlaceOrder(NewShop(), new CheckoutRequest(Ada.Id, " ", 0));
 
-        var messages = ((AggregateException)result.GetError()).InnerExceptions.Select(e => e.Message);
-        Assert.That(messages, Is.EqualTo(new[] { "Sku must not be empty or white space.", "Quantity must be between 1 and 10." }));
+        var errors = ((ValidationErrors)result.GetError()).Errors;
+        Assert.That(errors.Select(e => e.Message), Is.EqualTo(new[] { "Sku must not be empty or white space.", "Quantity must be between 1 and 10." }));
+        Assert.That(errors.Select(e => e.MemberName), Is.EqualTo(new[] { "Sku", "Quantity" }));
     }
 
     [Test]

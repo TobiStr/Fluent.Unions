@@ -1,3 +1,4 @@
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Fluent.Unions.Abstractions;
 using Fluent.Unions.Serialization;
@@ -15,35 +16,73 @@ namespace Fluent.Unions;
 public union Result<T, TError>(T, TError) : IResult<Result<T, TError>, T, TError>
     where TError : notnull, IFromException<TError>
 {
-    static Result<T, TError> IResult<Result<T, TError>, T, TError>.FromValue(T value) => new(value);
+    static Result<T, TError> IResult<Result<T, TError>, T, TError>.FromValue(T value) => Of(value);
 
     static Result<T, TError> IErrorResult<Result<T, TError>, TError>.FromError(TError error) => new(error);
 
     static TError IErrorResult<Result<T, TError>, TError>.FromException(Exception exception) => TError.FromException(exception);
 
     /// <summary>
-    /// Indicates if the operation was successful.
+    /// Indicates whether the result holds a value.
     /// </summary>
-    public bool Success => Value is not TError && Value is T;
+    public bool IsSuccess => Value is not (null or TError);
 
     /// <summary>
-    /// Gets the value of the successful result.
+    /// Indicates whether the result holds an error.
     /// </summary>
-    /// <exception cref="InvalidOperationException">The result failed or is empty.</exception>
-    public T GetOk() => Value switch
+    public bool IsError => !IsSuccess;
+
+    /// <summary>
+    /// Gets the value.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The result holds an error. An error that is an exception becomes the inner exception.</exception>
+    public T GetValue() => TryGetValue(out var value)
+        ? value
+        : throw new InvalidOperationException(
+            $"{ResultErrors.Name(typeof(Result<T, TError>))} holds an error, not a value: {Case}", Case as Exception);
+
+    /// <summary>
+    /// Gets the value, if the result holds one.
+    /// </summary>
+    public bool TryGetValue([MaybeNullWhen(false)] out T value)
     {
-        TError => throw new InvalidOperationException($"Operation for Result<{typeof(T)}, {typeof(TError)}> was not successful."),
-        T value => value,
-        _ => throw new InvalidOperationException($"Payload for Result<{typeof(T)}, {typeof(TError)}> was not set.")
-    };
+        if (IsSuccess)
+        {
+            value = (T)Value!;
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
 
     /// <summary>
-    /// Gets the error of the failed result.
+    /// Gets the error.
     /// </summary>
-    /// <exception cref="InvalidOperationException">The result did not fail.</exception>
-    public TError GetError() => Value is TError error
+    /// <exception cref="InvalidOperationException">The result holds a value.</exception>
+    public TError GetError() => TryGetError(out var error)
         ? error
-        : throw new InvalidOperationException($"Error property for Result<{typeof(T)}, {typeof(TError)}> not set.");
+        : throw new InvalidOperationException($"{ResultErrors.Name(typeof(Result<T, TError>))} holds a value, not an error.");
+
+    /// <summary>
+    /// Gets the error, if the result holds one.
+    /// </summary>
+    public bool TryGetError([MaybeNullWhen(false)] out TError error)
+    {
+        if (Case is TError found)
+        {
+            error = found;
+            return true;
+        }
+
+        error = default;
+        return false;
+    }
+
+    internal object Case => Value ?? TError.FromException(ResultErrors.Uninitialized(typeof(Result<T, TError>)));
+
+    internal static Result<T, TError> Of(T? value) =>
+        value is null ? new(TError.FromException(ResultErrors.Uninitialized(typeof(Result<T, TError>)))) : new(value);
 
     /// <inheritdoc />
     public override string ToString() => Value?.ToString() ?? "";

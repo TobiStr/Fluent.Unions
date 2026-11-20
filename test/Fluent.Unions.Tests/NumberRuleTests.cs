@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.Tests;
@@ -42,13 +41,13 @@ public class NumberRuleTests
     ];
 
     private static IEnumerable<string> Members(Result<int> result) =>
-        ((ValidationException)result.GetError()).ValidationResult.MemberNames;
+        ((ValidationError)result.GetError()).MemberName is { } member ? new[] { member } : Array.Empty<string>();
 
     [TestCaseSource(nameof(Rules))]
     public void PassingValueIsReturnedInBothForms(RuleCase rule)
     {
-        Assert.That(rule.OnValue(rule.Passing).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
-        Assert.That(rule.OnResult(Result<int>.Ok(rule.Passing)).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnValue(rule.Passing).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnResult(Result<int>.Ok(rule.Passing)).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
     }
 
     [TestCaseSource(nameof(Rules))]
@@ -57,10 +56,10 @@ public class NumberRuleTests
         Result<int> onValue = rule.OnValue(rule.Failing);
         Result<int> onResult = rule.OnResult(Result<int>.Ok(rule.Failing));
 
-        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo(rule.Message));
-        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
         Assert.That(Members(onValue), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
         Assert.That(Members(onResult), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
     }
@@ -85,7 +84,7 @@ public class NumberRuleTests
 
         Result<int> result = customer.Age.EnsureInRange(18, 120);
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Age must be between 18 and 120."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Age must be between 18 and 120."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "Age" }));
     }
 
@@ -94,7 +93,7 @@ public class NumberRuleTests
     {
         Result<int> result = Result<int>.Ok(0).EnsurePositive();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must be positive."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must be positive."));
         Assert.That(Members(result), NUnit.Framework.Is.Empty);
     }
 
@@ -104,8 +103,8 @@ public class NumberRuleTests
         Result<int> onValue = 0.EnsurePositive("Enter a {Name}.", "Field");
         Result<int> onResult = Result<int>.Ok(0).EnsurePositive("Enter a {Name}.", "Field");
 
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo("Enter a {Name}."));
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo("Enter a {Name}."));
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo("Enter a {Name}."));
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo("Enter a {Name}."));
     }
 
     [Test]
@@ -114,8 +113,8 @@ public class NumberRuleTests
         Result<double> positive = double.NaN.EnsurePositive(name: "Price");
         Result<double> nonNegative = Result<double>.Ok(double.NaN).EnsureNonNegative(name: "Price");
 
-        Assert.That(positive.Message, NUnit.Framework.Is.EqualTo("Price must be positive."));
-        Assert.That(nonNegative.Message, NUnit.Framework.Is.EqualTo("Price must not be negative."));
+        Assert.That(positive.GetError().Message, NUnit.Framework.Is.EqualTo("Price must be positive."));
+        Assert.That(nonNegative.GetError().Message, NUnit.Framework.Is.EqualTo("Price must not be negative."));
     }
 
     [Test]
@@ -127,7 +126,7 @@ public class NumberRuleTests
         {
             Result<double> result = 1.0.EnsureGreaterThan(2.5, name: "Price");
 
-            Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Price must be greater than 2.5."));
+            Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Price must be greater than 2.5."));
         }
         finally
         {
@@ -167,8 +166,8 @@ public class NumberRuleTests
             c => c.Age.EnsureInRange(18, 120),
             c => c.Age.EnsureEven());
 
-        var error = (AggregateException)result.GetError();
-        Assert.That(error.InnerExceptions.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
+        var error = (ValidationErrors)result.GetError();
+        Assert.That(error.Errors.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
         {
             "Age must be between 18 and 120.",
             "Age must be even."

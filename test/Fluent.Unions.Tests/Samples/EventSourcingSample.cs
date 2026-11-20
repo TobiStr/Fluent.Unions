@@ -69,7 +69,7 @@ public class EventSourcingSampleTests
         var checkedOut = CartEvents.CheckOut(cart);
         var again = checkedOut.Select(e => CartEvents.Evolve(cart, e)).Chain(CartEvents.CheckOut);
 
-        Assert.That(checkedOut.GetOk().As<CartCheckedOut>().GetValue().Total, Is.EqualTo(4.5m));
+        Assert.That(checkedOut.GetValue().As<CartCheckedOut>().GetValue().Total, Is.EqualTo(4.5m));
         Assert.That(again.GetError().Message, Is.EqualTo("The cart is already checked out."));
         Assert.That(CartEvents.CheckOut(empty).GetError().Message, Is.EqualTo("An empty cart cannot be checked out."));
     }

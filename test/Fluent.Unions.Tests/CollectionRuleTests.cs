@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.Tests;
@@ -39,13 +38,13 @@ public class CollectionRuleTests
     ];
 
     private static IEnumerable<string> Members<T>(Result<T> result) =>
-        ((ValidationException)result.GetError()).ValidationResult.MemberNames;
+        ((ValidationError)result.GetError()).MemberName is { } member ? new[] { member } : Array.Empty<string>();
 
     [TestCaseSource(nameof(Rules))]
     public void PassingCollectionIsReturnedInBothForms(RuleCase rule)
     {
-        Assert.That(rule.OnValue(rule.Passing).GetOk(), NUnit.Framework.Is.SameAs(rule.Passing));
-        Assert.That(rule.OnResult(Result<List<int>>.Ok(rule.Passing)).GetOk(), NUnit.Framework.Is.SameAs(rule.Passing));
+        Assert.That(rule.OnValue(rule.Passing).GetValue(), NUnit.Framework.Is.SameAs(rule.Passing));
+        Assert.That(rule.OnResult(Result<List<int>>.Ok(rule.Passing)).GetValue(), NUnit.Framework.Is.SameAs(rule.Passing));
     }
 
     [TestCaseSource(nameof(Rules))]
@@ -54,10 +53,10 @@ public class CollectionRuleTests
         Result<List<int>> onValue = rule.OnValue(rule.Failing);
         Result<List<int>> onResult = rule.OnResult(Result<List<int>>.Ok(rule.Failing));
 
-        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo(rule.Message));
-        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
         Assert.That(Members(onValue), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
         Assert.That(Members(onResult), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
     }
@@ -67,8 +66,8 @@ public class CollectionRuleTests
     {
         Result<List<int>> result = rule.OnValue(null!);
 
-        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Field must not be null."));
+        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Field must not be null."));
     }
 
     [TestCaseSource(nameof(Rules))]
@@ -92,8 +91,8 @@ public class CollectionRuleTests
         Result<List<int>> items = Result<List<int>>.Ok([1]);
         Result<List<int>> emptyResult = default;
 
-        Assert.That(emptyList.EnsureNotEmpty().Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
-        Assert.That(items.EnsureNotEmpty().Success, NUnit.Framework.Is.True);
+        Assert.That(emptyList.EnsureNotEmpty().GetError().Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
+        Assert.That(items.EnsureNotEmpty().IsSuccess, NUnit.Framework.Is.True);
         Assert.That(Result<List<int>>.Error(failure).EnsureNotEmpty().GetError(), NUnit.Framework.Is.SameAs(failure));
         Assert.That(emptyResult.EnsureNotEmpty().Value, NUnit.Framework.Is.Null);
     }
@@ -107,8 +106,8 @@ public class CollectionRuleTests
         Result<int[]> fromArray = array.EnsureHasMinCount(1);
         Result<HashSet<string>> fromSet = Result<HashSet<string>>.Ok(set).EnsureContainsItem("a");
 
-        Assert.That(fromArray.GetOk(), NUnit.Framework.Is.SameAs(array));
-        Assert.That(fromSet.GetOk(), NUnit.Framework.Is.SameAs(set));
+        Assert.That(fromArray.GetValue(), NUnit.Framework.Is.SameAs(array));
+        Assert.That(fromSet.GetValue(), NUnit.Framework.Is.SameAs(set));
     }
 
     [Test]
@@ -117,8 +116,8 @@ public class CollectionRuleTests
         Result<string> onValue = "".EnsureNotEmpty(name: "Field");
         Result<string> onResult = Result<string>.Ok("").EnsureNotEmpty(name: "Field");
 
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo("Field must not be empty."));
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo("Field must not be empty."));
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo("Field must not be empty."));
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo("Field must not be empty."));
     }
 
     [Test]
@@ -128,7 +127,7 @@ public class CollectionRuleTests
 
         Result<List<int>> result = order.Lines.EnsureNotEmpty();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Lines must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Lines must not be empty."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "Lines" }));
     }
 
@@ -138,8 +137,8 @@ public class CollectionRuleTests
         Result<List<int>> onValue = new List<int>().EnsureNotEmpty("Add a {Name}.", "Field");
         Result<List<int>> onResult = Result<List<int>>.Ok([]).EnsureNotEmpty("Add a {Name}.", "Field");
 
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo("Add a {Name}."));
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo("Add a {Name}."));
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo("Add a {Name}."));
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo("Add a {Name}."));
     }
 
     [Test]
@@ -150,8 +149,8 @@ public class CollectionRuleTests
         Result<string[]> ordinal = names.EnsureUnique(StringComparer.Ordinal);
         Result<string[]> ignoreCase = names.EnsureUnique(StringComparer.OrdinalIgnoreCase, name: "Names");
 
-        Assert.That(ordinal.Success, NUnit.Framework.Is.True);
-        Assert.That(ignoreCase.Message, NUnit.Framework.Is.EqualTo("Names must contain unique items."));
+        Assert.That(ordinal.IsSuccess, NUnit.Framework.Is.True);
+        Assert.That(ignoreCase.GetError().Message, NUnit.Framework.Is.EqualTo("Names must contain unique items."));
     }
 
     [Test]
@@ -181,8 +180,8 @@ public class CollectionRuleTests
             o => o.Lines.EnsureNotEmpty(),
             o => o.Lines.EnsureHasMinCount(2));
 
-        var error = (AggregateException)result.GetError();
-        Assert.That(error.InnerExceptions.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
+        var error = (ValidationErrors)result.GetError();
+        Assert.That(error.Errors.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
         {
             "Lines must not be empty.",
             "Lines must contain at least 2 items."

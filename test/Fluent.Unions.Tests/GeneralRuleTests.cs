@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.Tests;
@@ -31,13 +30,13 @@ public class GeneralRuleTests
     ];
 
     private static IEnumerable<string> Members<T>(Result<T> result) =>
-        ((ValidationException)result.GetError()).ValidationResult.MemberNames;
+        ((ValidationError)result.GetError()).MemberName is { } member ? new[] { member } : Array.Empty<string>();
 
     [TestCaseSource(nameof(Rules))]
     public void PassingValueIsReturnedInBothForms(RuleCase rule)
     {
-        Assert.That(rule.OnValue(rule.Passing).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
-        Assert.That(rule.OnResult(Result<int>.Ok(rule.Passing)).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnValue(rule.Passing).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnResult(Result<int>.Ok(rule.Passing)).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
     }
 
     [TestCaseSource(nameof(Rules))]
@@ -46,10 +45,10 @@ public class GeneralRuleTests
         Result<int> onValue = rule.OnValue(rule.Failing);
         Result<int> onResult = rule.OnResult(Result<int>.Ok(rule.Failing));
 
-        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo(rule.Message));
-        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
         Assert.That(Members(onValue), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
         Assert.That(Members(onResult), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
     }
@@ -76,8 +75,8 @@ public class GeneralRuleTests
         Result<int> notIn = Result<int>.Ok(1).EnsureNotIn([2, 3]);
         Result<int> error = Result<int>.Error(failure).EnsureEqualTo(1);
 
-        Assert.That(equal.GetOk(), NUnit.Framework.Is.EqualTo(1));
-        Assert.That(notIn.GetOk(), NUnit.Framework.Is.EqualTo(1));
+        Assert.That(equal.GetValue(), NUnit.Framework.Is.EqualTo(1));
+        Assert.That(notIn.GetValue(), NUnit.Framework.Is.EqualTo(1));
         Assert.That(error.GetError(), NUnit.Framework.Is.SameAs(failure));
     }
 
@@ -86,7 +85,7 @@ public class GeneralRuleTests
     {
         Result<int> result = Result<int>.Ok(1).EnsureEqualTo(2);
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must be equal to 2."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must be equal to 2."));
         Assert.That(Members(result), NUnit.Framework.Is.Empty);
     }
 
@@ -97,7 +96,7 @@ public class GeneralRuleTests
 
         Result<string> result = order.Status.EnsureIn(["PAID", "SHIPPED"]);
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Status must be one of the allowed values."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Status must be one of the allowed values."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "Status" }));
     }
 
@@ -107,8 +106,8 @@ public class GeneralRuleTests
         Result<string> onValue = "A".EnsureEqualTo("a", StringComparer.OrdinalIgnoreCase);
         Result<string> onResult = Result<string>.Ok("A").EnsureNotEqualTo("a", StringComparer.Ordinal);
 
-        Assert.That(onValue.GetOk(), NUnit.Framework.Is.EqualTo("A"));
-        Assert.That(onResult.GetOk(), NUnit.Framework.Is.EqualTo("A"));
+        Assert.That(onValue.GetValue(), NUnit.Framework.Is.EqualTo("A"));
+        Assert.That(onResult.GetValue(), NUnit.Framework.Is.EqualTo("A"));
     }
 
     [Test]
@@ -117,8 +116,8 @@ public class GeneralRuleTests
         Result<int> onValue = 1.EnsureEqualTo(2, message: "Wrong {Name}.", name: "Field");
         Result<int> onResult = Result<int>.Ok(1).EnsureEqualTo(2, message: "Wrong {Name}.", name: "Field");
 
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo("Wrong {Name}."));
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo("Wrong {Name}."));
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo("Wrong {Name}."));
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo("Wrong {Name}."));
     }
 
     [Test]
@@ -129,8 +128,8 @@ public class GeneralRuleTests
         Result<string> equal = missing!.EnsureEqualTo("a", name: "Field");
         Result<string> notIn = missing!.EnsureNotIn(["a"], name: "Field");
 
-        Assert.That(equal.Message, NUnit.Framework.Is.EqualTo("Field must not be null."));
-        Assert.That(notIn.Message, NUnit.Framework.Is.EqualTo("Field must not be null."));
+        Assert.That(equal.GetError().Message, NUnit.Framework.Is.EqualTo("Field must not be null."));
+        Assert.That(notIn.GetError().Message, NUnit.Framework.Is.EqualTo("Field must not be null."));
     }
 
     [Test]
@@ -143,10 +142,10 @@ public class GeneralRuleTests
         Result<string> passed = present.EnsureNotNull();
         Result<string> custom = missing.EnsureNotNull("Enter a name.");
 
-        Assert.That(failed.Message, NUnit.Framework.Is.EqualTo("missing must not be null."));
+        Assert.That(failed.GetError().Message, NUnit.Framework.Is.EqualTo("missing must not be null."));
         Assert.That(Members(failed), NUnit.Framework.Is.EqualTo(new[] { "missing" }));
-        Assert.That(passed.GetOk(), NUnit.Framework.Is.EqualTo("a"));
-        Assert.That(custom.Message, NUnit.Framework.Is.EqualTo("Enter a name."));
+        Assert.That(passed.GetValue(), NUnit.Framework.Is.EqualTo("a"));
+        Assert.That(custom.GetError().Message, NUnit.Framework.Is.EqualTo("Enter a name."));
     }
 
     [Test]
@@ -155,10 +154,10 @@ public class GeneralRuleTests
         Option<int> some = Option.Some(5);
         Option<int> none = default;
 
-        Assert.That(some.EnsureSome().Success, NUnit.Framework.Is.True);
-        Assert.That(none.EnsureSome().Message, NUnit.Framework.Is.EqualTo("none must have a value."));
-        Assert.That(none.EnsureNone().Success, NUnit.Framework.Is.True);
-        Assert.That(some.EnsureNone().Message, NUnit.Framework.Is.EqualTo("some must not have a value."));
+        Assert.That(some.EnsureSome().IsSuccess, NUnit.Framework.Is.True);
+        Assert.That(none.EnsureSome().GetError().Message, NUnit.Framework.Is.EqualTo("none must have a value."));
+        Assert.That(none.EnsureNone().IsSuccess, NUnit.Framework.Is.True);
+        Assert.That(some.EnsureNone().GetError().Message, NUnit.Framework.Is.EqualTo("some must not have a value."));
         Assert.That(Members(none.EnsureSome()), NUnit.Framework.Is.EqualTo(new[] { "none" }));
     }
 
@@ -173,9 +172,9 @@ public class GeneralRuleTests
         Result<Option<int>> notNone = Result<Option<int>>.Ok(Option.Some(5)).EnsureNone(message: "Gone.");
         Result<Option<int>> error = Result<Option<int>>.Error(failure).EnsureSome();
 
-        Assert.That(some.Success, NUnit.Framework.Is.True);
-        Assert.That(notSome.Message, NUnit.Framework.Is.EqualTo("Stock must have a value."));
-        Assert.That(notNone.Message, NUnit.Framework.Is.EqualTo("Gone."));
+        Assert.That(some.IsSuccess, NUnit.Framework.Is.True);
+        Assert.That(notSome.GetError().Message, NUnit.Framework.Is.EqualTo("Stock must have a value."));
+        Assert.That(notNone.GetError().Message, NUnit.Framework.Is.EqualTo("Gone."));
         Assert.That(error.GetError(), NUnit.Framework.Is.SameAs(failure));
         Assert.That(empty.EnsureSome().Value, NUnit.Framework.Is.Null);
         Assert.That(empty.EnsureNone().Value, NUnit.Framework.Is.Null);

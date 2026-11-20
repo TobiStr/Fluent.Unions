@@ -7,8 +7,8 @@ public class UseCases
     {
         var result = CopyPerson();
 
-        if (!result.Success)
-            Console.WriteLine($"{nameof(CopyPerson)} was not successfull: {result.Message}");
+        if (!result.IsSuccess)
+            Console.WriteLine($"{nameof(CopyPerson)} was not successfull: {result.GetError().Message}");
     }
 
     [Test]
@@ -16,8 +16,8 @@ public class UseCases
     {
         var result = CopyPersonThrowing();
 
-        if (!result.Success)
-            Console.WriteLine($"{nameof(CopyPerson)} was not successfull: {result.Message}");
+        if (!result.IsSuccess)
+            Console.WriteLine($"{nameof(CopyPerson)} was not successfull: {result.GetError().Message}");
     }
 
     [Test]
@@ -36,7 +36,7 @@ public class UseCases
         var log = new List<string>();
 
         var copied = GetPersonFromDatabase()
-            .Where(person => person.Age >= 18)
+            .Ensure(person => person.Age >= 18, "Underage")
             .Do(person => log.Add($"Copying {person.Name}"))
             .SelectMany(InsertPersonToOtherDatabase);
 
@@ -45,7 +45,7 @@ public class UseCases
             .SelectMany(InsertPersonToOtherDatabase)
             .Catch((InvalidDataException error) => new ApplicationException("Copy failed", error));
 
-        Assert.True(copied.Success);
+        Assert.True(copied.IsSuccess);
         Assert.That(failed.GetError().Message, Is.EqualTo("Copy failed"));
         Assert.That(log, Is.EqualTo(new[] { "Copying Test" }));
     }
@@ -63,7 +63,7 @@ public class UseCases
             var personResult = GetPersonFromDatabase()
                 .Check();
 
-            return InsertPersonToOtherDatabase(personResult.GetOk())
+            return InsertPersonToOtherDatabase(personResult.GetValue())
                 .Check();
         }
         catch (Exception ex)
@@ -79,7 +79,7 @@ public class UseCases
             var personResult = GetPersonFromDatabaseThrowing()
                 .Check();
 
-            return InsertPersonToOtherDatabase(personResult.GetOk())
+            return InsertPersonToOtherDatabase(personResult.GetValue())
                 .Check();
         }
         catch (Exception ex)

@@ -1,4 +1,4 @@
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Operators for <see cref="Loadable{T}"/>.
@@ -30,16 +30,16 @@ public static class LoadableExtensions
         this Loadable<T> loadable,
         Func<TOut> onNotLoaded,
         Func<TOut> onLoading,
-        Func<T, TOut> onNext,
+        Func<T, TOut> onLoaded,
         Func<Exception, TOut> onError)
     {
         ArgumentNullException.ThrowIfNull(onNotLoaded);
         ArgumentNullException.ThrowIfNull(onLoading);
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onLoaded);
         ArgumentNullException.ThrowIfNull(onError);
 
         if (loadable.TryGetValue(out var value))
-            return onNext(value);
+            return onLoaded(value);
 
         return loadable.Value switch
         {
@@ -62,14 +62,10 @@ public static class LoadableExtensions
         loadable.TryGetValue(out var value) ? Option<T>.Of(value) : Option<T>.NoValue;
 
     /// <summary>
-    /// Turns a finished result into a loaded or failed state. An empty result counts as not loaded.
+    /// Turns a finished result into a loaded or failed state.
     /// </summary>
-    public static Loadable<T> ToLoadable<T>(this Result<T> result) => result.Value switch
-    {
-        Exception error => new Loadable<T>(error),
-        T value => new Loadable<T>(value),
-        _ => new Loadable<T>(Loadable.NotLoaded)
-    };
+    public static Loadable<T> ToLoadable<T>(this Result<T> result) =>
+        result.TryGetError(out var error) ? new Loadable<T>(error) : new Loadable<T>(result.GetValue());
 
     /// <summary>
     /// Awaits the result and turns it into a loaded or failed state. A faulted task counts as failed.

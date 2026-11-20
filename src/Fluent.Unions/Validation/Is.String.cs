@@ -22,7 +22,7 @@ public static partial class Is
     /// <summary>True if the string is null, empty or only white space.</summary>
     public static bool WhiteSpace(string? value) => string.IsNullOrWhiteSpace(value);
 
-    /// <summary>True if the string is a valid email address.</summary>
+    /// <summary>True if the string has exactly one <c>@</c> that is neither the first nor the last character (the DataAnnotations email rule). The domain is not checked.</summary>
     public static bool MatchesEmail(string? value) => !string.IsNullOrEmpty(value) && EmailValidator.IsValid(value);
 
     /// <summary>True if the string is an absolute http or https URL.</summary>
@@ -35,7 +35,7 @@ public static partial class Is
     /// <summary>True if the string parses as an IP address.</summary>
     public static bool MatchesIpAddress(string? value) => IPAddress.TryParse(value, out _);
 
-    /// <summary>True if the string is a valid phone number.</summary>
+    /// <summary>True if the string has only digits, spaces and <c>+ - . ( )</c>, with an optional extension (the DataAnnotations phone rule).</summary>
     public static bool MatchesPhoneNumber(string? value) => !string.IsNullOrEmpty(value) && PhoneValidator.IsValid(value);
 
     /// <summary>True if the string is not empty and has only letters.</summary>

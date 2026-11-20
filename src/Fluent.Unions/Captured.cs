@@ -39,7 +39,7 @@ public sealed class Captured<T>
 
     internal void SetFrom(Result<T> result)
     {
-        if (result.Value is not Exception && result.Value is T payload)
+        if (result.TryGetValue(out var payload))
             Set(payload);
     }
 

@@ -53,7 +53,7 @@ public class OrderStateMachineSampleTests
     {
         var result = OrderStateMachine.Run(NewOrder, new AddItem("Tea"), new Submit(), new Pay(4.5m), new Ship("TRACK-1"));
 
-        Assert.That(result.Select(OrderStateMachine.Describe).GetOk(), Is.EqualTo("Shipped as TRACK-1"));
+        Assert.That(result.Select(OrderStateMachine.Describe).GetValue(), Is.EqualTo("Shipped as TRACK-1"));
     }
 
     [Test]

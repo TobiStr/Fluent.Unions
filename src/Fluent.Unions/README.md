@@ -34,7 +34,7 @@ string greeting = GetCustomer(id) switch
 ```csharp
 Result<Order> order = GetCustomer(id)
     .Chain(GetCart)
-    .Where(cart => cart.Items.Count > 0)
+    .Ensure(cart => cart.Items.Count > 0, "The cart is empty.")
     .Chain(PlaceOrder)
     .OnErrorDo(error => logger.LogWarning(error, "Checkout failed"));
 ```

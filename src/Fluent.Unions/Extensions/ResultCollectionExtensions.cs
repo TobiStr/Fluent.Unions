@@ -1,4 +1,4 @@
-﻿namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Operators for sequences of results.
@@ -6,7 +6,7 @@
 public static class ResultCollectionExtensions
 {
     /// <summary>
-    /// Collects all values into one result. The first error wins, and empty results are skipped.
+    /// Collects all values into one result. The first error wins.
     /// </summary>
     public static Result<IReadOnlyList<T>> Combine<T>(this IEnumerable<Result<T>> results)
     {
@@ -18,7 +18,7 @@ public static class ResultCollectionExtensions
 
             foreach (var result in results)
             {
-                switch (result.Value)
+                switch (result.Case)
                 {
                     case Exception error:
                         return error;
@@ -28,12 +28,13 @@ public static class ResultCollectionExtensions
                 }
             }
 
-            return new Result<IReadOnlyList<T>>(values);
+            return Result<IReadOnlyList<T>>.Of(values);
         });
     }
 
     /// <summary>
-    /// Collects all values into one result, or every error in an <see cref="AggregateException"/>. Empty results are skipped.
+    /// Collects all values into one result, or every error: a <see cref="ValidationErrors"/> when all of them are
+    /// validation failures, otherwise an <see cref="AggregateException"/>.
     /// </summary>
     public static Result<IReadOnlyList<T>> CombineAll<T>(this IEnumerable<Result<T>> results)
     {
@@ -44,13 +45,13 @@ public static class ResultCollectionExtensions
             var (values, errors) = results.Partition();
 
             return errors.Count == 0
-                ? new Result<IReadOnlyList<T>>(values)
-                : new AggregateException(errors).Flatten();
+                ? Result<IReadOnlyList<T>>.Of(values)
+                : ValidationErrors.Combine(errors);
         });
     }
 
     /// <summary>
-    /// Splits the results into values and errors in one pass. Empty results are skipped.
+    /// Splits the results into values and errors in one pass.
     /// </summary>
     public static (IReadOnlyList<T> Values, IReadOnlyList<Exception> Errors) Partition<T>(this IEnumerable<Result<T>> results)
     {
@@ -61,7 +62,7 @@ public static class ResultCollectionExtensions
 
         foreach (var result in results)
         {
-            switch (result.Value)
+            switch (result.Case)
             {
                 case Exception error:
                     errors.Add(error);
@@ -82,7 +83,7 @@ public static class ResultCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(results);
 
-        return results.Select(result => result.Value).Where(value => value is not Exception).OfType<T>();
+        return results.Select(result => result.Case).Where(value => value is not Exception).OfType<T>();
     }
 
     /// <summary>
@@ -92,6 +93,6 @@ public static class ResultCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(results);
 
-        return results.Select(result => result.Value).OfType<Exception>();
+        return results.Select(result => result.Case).OfType<Exception>();
     }
 }

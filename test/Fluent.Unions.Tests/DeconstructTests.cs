@@ -7,7 +7,7 @@ public class DeconstructTests
     private record Customer(int Id, string Name);
 
     [Test]
-    public void DeconstructsValueErrorAndEmpty()
+    public void DeconstructSetsExactlyOneOfValueAndError()
     {
         var (value, error) = (Result<int>)5;
         var (failedValue, failure) = (Result<int>)NotFound;
@@ -18,15 +18,15 @@ public class DeconstructTests
         Assert.That(failedValue, Is.EqualTo(0));
         Assert.That(failure, Is.SameAs(NotFound));
         Assert.That(emptyValue, Is.Null);
-        Assert.That(emptyError, Is.Null);
+        Assert.That(emptyError, Is.TypeOf<InvalidOperationException>());
     }
 
     [Test]
     public void SupportsGoStyleEarlyReturns()
     {
-        Assert.That(Greet(7).GetOk(), Is.EqualTo("Hello Ada"));
+        Assert.That(Greet(7).GetValue(), Is.EqualTo("Hello Ada"));
         Assert.That(Greet(0).GetError(), Is.SameAs(NotFound));
-        Assert.That(Greet(-1).Value, Is.Null);
+        Assert.That(Greet(-1).GetError().Message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]

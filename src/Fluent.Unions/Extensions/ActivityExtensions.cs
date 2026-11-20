@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Fluent.Unions.Abstractions;
 
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Records the outcome of a result on an <see cref="Activity"/>.
@@ -9,21 +9,21 @@ namespace Fluent.Unions.Extensions;
 public static class ActivityExtensions
 {
     /// <summary>
-    /// Sets the status from the result and records the exception of an error. An empty result is an error without an exception event.
+    /// Sets the status from the result and records the exception of an error.
     /// </summary>
     public static Activity? RecordResult(this Activity? activity, Result result) =>
-        Record(activity, result.Success, result.Value as Exception);
+        Record(activity, result.TryGetError(out var error) ? error : null);
 
     /// <inheritdoc cref="RecordResult(Activity?, Result)"/>
     public static Activity? RecordResult<T>(this Activity? activity, Result<T> result) =>
-        Record(activity, result.Success, result.Value as Exception);
+        Record(activity, result.TryGetError(out var error) ? error : null);
 
     /// <summary>
     /// Sets the status from the result and records the error. An error that is not an exception is wrapped in a <see cref="ResultErrorException"/>.
     /// </summary>
     public static Activity? RecordResult<T, TError>(this Activity? activity, Result<T, TError> result)
         where TError : notnull, IFromException<TError> =>
-        Record(activity, result.Success, result.Value is TError error ? error as Exception ?? new ResultErrorException(error) : null);
+        Record(activity, result.TryGetError(out var error) ? error as Exception ?? new ResultErrorException(error) : null);
 
     /// <summary>
     /// Sets the status from a custom result and records the error. An error that is not an exception is wrapped in a <see cref="ResultErrorException"/>.
@@ -34,13 +34,10 @@ public static class ActivityExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return Record(
-            activity,
-            result.Value is not TError && result.Value is T,
-            result.Value is TError error ? error as Exception ?? new ResultErrorException(error) : null);
+        return Record(activity, result.TryGetError(out var error) ? error as Exception ?? new ResultErrorException(error) : null);
     }
 
-    private static Activity? Record(Activity? activity, bool success, Exception? error)
+    private static Activity? Record(Activity? activity, Exception? error)
     {
         if (activity is null)
         {
@@ -52,13 +49,9 @@ public static class ActivityExtensions
             activity.SetStatus(ActivityStatusCode.Error, error.Message);
             activity.AddException(error);
         }
-        else if (success)
-        {
-            activity.SetStatus(ActivityStatusCode.Ok);
-        }
         else
         {
-            activity.SetStatus(ActivityStatusCode.Error, "Result is empty");
+            activity.SetStatus(ActivityStatusCode.Ok);
         }
 
         return activity;

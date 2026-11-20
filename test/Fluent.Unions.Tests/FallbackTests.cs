@@ -71,27 +71,12 @@ public class FallbackTests
     }
 
     [Test]
-    public void ResultDefaultIfEmptyFactoryRunsOnlyForEmptyAndCapturesExceptions()
-    {
-        var calls = 0;
-        Result<int> ok = 5;
-        Result<int> error = Failure;
-
-        Assert.That(ok.DefaultIfEmpty(() => ++calls).GetOk(), Is.EqualTo(5));
-        Assert.That(error.DefaultIfEmpty(() => ++calls).GetError(), Is.SameAs(Failure));
-        Assert.That(calls, Is.EqualTo(0));
-        Assert.That(default(Result<int>).DefaultIfEmpty(() => 9).GetOk(), Is.EqualTo(9));
-        Assert.That(default(Result<int>).DefaultIfEmpty(() => throw Failure).GetError(), Is.SameAs(Failure));
-    }
-
-    [Test]
     public async Task TaskOverloads()
     {
         Assert.That(await Task.FromResult<Option<int>>(Option.None).GetValueOrDefault(Seven), Is.EqualTo(7));
         Assert.That((await Task.FromResult<Option<int>>(Option.None).DefaultIfEmpty(Seven)).GetValue(), Is.EqualTo(7));
         Assert.That((await Task.FromResult<Option<int>>(Option.None).Or(() => 3)).GetValue(), Is.EqualTo(3));
         Assert.That(await Task.FromResult<Result<int>>(Failure).GetValueOrDefault(Seven), Is.EqualTo(7));
-        Assert.That((await Task.FromResult(default(Result<int>)).DefaultIfEmpty(Seven)).GetOk(), Is.EqualTo(7));
     }
 
     private static int Seven() => 7;

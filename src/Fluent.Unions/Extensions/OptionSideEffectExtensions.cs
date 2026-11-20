@@ -1,4 +1,4 @@
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Rx-style operators that run side effects and return the same option.
@@ -6,28 +6,28 @@ namespace Fluent.Unions.Extensions;
 public static class OptionSideEffectExtensions
 {
     /// <summary>
-    /// Runs <paramref name="onNext"/> with the value.
+    /// Runs <paramref name="onSome"/> with the value.
     /// </summary>
-    public static Option<T> Do<T>(this Option<T> option, Action<T> onNext)
+    public static Option<T> Do<T>(this Option<T> option, Action<T> onSome)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSome);
 
         if (option.TryGetValue(out var value))
-            onNext(value);
+            onSome(value);
 
         return option.Normalize();
     }
 
     /// <summary>
-    /// Runs <paramref name="onNext"/> with the value, or <paramref name="onNone"/> when the option holds none.
+    /// Runs <paramref name="onSome"/> with the value, or <paramref name="onNone"/> when the option holds none.
     /// </summary>
-    public static Option<T> Do<T>(this Option<T> option, Action<T> onNext, Action onNone)
+    public static Option<T> Do<T>(this Option<T> option, Action<T> onSome, Action onNone)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSome);
         ArgumentNullException.ThrowIfNull(onNone);
 
         if (option.TryGetValue(out var value))
-            onNext(value);
+            onSome(value);
         else
             onNone();
 

@@ -1,4 +1,6 @@
-namespace Fluent.Unions.Extensions;
+using System.ComponentModel;
+
+namespace Fluent.Unions;
 
 /// <summary>
 /// The fluent operators on <see cref="Task{TResult}"/> of an option, so a pipeline stays one expression.
@@ -11,10 +13,12 @@ public static class OptionTaskExtensions
         Then(task, option => option.Select(selector));
 
     /// <inheritdoc cref="OptionQueryExtensions.SelectMany{T, TOut}(Option{T}, Func{T, Option{TOut}})"/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static Task<Option<TOut>> SelectMany<T, TOut>(this Task<Option<T>> task, Func<T, Option<TOut>> selector) =>
         Then(task, option => option.SelectMany(selector));
 
     /// <inheritdoc cref="OptionQueryExtensions.SelectMany{T, TMid, TOut}(Option{T}, Func{T, Option{TMid}}, Func{T, TMid, TOut})"/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static Task<Option<TOut>> SelectMany<T, TMid, TOut>(
         this Task<Option<T>> task,
         Func<T, Option<TMid>> selector,
@@ -24,6 +28,7 @@ public static class OptionTaskExtensions
     /// <summary>
     /// Chains an asynchronous operation and combines both values. Enables async query syntax.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static Task<Option<TOut>> SelectMany<T, TMid, TOut>(
         this Task<Option<T>> task,
         Func<T, Task<Option<TMid>>> selector,
@@ -72,16 +77,16 @@ public static class OptionTaskExtensions
         Then(task, option => option.Or(alternativeFactory));
 
     /// <inheritdoc cref="OptionQueryExtensions.Match{T, TOut}(Option{T}, Func{T, TOut}, Func{TOut})"/>
-    public static Task<TOut> Match<T, TOut>(this Task<Option<T>> task, Func<T, TOut> onNext, Func<TOut> onNone) =>
-        Then(task, option => option.Match(onNext, onNone));
+    public static Task<TOut> Match<T, TOut>(this Task<Option<T>> task, Func<T, TOut> onSome, Func<TOut> onNone) =>
+        Then(task, option => option.Match(onSome, onNone));
 
     /// <inheritdoc cref="OptionSideEffectExtensions.Do{T}(Option{T}, Action{T})"/>
-    public static Task<Option<T>> Do<T>(this Task<Option<T>> task, Action<T> onNext) =>
-        Then(task, option => option.Do(onNext));
+    public static Task<Option<T>> Do<T>(this Task<Option<T>> task, Action<T> onSome) =>
+        Then(task, option => option.Do(onSome));
 
     /// <inheritdoc cref="OptionSideEffectExtensions.Do{T}(Option{T}, Action{T}, Action)"/>
-    public static Task<Option<T>> Do<T>(this Task<Option<T>> task, Action<T> onNext, Action onNone) =>
-        Then(task, option => option.Do(onNext, onNone));
+    public static Task<Option<T>> Do<T>(this Task<Option<T>> task, Action<T> onSome, Action onNone) =>
+        Then(task, option => option.Do(onSome, onNone));
 
     /// <inheritdoc cref="OptionSideEffectExtensions.OnNoneDo{T}(Option{T}, Action)"/>
     public static Task<Option<T>> OnNoneDo<T>(this Task<Option<T>> task, Action onNone) =>

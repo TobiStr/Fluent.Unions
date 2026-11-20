@@ -1,4 +1,4 @@
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Conversions between nullable values, options and results.
@@ -24,44 +24,34 @@ public static class OptionConversionExtensions
         option.TryGetValue(out var value) ? value : null;
 
     /// <summary>
-    /// Keeps the value of a successful result. Errors and empty results give an option without a value.
+    /// Keeps the value of a successful result. An error gives an option without a value.
     /// </summary>
-    public static Option<T> ToOption<T>(this Result<T> result) => result.Value switch
-    {
-        Exception => Option<T>.NoValue,
-        T value => Option<T>.Of(value),
-        _ => Option<T>.NoValue
-    };
+    public static Option<T> ToOption<T>(this Result<T> result) =>
+        result.TryGetValue(out var value) ? Option<T>.Of(value) : Option<T>.NoValue;
 
     /// <summary>
     /// Swaps an optional result into a result of an option: no value gives ok with <see cref="None"/>,
-    /// an error stays an error, and an empty inner result stays empty.
+    /// and an error stays an error.
     /// </summary>
     public static Result<Option<T>> Transpose<T>(this Option<Result<T>> option)
     {
         if (!option.TryGetValue(out var inner))
             return new Result<Option<T>>(Option<T>.NoValue);
 
-        return inner.Value switch
-        {
-            Exception error => error,
-            T value => new Result<Option<T>>(Option<T>.Of(value)),
-            _ => default
-        };
+        return inner.TryGetError(out var error) ? error : new Result<Option<T>>(Option<T>.Of(inner.GetValue()));
     }
 
     /// <summary>
     /// Swaps a result of an option into an optional result: ok with <see cref="None"/> gives no value,
-    /// and errors and empty results are kept inside the option. Reverses the other <c>Transpose</c>.
+    /// and an error is kept inside the option. Reverses the other <c>Transpose</c>.
     /// </summary>
-    public static Option<Result<T>> Transpose<T>(this Result<Option<T>> result) => result.Value switch
+    public static Option<Result<T>> Transpose<T>(this Result<Option<T>> result)
     {
-        Exception error => new Option<Result<T>>(new Result<T>(error)),
-        Option<T> inner => inner.TryGetValue(out var value)
-            ? new Option<Result<T>>(new Result<T>(value))
-            : Option<Result<T>>.NoValue,
-        _ => new Option<Result<T>>(default(Result<T>))
-    };
+        if (result.TryGetError(out var error))
+            return new Option<Result<T>>(new Result<T>(error));
+
+        return result.GetValue().TryGetValue(out var value) ? new Option<Result<T>>(new Result<T>(value)) : Option<Result<T>>.NoValue;
+    }
 
     /// <summary>
     /// Turns a reference that may be <c>null</c> into a result, using <paramref name="error"/> for <c>null</c>.

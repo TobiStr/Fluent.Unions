@@ -26,7 +26,10 @@ public class SequenceAndValidationTests
         var (values, errors) = results.Partition();
 
         Assert.That(values, Is.EqualTo(new[] { 1, 4 }));
-        Assert.That(errors, Is.EqualTo(new Exception[] { Failure, other }));
+        Assert.That(errors, Has.Count.EqualTo(3));
+        Assert.That(errors[0], Is.SameAs(Failure));
+        Assert.That(errors[1].Message, Does.Contain("holds neither a value nor an error"));
+        Assert.That(errors[2], Is.SameAs(other));
     }
 
     [Test]
@@ -36,7 +39,7 @@ public class SequenceAndValidationTests
         Result<int>[] ok = [1, default, 2];
         Result<int>[] failed = [1, Failure, 2, other];
 
-        Assert.That(ok.CombineAll().GetOk(), Is.EqualTo(new[] { 1, 2 }));
+        Assert.That(ok.CombineAll().GetError(), Is.TypeOf<AggregateException>());
         var aggregate = failed.CombineAll().GetError() as AggregateException;
         Assert.That(aggregate!.InnerExceptions, Is.EqualTo(new Exception[] { Failure, other }));
     }
@@ -79,7 +82,7 @@ public class SequenceAndValidationTests
             return Result.Ok;
         });
 
-        Assert.That(kept.GetOk(), Is.EqualTo("Ada"));
+        Assert.That(kept.GetValue(), Is.EqualTo("Ada"));
         Assert.That(skipped.GetError(), Is.SameAs(Failure));
         Assert.That(default(Result<string>).Validate(_ => Result.Ok).Value, Is.Null);
         Assert.That(calls, Is.EqualTo(0));

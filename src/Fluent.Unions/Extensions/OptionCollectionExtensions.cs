@@ -1,4 +1,4 @@
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Operators between sequences and options.

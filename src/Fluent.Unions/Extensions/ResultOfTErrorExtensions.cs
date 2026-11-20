@@ -1,6 +1,7 @@
+using System.ComponentModel;
 using Fluent.Unions.Abstractions;
 
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Operators for <see cref="Result{T, TError}"/> that change the value or error type. The other operators come from
@@ -18,6 +19,7 @@ public static class ResultOfTErrorExtensions
     /// <summary>
     /// Chains an operation that returns a result with the same error type.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static Result<TOut, TError> SelectMany<T, TError, TOut>(
         this Result<T, TError> result,
         Func<T, Result<TOut, TError>> selector)
@@ -27,6 +29,7 @@ public static class ResultOfTErrorExtensions
     /// <summary>
     /// Chains an operation and combines both values. Enables query syntax with multiple <c>from</c> clauses.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static Result<TOut, TError> SelectMany<T, TError, TMid, TOut>(
         this Result<T, TError> result,
         Func<T, Result<TMid, TError>> selector,

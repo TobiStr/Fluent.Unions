@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Fluent operators that take asynchronous lambdas, named after System.Linq.Async (<c>SelectAwait</c>, ...).
@@ -14,11 +14,11 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => Task.FromResult<Result<TOut>>(error),
-            T value => Capture.RunAsync(async () => new Result<TOut>(await selector(value).ConfigureAwait(false))),
-            _ => Task.FromResult(default(Result<TOut>))
+            T value => Capture.RunAsync(async () => Result<TOut>.Of(await selector(value).ConfigureAwait(false))),
+            _ => throw new UnreachableException()
         };
     }
 
@@ -29,11 +29,11 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => Task.FromResult<Result<TOut>>(error),
-            Ok => Capture.RunAsync(async () => new Result<TOut>(await selector().ConfigureAwait(false))),
-            _ => Task.FromResult(default(Result<TOut>))
+            Ok => Capture.RunAsync(async () => Result<TOut>.Of(await selector().ConfigureAwait(false))),
+            _ => throw new UnreachableException()
         };
     }
 
@@ -44,11 +44,11 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => Task.FromResult<Result<TOut>>(error),
             T value => Capture.RunAsync(() => selector(value)),
-            _ => Task.FromResult(default(Result<TOut>))
+            _ => throw new UnreachableException()
         };
     }
 
@@ -59,11 +59,11 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => Task.FromResult<Result>(error),
             T value => Capture.RunAsync(() => selector(value)),
-            _ => Task.FromResult(default(Result))
+            _ => throw new UnreachableException()
         };
     }
 
@@ -74,11 +74,11 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => Task.FromResult<Result>(error),
             Ok => Capture.RunAsync(selector),
-            _ => Task.FromResult(default(Result))
+            _ => throw new UnreachableException()
         };
     }
 
@@ -89,11 +89,11 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => Task.FromResult<Result<TOut>>(error),
             Ok => Capture.RunAsync(selector),
-            _ => Task.FromResult(default(Result<TOut>))
+            _ => throw new UnreachableException()
         };
     }
 
@@ -114,21 +114,6 @@ public static class ResultAwaitExtensions
         result.SelectManyAwait(selector);
 
     /// <summary>
-    /// Keeps the value if the asynchronous predicate is satisfied, otherwise the result becomes empty.
-    /// </summary>
-    public static Task<Result<T>> WhereAwait<T>(this Result<T> result, Func<T, Task<bool>> predicate)
-    {
-        ArgumentNullException.ThrowIfNull(predicate);
-
-        return result.Value switch
-        {
-            Exception => Task.FromResult(result),
-            T value => Capture.RunAsync(async () => await predicate(value).ConfigureAwait(false) ? result : default),
-            _ => Task.FromResult(result)
-        };
-    }
-
-    /// <summary>
     /// Keeps the value if the asynchronous predicate is satisfied, otherwise the result becomes the error from <paramref name="error"/>.
     /// </summary>
     public static Task<Result<T>> EnsureAwait<T>(
@@ -139,7 +124,7 @@ public static class ResultAwaitExtensions
         ArgumentNullException.ThrowIfNull(predicate);
         ArgumentNullException.ThrowIfNull(error);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception => Task.FromResult(result),
             T value => Capture.RunAsync(async () => await predicate(value).ConfigureAwait(false) ? result : error(value)),
@@ -149,13 +134,13 @@ public static class ResultAwaitExtensions
 
     /// <summary>
     /// Keeps the value if the asynchronous predicate is satisfied, otherwise the result becomes a
-    /// <see cref="ValidationException"/> with <paramref name="message"/>.
+    /// <see cref="ValidationError"/> with <paramref name="message"/>.
     /// </summary>
     public static Task<Result<T>> EnsureAwait<T>(this Result<T> result, Func<T, Task<bool>> predicate, string message)
     {
         ArgumentNullException.ThrowIfNull(message);
 
-        return result.EnsureAwait(predicate, _ => new ValidationException(message));
+        return result.EnsureAwait(predicate, _ => new ValidationError(message));
     }
 
     /// <summary>
@@ -201,16 +186,16 @@ public static class ResultAwaitExtensions
     /// <summary>
     /// Runs an asynchronous side effect with the value and returns the same result.
     /// </summary>
-    public static Task<Result<T>> DoAwait<T>(this Result<T> result, Func<T, Task> onNext)
+    public static Task<Result<T>> DoAwait<T>(this Result<T> result, Func<T, Task> onSuccess)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception => Task.FromResult(result),
             T value => Capture.RunAsync(async () =>
             {
-                await onNext(value).ConfigureAwait(false);
+                await onSuccess(value).ConfigureAwait(false);
                 return result;
             }),
             _ => Task.FromResult(result)
@@ -220,14 +205,14 @@ public static class ResultAwaitExtensions
     /// <summary>
     /// Runs an asynchronous side effect after a successful <see cref="Result"/> and returns the same result.
     /// </summary>
-    public static Task<Result> DoAwait(this Result result, Func<Task> onNext)
+    public static Task<Result> DoAwait(this Result result, Func<Task> onSuccess)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
 
-        return result.Value is Ok
+        return result.Case is Ok
             ? Capture.RunAsync(async () =>
             {
-                await onNext().ConfigureAwait(false);
+                await onSuccess().ConfigureAwait(false);
                 return result;
             })
             : Task.FromResult(result);
@@ -240,7 +225,7 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is Exception error ? Capture.RunAsync(() => handler(error)) : Task.FromResult(result);
+        return result.Case is Exception error ? Capture.RunAsync(() => handler(error)) : Task.FromResult(result);
     }
 
     /// <summary>
@@ -251,7 +236,7 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is TException error ? Capture.RunAsync(() => handler(error)) : Task.FromResult(result);
+        return result.Case is TException error ? Capture.RunAsync(() => handler(error)) : Task.FromResult(result);
     }
 
     /// <summary>
@@ -261,7 +246,7 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is Exception error ? Capture.RunAsync(() => handler(error)) : Task.FromResult(result);
+        return result.Case is Exception error ? Capture.RunAsync(() => handler(error)) : Task.FromResult(result);
     }
 
     /// <summary>
@@ -272,11 +257,11 @@ public static class ResultAwaitExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is TException error ? Capture.RunAsync(() => handler(error)) : Task.FromResult(result);
+        return result.Case is TException error ? Capture.RunAsync(() => handler(error)) : Task.FromResult(result);
     }
 
     /// <summary>
-    /// Runs an asynchronous action for every result: value, error or empty.
+    /// Runs an asynchronous action for every result, value or error.
     /// </summary>
     public static Task<Result<T>> FinallyAwait<T>(this Result<T> result, Func<Task> action)
     {
@@ -290,7 +275,7 @@ public static class ResultAwaitExtensions
     }
 
     /// <summary>
-    /// Runs an asynchronous action for every result: success, error or empty.
+    /// Runs an asynchronous action for every result, success or error.
     /// </summary>
     public static Task<Result> FinallyAwait(this Result result, Func<Task> action)
     {
@@ -343,10 +328,6 @@ public static class ResultAwaitExtensions
     public static Task<Result<TOut>> ChainAwait<TOut>(this Task<Result> task, Func<Task<Result<TOut>>> selector) =>
         task.SelectManyAwait(selector);
 
-    /// <inheritdoc cref="WhereAwait{T}(Result{T}, Func{T, Task{bool}})"/>
-    public static Task<Result<T>> WhereAwait<T>(this Task<Result<T>> task, Func<T, Task<bool>> predicate) =>
-        Capture.ThenAwait(Capture.Settle(task), result => result.WhereAwait(predicate));
-
     /// <inheritdoc cref="EnsureAwait{T}(Result{T}, Func{T, Task{bool}}, Func{T, Exception})"/>
     public static Task<Result<T>> EnsureAwait<T>(
         this Task<Result<T>> task,
@@ -377,12 +358,12 @@ public static class ResultAwaitExtensions
         Capture.ThenAwait(Capture.Settle(task), result => result.BindAppendAwait(selector));
 
     /// <inheritdoc cref="DoAwait{T}(Result{T}, Func{T, Task})"/>
-    public static Task<Result<T>> DoAwait<T>(this Task<Result<T>> task, Func<T, Task> onNext) =>
-        Capture.ThenAwait(Capture.Settle(task), result => result.DoAwait(onNext));
+    public static Task<Result<T>> DoAwait<T>(this Task<Result<T>> task, Func<T, Task> onSuccess) =>
+        Capture.ThenAwait(Capture.Settle(task), result => result.DoAwait(onSuccess));
 
     /// <inheritdoc cref="DoAwait(Result, Func{Task})"/>
-    public static Task<Result> DoAwait(this Task<Result> task, Func<Task> onNext) =>
-        Capture.ThenAwait(Capture.Settle(task), result => result.DoAwait(onNext));
+    public static Task<Result> DoAwait(this Task<Result> task, Func<Task> onSuccess) =>
+        Capture.ThenAwait(Capture.Settle(task), result => result.DoAwait(onSuccess));
 
     /// <inheritdoc cref="CatchAwait{T}(Result{T}, Func{Exception, Task{Result{T}}})"/>
     public static Task<Result<T>> CatchAwait<T>(this Task<Result<T>> task, Func<Exception, Task<Result<T>>> handler) =>

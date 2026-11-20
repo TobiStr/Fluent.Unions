@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Fluent.Unions.Extensions;
 
 namespace Fluent.Unions.Validation;
 

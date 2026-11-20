@@ -11,7 +11,7 @@ public class ErrorOperatorTests
 
         var recovered = result.Catch(_ => "fallback");
 
-        Assert.That(recovered.GetOk(), Is.EqualTo("fallback"));
+        Assert.That(recovered.GetValue(), Is.EqualTo("fallback"));
     }
 
     [Test]
@@ -26,7 +26,7 @@ public class ErrorOperatorTests
     }
 
     [Test]
-    public void CatchDoesNotRunForValueOrEmpty()
+    public void CatchRunsOnlyForErrorsIncludingDefault()
     {
         Result<string> ok = "value";
         var calls = 0;
@@ -42,9 +42,9 @@ public class ErrorOperatorTests
             return "fallback";
         });
 
-        Assert.That(okResult.GetOk(), Is.EqualTo("value"));
-        Assert.That(emptyResult.Value, Is.Null);
-        Assert.That(calls, Is.EqualTo(0));
+        Assert.That(okResult.GetValue(), Is.EqualTo("value"));
+        Assert.That(emptyResult.GetValue(), Is.EqualTo("fallback"));
+        Assert.That(calls, Is.EqualTo(1));
     }
 
     [Test]
@@ -65,7 +65,7 @@ public class ErrorOperatorTests
 
         var recovered = result.Catch((IOException _) => "default content");
 
-        Assert.That(recovered.GetOk(), Is.EqualTo("default content"));
+        Assert.That(recovered.GetValue(), Is.EqualTo("default content"));
     }
 
     [Test]
@@ -84,8 +84,8 @@ public class ErrorOperatorTests
         Result<int> result = Failure;
         Result<int> ok = 1;
 
-        Assert.That(result.Catch(2).GetOk(), Is.EqualTo(2));
-        Assert.That(ok.Catch(2).GetOk(), Is.EqualTo(1));
+        Assert.That(result.Catch(2).GetValue(), Is.EqualTo(2));
+        Assert.That(ok.Catch(2).GetValue(), Is.EqualTo(1));
     }
 
     [Test]
@@ -96,10 +96,10 @@ public class ErrorOperatorTests
         var notHandled = Result.Error(Failure).Catch((IOException _) => Result.Ok);
         var fallback = Result.Error(Failure).Catch(Result.Ok);
 
-        Assert.True(recovered.Success);
-        Assert.True(typed.Success);
+        Assert.True(recovered.IsSuccess);
+        Assert.True(typed.IsSuccess);
         Assert.That(notHandled.GetError(), Is.SameAs(Failure));
-        Assert.True(fallback.Success);
+        Assert.True(fallback.IsSuccess);
     }
 
     [Test]
@@ -111,6 +111,6 @@ public class ErrorOperatorTests
             .Select(int.Parse)
             .Catch((FormatException _) => -1);
 
-        Assert.That(parsed.GetOk(), Is.EqualTo(-1));
+        Assert.That(parsed.GetValue(), Is.EqualTo(-1));
     }
 }

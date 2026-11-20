@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.Tests;
@@ -12,7 +11,7 @@ public class ValueEnsureTests
 
         Result<int> result = quantity.Ensure(q => q > 3, "Too small.");
 
-        Assert.That(result.GetOk(), NUnit.Framework.Is.EqualTo(5));
+        Assert.That(result.GetValue(), NUnit.Framework.Is.EqualTo(5));
     }
 
     [Test]
@@ -22,8 +21,8 @@ public class ValueEnsureTests
 
         Result<int> result = quantity.Ensure(q => q > 3, "{Name} is wrong.");
 
-        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("{Name} is wrong."));
+        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("{Name} is wrong."));
     }
 
     [Test]
@@ -33,8 +32,8 @@ public class ValueEnsureTests
 
         Result<int> result = quantity.Ensure(q => q > 3, "Too small.");
 
-        var error = (ValidationException)result.GetError();
-        Assert.That(error.ValidationResult.MemberNames, NUnit.Framework.Is.EqualTo(new[] { "quantity" }));
+        var error = (ValidationError)result.GetError();
+        Assert.That(error.MemberName, NUnit.Framework.Is.EqualTo("quantity"));
     }
 
     [Test]
@@ -42,8 +41,8 @@ public class ValueEnsureTests
     {
         Result<int> result = 2.Ensure(q => q > 3, "Too small.", "quantity");
 
-        var error = (ValidationException)result.GetError();
-        Assert.That(error.ValidationResult.MemberNames, NUnit.Framework.Is.EqualTo(new[] { "quantity" }));
+        var error = (ValidationError)result.GetError();
+        Assert.That(error.MemberName, NUnit.Framework.Is.EqualTo("quantity"));
     }
 
     [Test]
@@ -63,8 +62,8 @@ public class ValueEnsureTests
 
         Result<string?> result = nickname.Ensure(n => n!.Length > 0, "Nickname is empty.");
 
-        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Nickname is empty."));
+        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Nickname is empty."));
     }
 
     [Test]
@@ -75,8 +74,8 @@ public class ValueEnsureTests
 
         Result<string?> result = nickname.Ensure(n => { calls++; return true; }, n => new InvalidOperationException());
 
-        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must not be null."));
+        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must not be null."));
         Assert.That(calls, NUnit.Framework.Is.EqualTo(0));
     }
 
@@ -95,8 +94,8 @@ public class ValueEnsureTests
     {
         Result<int> result = Result<int>.Ok(2).Ensure(_ => false, "Too small.");
 
-        var error = (ValidationException)result.GetError();
-        Assert.That(error.ValidationResult.MemberNames, NUnit.Framework.Is.Empty);
+        var error = (ValidationError)result.GetError();
+        Assert.That(error.MemberName, NUnit.Framework.Is.Null);
     }
 
     [Test]

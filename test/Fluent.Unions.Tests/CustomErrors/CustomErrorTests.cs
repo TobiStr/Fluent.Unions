@@ -19,7 +19,7 @@ public class CustomErrorTests
     }
 
     [Test]
-    public void ChainPassesErrorAndEmptyThrough()
+    public void ChainPassesErrorAndDefaultThrough()
     {
         var calls = 0;
 
@@ -27,7 +27,8 @@ public class CustomErrorTests
         var empty = default(Result<string>).Chain(name => Count(ref calls, name));
 
         Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.Value, Is.TypeOf<UnexpectedDomainException>());
+        Assert.That(((Exception)empty.Value!).Message, Does.Contain("holds neither a value nor an error"));
         Assert.That(calls, Is.EqualTo(0));
     }
 
@@ -119,18 +120,6 @@ public class CustomErrorTests
     }
 
     [Test]
-    public void WhereAndDefaultIfEmpty()
-    {
-        var kept = GetName("Ada").Where(name => name.Length == 3);
-        var dropped = GetName("Ada").Where(name => name.Length > 3);
-        var filled = dropped.DefaultIfEmpty("Default");
-
-        Assert.That(kept.Value, Is.EqualTo("Ada"));
-        Assert.That(dropped.Value, Is.Null);
-        Assert.That(filled.Value, Is.EqualTo("Default"));
-    }
-
-    [Test]
     public void GetValueOrDefault()
     {
         Assert.That(GetName("Ada").GetValueOrDefault(), Is.EqualTo("Ada"));
@@ -140,11 +129,11 @@ public class CustomErrorTests
     }
 
     [Test]
-    public void CheckReturnsValueRethrowsErrorAndRejectsEmpty()
+    public void CheckReturnsValueRethrowsErrorAndRejectsDefault()
     {
         Assert.That(GetName("Ada").Check().Value, Is.EqualTo("Ada"));
         Assert.That(Assert.Throws<NotFoundException>(() => GetName(null).Check()), Is.SameAs(NotFound));
-        Assert.Throws<InvalidOperationException>(() => default(Result<string>).Check());
+        Assert.Throws<UnexpectedDomainException>(() => default(Result<string>).Check());
     }
 
     [Test]
@@ -210,9 +199,9 @@ public class CustomErrorTests
     [Test]
     public void MatchCoversEveryState()
     {
-        Assert.That(GetName("Ada").Match(n => n, e => e.Message, () => "empty"), Is.EqualTo("Ada"));
-        Assert.That(GetName(null).Match(n => n, e => e.Message, () => "empty"), Is.EqualTo("Not found"));
-        Assert.That(default(Result<string>).Match(n => n, e => e.Message, () => "empty"), Is.EqualTo("empty"));
+        Assert.That(GetName("Ada").Match(n => n, e => e.Message), Is.EqualTo("Ada"));
+        Assert.That(GetName(null).Match(n => n, e => e.Message), Is.EqualTo("Not found"));
+        Assert.That(default(Result<string>).Match(n => n, e => e.Message), Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]

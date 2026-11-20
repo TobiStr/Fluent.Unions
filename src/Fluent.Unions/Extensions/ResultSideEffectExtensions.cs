@@ -1,4 +1,4 @@
-﻿namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Rx-style operators that run side effects and return the same result, unless the side effect throws.
@@ -6,18 +6,18 @@
 public static class ResultSideEffectExtensions
 {
     /// <summary>
-    /// Runs <paramref name="onNext"/> with the value.
+    /// Runs <paramref name="onSuccess"/> with the value.
     /// </summary>
-    public static Result<T> Do<T>(this Result<T> result, Action<T> onNext)
+    public static Result<T> Do<T>(this Result<T> result, Action<T> onSuccess)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception => result,
             T value => Capture.Run(() =>
             {
-                onNext(value);
+                onSuccess(value);
                 return result;
             }),
             _ => result
@@ -25,14 +25,14 @@ public static class ResultSideEffectExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="onNext"/> with the value, or <paramref name="onError"/> with the error.
+    /// Runs <paramref name="onSuccess"/> with the value, or <paramref name="onError"/> with the error.
     /// </summary>
-    public static Result<T> Do<T>(this Result<T> result, Action<T> onNext, Action<Exception> onError)
+    public static Result<T> Do<T>(this Result<T> result, Action<T> onSuccess, Action<Exception> onError)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
         ArgumentNullException.ThrowIfNull(onError);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => Capture.Run(() =>
             {
@@ -41,7 +41,7 @@ public static class ResultSideEffectExtensions
             }),
             T value => Capture.Run(() =>
             {
-                onNext(value);
+                onSuccess(value);
                 return result;
             }),
             _ => result
@@ -49,30 +49,30 @@ public static class ResultSideEffectExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="onNext"/> after a successful <see cref="Result"/>.
+    /// Runs <paramref name="onSuccess"/> after a successful <see cref="Result"/>.
     /// </summary>
-    public static Result Do(this Result result, Action onNext)
+    public static Result Do(this Result result, Action onSuccess)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
 
-        return result.Value is Ok
+        return result.Case is Ok
             ? Capture.Run(() =>
             {
-                onNext();
+                onSuccess();
                 return result;
             })
             : result;
     }
 
     /// <summary>
-    /// Runs <paramref name="onNext"/> after success, or <paramref name="onError"/> with the error.
+    /// Runs <paramref name="onSuccess"/> after success, or <paramref name="onError"/> with the error.
     /// </summary>
-    public static Result Do(this Result result, Action onNext, Action<Exception> onError)
+    public static Result Do(this Result result, Action onSuccess, Action<Exception> onError)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
         ArgumentNullException.ThrowIfNull(onError);
 
-        return result.Value switch
+        return result.Case switch
         {
             Exception error => Capture.Run(() =>
             {
@@ -81,7 +81,7 @@ public static class ResultSideEffectExtensions
             }),
             Ok => Capture.Run(() =>
             {
-                onNext();
+                onSuccess();
                 return result;
             }),
             _ => result
@@ -95,7 +95,7 @@ public static class ResultSideEffectExtensions
     {
         ArgumentNullException.ThrowIfNull(onError);
 
-        return result.Value is Exception error
+        return result.Case is Exception error
             ? Capture.Run(() =>
             {
                 onError(error);
@@ -111,7 +111,7 @@ public static class ResultSideEffectExtensions
     {
         ArgumentNullException.ThrowIfNull(onError);
 
-        return result.Value is Exception error
+        return result.Case is Exception error
             ? Capture.Run(() =>
             {
                 onError(error);
@@ -133,7 +133,7 @@ public static class ResultSideEffectExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="action"/> for every result: value, error or empty.
+    /// Runs <paramref name="action"/> for every result, value or error.
     /// </summary>
     public static Result<T> Finally<T>(this Result<T> result, Action action)
     {
@@ -147,7 +147,7 @@ public static class ResultSideEffectExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="action"/> for every result: success, error or empty.
+    /// Runs <paramref name="action"/> for every result, success or error.
     /// </summary>
     public static Result Finally(this Result result, Action action)
     {

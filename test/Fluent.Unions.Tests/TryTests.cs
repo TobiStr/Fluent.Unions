@@ -9,7 +9,7 @@ public class TryTests
     {
         var result = Result.Try(() => int.Parse("42"));
 
-        Assert.That(result.GetOk(), Is.EqualTo(42));
+        Assert.That(result.GetValue(), Is.EqualTo(42));
     }
 
     [Test]
@@ -21,11 +21,12 @@ public class TryTests
     }
 
     [Test]
-    public void TryWithNullValueGivesEmptyResult()
+    public void TryWithNullValueGivesAnError()
     {
         var result = Result.Try(() => (string?)null);
 
-        Assert.That(result.Value, Is.Null);
+        Assert.True(result.IsError);
+        Assert.That(result.GetError(), Is.TypeOf<InvalidOperationException>());
     }
 
     [Test]
@@ -35,7 +36,7 @@ public class TryTests
         Result<int> failed = Result.Try(() => Parse("x"));
         Result<int> thrown = Result.Try(ThrowingParse);
 
-        Assert.That(ok.GetOk(), Is.EqualTo(7));
+        Assert.That(ok.GetValue(), Is.EqualTo(7));
         Assert.That(failed.GetError(), Is.TypeOf<FormatException>());
         Assert.That(thrown.GetError(), Is.SameAs(Failure));
     }
@@ -48,7 +49,7 @@ public class TryTests
         var ok = Result.Try(() => { calls++; });
         var failed = Result.Try(() => throw Failure);
 
-        Assert.True(ok.Success);
+        Assert.True(ok.IsSuccess);
         Assert.That(calls, Is.EqualTo(1));
         Assert.That(failed.GetError(), Is.SameAs(Failure));
     }
@@ -59,7 +60,7 @@ public class TryTests
         Result ok = Result.Try(() => Result.Ok);
         Result failed = Result.Try(() => Result.Error(Failure));
 
-        Assert.True(ok.Success);
+        Assert.True(ok.IsSuccess);
         Assert.That(failed.GetError(), Is.SameAs(Failure));
     }
 
@@ -68,7 +69,7 @@ public class TryTests
     {
         var result = Result.Try(() => "42").Chain(Parse);
 
-        Assert.That(result.GetOk(), Is.EqualTo(42));
+        Assert.That(result.GetValue(), Is.EqualTo(42));
     }
 
     [Test]
@@ -92,7 +93,7 @@ public class TryTests
             throw Failure;
         });
 
-        Assert.That(ok.GetOk(), Is.EqualTo(42));
+        Assert.That(ok.GetValue(), Is.EqualTo(42));
         Assert.That(failed.GetError(), Is.SameAs(Failure));
     }
 
@@ -110,7 +111,7 @@ public class TryTests
         var ok = await Result.TryAsync(() => ParseAsync("7"));
         var failed = await Result.TryAsync(() => ParseAsync("x"));
 
-        Assert.That(ok.GetOk(), Is.EqualTo(7));
+        Assert.That(ok.GetValue(), Is.EqualTo(7));
         Assert.That(failed.GetError(), Is.TypeOf<FormatException>());
     }
 
@@ -121,7 +122,7 @@ public class TryTests
         var failed = await Result.TryAsync(() => Task.FromException(Failure));
         var plain = await Result.TryAsync(() => Task.FromResult(Result.Error(Failure)));
 
-        Assert.True(ok.Success);
+        Assert.True(ok.IsSuccess);
         Assert.That(failed.GetError(), Is.SameAs(Failure));
         Assert.That(plain.GetError(), Is.SameAs(Failure));
     }

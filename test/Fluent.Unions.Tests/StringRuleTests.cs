@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Fluent.Unions.Validation;
 
@@ -67,13 +66,13 @@ public class StringRuleTests
     ];
 
     private static IEnumerable<string> Members(Result<string> result) =>
-        ((ValidationException)result.GetError()).ValidationResult.MemberNames;
+        ((ValidationError)result.GetError()).MemberName is { } member ? new[] { member } : Array.Empty<string>();
 
     [TestCaseSource(nameof(Rules))]
     public void PassingValueIsReturnedInBothForms(RuleCase rule)
     {
-        Assert.That(rule.OnValue(rule.Passing).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
-        Assert.That(rule.OnResult(Result<string>.Ok(rule.Passing)).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnValue(rule.Passing).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnResult(Result<string>.Ok(rule.Passing)).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
     }
 
     [TestCaseSource(nameof(Rules))]
@@ -82,10 +81,10 @@ public class StringRuleTests
         Result<string> onValue = rule.OnValue(rule.Failing);
         Result<string> onResult = rule.OnResult(Result<string>.Ok(rule.Failing));
 
-        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo(rule.Message));
-        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
         Assert.That(Members(onValue), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
         Assert.That(Members(onResult), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
     }
@@ -95,8 +94,8 @@ public class StringRuleTests
     {
         Result<string> result = rule.OnValue(null);
 
-        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Field must not be null."));
+        Assert.That(result.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Field must not be null."));
     }
 
     [TestCaseSource(nameof(Rules))]
@@ -119,9 +118,9 @@ public class StringRuleTests
         Result<string> onResult = Result<string>.Ok("").EnsureNotEmpty("Please enter a {Name}.", "Field");
         Result<string> onNull = ((string?)null).EnsureNotEmpty("Please enter a {Name}.", "Field");
 
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo("Please enter a {Name}."));
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo("Please enter a {Name}."));
-        Assert.That(onNull.Message, NUnit.Framework.Is.EqualTo("Please enter a {Name}."));
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo("Please enter a {Name}."));
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo("Please enter a {Name}."));
+        Assert.That(onNull.GetError().Message, NUnit.Framework.Is.EqualTo("Please enter a {Name}."));
     }
 
     [Test]
@@ -130,8 +129,8 @@ public class StringRuleTests
         Result<string> strict = "xAby".EnsureContains("ab", name: "Field");
         Result<string> relaxed = "xAby".EnsureContains("ab", StringComparison.OrdinalIgnoreCase, name: "Field");
 
-        Assert.That(strict.Success, NUnit.Framework.Is.False);
-        Assert.That(relaxed.Success, NUnit.Framework.Is.True);
+        Assert.That(strict.IsSuccess, NUnit.Framework.Is.False);
+        Assert.That(relaxed.IsSuccess, NUnit.Framework.Is.True);
     }
 
     [Test]
@@ -139,7 +138,7 @@ public class StringRuleTests
     {
         Result<string> result = "AB".EnsureMatches("^ab$", RegexOptions.IgnoreCase, name: "Field");
 
-        Assert.That(result.Success, NUnit.Framework.Is.True);
+        Assert.That(result.IsSuccess, NUnit.Framework.Is.True);
     }
 
     [Test]
@@ -182,8 +181,8 @@ public class StringRuleTests
             c => c.Name.EnsureNotEmpty(),
             c => c.Email.EnsureMatchesEmail());
 
-        var error = (AggregateException)result.GetError();
-        Assert.That(error.InnerExceptions.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
+        var error = (ValidationErrors)result.GetError();
+        Assert.That(error.Errors.Select(e => e.Message), NUnit.Framework.Is.EqualTo(new[]
         {
             "Name must not be empty.",
             "Email must be a valid email address."
@@ -199,7 +198,7 @@ public class StringRuleTests
             c => c.Name.EnsureNotEmpty(),
             c => c.Email.EnsureMatchesEmail());
 
-        Assert.That(result.GetOk(), NUnit.Framework.Is.EqualTo(customer));
+        Assert.That(result.GetValue(), NUnit.Framework.Is.EqualTo(customer));
     }
 
     private sealed record Customer(string Name, string Email);

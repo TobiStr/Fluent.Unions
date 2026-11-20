@@ -52,7 +52,6 @@ public class UnusedResultAnalyzerTests
             using System.Threading.Tasks;
             using Fluent.Unions;
             using Fluent.Unions.Abstractions;
-            using Fluent.Unions.Extensions;
 
             public struct CustomResult : IErrorResult<CustomResult, Exception>
             {

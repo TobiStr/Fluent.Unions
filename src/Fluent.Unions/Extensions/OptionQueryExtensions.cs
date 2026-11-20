@@ -1,4 +1,6 @@
-namespace Fluent.Unions.Extensions;
+using System.ComponentModel;
+
+namespace Fluent.Unions;
 
 /// <summary>
 /// LINQ-style operators that run only when an option holds a value. Options without a value pass through.
@@ -18,6 +20,7 @@ public static class OptionQueryExtensions
     /// <summary>
     /// Chains an operation that returns an option itself.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static Option<TOut> SelectMany<T, TOut>(this Option<T> option, Func<T, Option<TOut>> selector)
     {
         ArgumentNullException.ThrowIfNull(selector);
@@ -28,6 +31,7 @@ public static class OptionQueryExtensions
     /// <summary>
     /// Chains an operation and combines both values. Enables query syntax with multiple <c>from</c> clauses.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static Option<TOut> SelectMany<T, TMid, TOut>(
         this Option<T> option,
         Func<T, Option<TMid>> selector,
@@ -130,13 +134,13 @@ public static class OptionQueryExtensions
         option.TryGetValue(out var inner) ? inner.Normalize() : Option<T>.NoValue;
 
     /// <summary>
-    /// Leaves the option with a value: <paramref name="onNext"/> for the value, <paramref name="onNone"/> otherwise.
+    /// Leaves the option with a value: <paramref name="onSome"/> for the value, <paramref name="onNone"/> otherwise.
     /// </summary>
-    public static TOut Match<T, TOut>(this Option<T> option, Func<T, TOut> onNext, Func<TOut> onNone)
+    public static TOut Match<T, TOut>(this Option<T> option, Func<T, TOut> onSome, Func<TOut> onNone)
     {
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSome);
         ArgumentNullException.ThrowIfNull(onNone);
 
-        return option.TryGetValue(out var value) ? onNext(value) : onNone();
+        return option.TryGetValue(out var value) ? onSome(value) : onNone();
     }
 }

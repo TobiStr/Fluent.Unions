@@ -80,7 +80,7 @@ public class OptionAsyncTests
         var ok = await FindNameAsync("Ada").ToResult(() => Failure);
         var error = await FindNameAsync(null).ToResult(() => Failure);
 
-        Assert.That(ok.GetOk(), Is.EqualTo("Ada"));
+        Assert.That(ok.GetValue(), Is.EqualTo("Ada"));
         Assert.That(error.GetError(), Is.SameAs(Failure));
     }
 

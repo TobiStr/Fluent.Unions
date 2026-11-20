@@ -1,10 +1,10 @@
-using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Fluent.Unions.Abstractions;
 
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Operators for custom result types that implement <see cref="IResult{TSelf, T, TError}"/>.
@@ -25,11 +25,11 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(next);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => TOutResult.FromError(error),
             T value => Capture.Run<TOutResult, TError>(() => next(value)),
-            _ => default
+            _ => throw new UnreachableException()
         };
     }
 
@@ -46,11 +46,11 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(next);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => Task.FromResult(TOutResult.FromError(error)),
             T value => Capture.RunAsync<TOutResult, TError>(() => next(value)),
-            _ => Task.FromResult(default(TOutResult))
+            _ => throw new UnreachableException()
         };
     }
 
@@ -64,7 +64,7 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is TError error ? Capture.Run<TSelf, TError>(() => handler(error)) : (TSelf)result;
+        return result.CaseOf() is TError error ? Capture.Run<TSelf, TError>(() => handler(error)) : (TSelf)result;
     }
 
     /// <summary>
@@ -79,7 +79,7 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is TError error && TryGetCase<TError, TCase>(error, out var match)
+        return result.CaseOf() is TError error && TryGetCase<TError, TCase>(error, out var match)
             ? Capture.Run<TSelf, TError>(() => handler(match))
             : (TSelf)result;
     }
@@ -109,27 +109,27 @@ public static class ResultInterfaceExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return result.Value is TError ? fallback : (TSelf)result;
+        return result.CaseOf() is TError ? fallback : (TSelf)result;
     }
 
     /// <summary>
-    /// Runs <paramref name="onNext"/> with the value.
+    /// Runs <paramref name="onSuccess"/> with the value.
     /// </summary>
-    public static TSelf Do<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Action<T> onNext)
+    public static TSelf Do<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Action<T> onSuccess)
         where TSelf : struct, IResult<TSelf, T, TError>
         where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
 
         var self = (TSelf)result;
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError => self,
             T value => Capture.Run<TSelf, TError>(() =>
             {
-                onNext(value);
+                onSuccess(value);
                 return self;
             }),
             _ => self
@@ -137,22 +137,22 @@ public static class ResultInterfaceExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="onNext"/> with the value, or <paramref name="onError"/> with the error.
+    /// Runs <paramref name="onSuccess"/> with the value, or <paramref name="onError"/> with the error.
     /// </summary>
     public static TSelf Do<TSelf, T, TError>(
         this IResult<TSelf, T, TError> result,
-        Action<T> onNext,
+        Action<T> onSuccess,
         Action<TError> onError)
         where TSelf : struct, IResult<TSelf, T, TError>
         where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
         ArgumentNullException.ThrowIfNull(onError);
 
         var self = (TSelf)result;
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => Capture.Run<TSelf, TError>(() =>
             {
@@ -161,7 +161,7 @@ public static class ResultInterfaceExtensions
             }),
             T value => Capture.Run<TSelf, TError>(() =>
             {
-                onNext(value);
+                onSuccess(value);
                 return self;
             }),
             _ => self
@@ -180,7 +180,7 @@ public static class ResultInterfaceExtensions
 
         var self = (TSelf)result;
 
-        return result.Value is TError error
+        return result.CaseOf() is TError error
             ? Capture.Run<TSelf, TError>(() =>
             {
                 onError(error);
@@ -190,7 +190,7 @@ public static class ResultInterfaceExtensions
     }
 
     /// <summary>
-    /// Runs <paramref name="action"/> for every result: value, error or empty.
+    /// Runs <paramref name="action"/> for every result, value or error.
     /// </summary>
     public static TSelf Finally<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Action action)
         where TSelf : struct, IResult<TSelf, T, TError>
@@ -207,30 +207,9 @@ public static class ResultInterfaceExtensions
             return self;
         });
     }
-
-    /// <summary>
-    /// Keeps the value if it satisfies the predicate, otherwise the result becomes empty.
-    /// </summary>
-    public static TSelf Where<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Func<T, bool> predicate)
-        where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : notnull
-    {
-        ArgumentNullException.ThrowIfNull(result);
-        ArgumentNullException.ThrowIfNull(predicate);
-
-        var self = (TSelf)result;
-
-        return result.Value switch
-        {
-            TError => self,
-            T value => Capture.Run<TSelf, TError>(() => predicate(value) ? self : default),
-            _ => self
-        };
-    }
-
     /// <summary>
     /// Keeps the value if it satisfies the predicate, otherwise the result becomes the error from <paramref name="error"/>.
-    /// An error or empty result passes through and the predicate does not run.
+    /// An error passes through and the predicate does not run.
     /// </summary>
     public static TSelf Ensure<TSelf, T, TError>(
         this IResult<TSelf, T, TError> result,
@@ -245,7 +224,7 @@ public static class ResultInterfaceExtensions
 
         var self = (TSelf)result;
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError => self,
             T value => Capture.Run<TSelf, TError>(() => predicate(value) ? self : TSelf.FromError(error(value))),
@@ -255,7 +234,7 @@ public static class ResultInterfaceExtensions
 
     /// <summary>
     /// Keeps the value if it satisfies the predicate, otherwise the result becomes the error that
-    /// <c>FromException</c> makes of a <see cref="ValidationException"/> with <paramref name="message"/>.
+    /// <c>FromException</c> makes of a <see cref="ValidationError"/> with <paramref name="message"/>.
     /// </summary>
     public static TSelf Ensure<TSelf, T, TError>(
         this IResult<TSelf, T, TError> result,
@@ -266,12 +245,12 @@ public static class ResultInterfaceExtensions
     {
         ArgumentNullException.ThrowIfNull(message);
 
-        return result.Ensure(predicate, _ => TSelf.FromException(new ValidationException(message)));
+        return result.Ensure(predicate, _ => TSelf.FromException(new ValidationError(message)));
     }
 
     /// <summary>
     /// Runs every rule on the value. If any fail, the error is what <paramref name="combine"/> makes of all errors.
-    /// A rule that throws or returns an empty result counts as a failure. Errors and empty results pass through.
+    /// A rule that throws counts as a failure. Errors pass through.
     /// A rule returns any result type with the same error type, whose own value type is ignored.
     /// </summary>
     public static TSelf Validate<TSelf, T, TError, TRuleResult>(
@@ -291,20 +270,17 @@ public static class ResultInterfaceExtensions
 
         var self = (TSelf)result;
 
-        if (result.Value is TError || result.Value is not T value)
+        if (result.CaseOf() is TError || result.CaseOf() is not T value)
             return self;
 
         var errors = new List<TError>();
 
         foreach (var rule in rules)
         {
-            switch (Capture.Run<TRuleResult, TError>(() => rule(value)).Value)
+            switch (Capture.Run<TRuleResult, TError>(() => rule(value)).CaseOf())
             {
                 case TError error:
                     errors.Add(error);
-                    break;
-                case null:
-                    errors.Add(TSelf.FromException(new InvalidOperationException("A validation rule returned an empty result.")));
                     break;
             }
         }
@@ -327,7 +303,7 @@ public static class ResultInterfaceExtensions
 
         value = new Captured<T>();
 
-        if (result.Value is not TError && result.Value is T payload)
+        if (result.CaseOf() is not TError && result.CaseOf() is T payload)
             value.SetFrom(Option<T>.Of(payload));
 
         return (TSelf)result;
@@ -336,21 +312,21 @@ public static class ResultInterfaceExtensions
     /// <summary>
     /// Runs an asynchronous side effect with the value and returns the same result.
     /// </summary>
-    public static Task<TSelf> DoAwait<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Func<T, Task> onNext)
+    public static Task<TSelf> DoAwait<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Func<T, Task> onSuccess)
         where TSelf : struct, IResult<TSelf, T, TError>
         where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
 
         var self = (TSelf)result;
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError => Task.FromResult(self),
             T value => Capture.RunAsync<TSelf, TError>(async () =>
             {
-                await onNext(value).ConfigureAwait(false);
+                await onSuccess(value).ConfigureAwait(false);
                 return self;
             }),
             _ => Task.FromResult(self)
@@ -369,13 +345,13 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is TError error
+        return result.CaseOf() is TError error
             ? Capture.RunAsync<TSelf, TError>(() => handler(error))
             : Task.FromResult((TSelf)result);
     }
 
     /// <summary>
-    /// Runs an asynchronous action for every result: value, error or empty.
+    /// Runs an asynchronous action for every result, value or error.
     /// </summary>
     public static Task<TSelf> FinallyAwait<TSelf, T, TError>(this IResult<TSelf, T, TError> result, Func<Task> action)
         where TSelf : struct, IResult<TSelf, T, TError>
@@ -394,41 +370,7 @@ public static class ResultInterfaceExtensions
     }
 
     /// <summary>
-    /// Keeps the value if the asynchronous predicate is satisfied, otherwise the result becomes empty.
-    /// </summary>
-    public static Task<TSelf> WhereAwait<TSelf, T, TError>(
-        this IResult<TSelf, T, TError> result,
-        Func<T, Task<bool>> predicate)
-        where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : notnull
-    {
-        ArgumentNullException.ThrowIfNull(result);
-        ArgumentNullException.ThrowIfNull(predicate);
-
-        var self = (TSelf)result;
-
-        return result.Value switch
-        {
-            TError => Task.FromResult(self),
-            T value => Capture.RunAsync<TSelf, TError>(async () => await predicate(value).ConfigureAwait(false) ? self : default),
-            _ => Task.FromResult(self)
-        };
-    }
-
-    /// <summary>
-    /// Replaces an empty result with <paramref name="fallback"/>. Values and errors pass through.
-    /// </summary>
-    public static TSelf DefaultIfEmpty<TSelf, T, TError>(this IResult<TSelf, T, TError> result, T fallback)
-        where TSelf : struct, IResult<TSelf, T, TError>
-        where TError : notnull
-    {
-        ArgumentNullException.ThrowIfNull(result);
-
-        return result.Value is null ? TSelf.FromValue(fallback) : (TSelf)result;
-    }
-
-    /// <summary>
-    /// Returns the value, or <c>default</c> for an error or empty result.
+    /// Returns the value, or <c>default</c> for an error.
     /// </summary>
     public static T? GetValueOrDefault<TSelf, T, TError>(this IResult<TSelf, T, TError> result)
         where TSelf : struct, IResult<TSelf, T, TError>
@@ -436,16 +378,16 @@ public static class ResultInterfaceExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError => default,
             T value => value,
-            _ => default
+            _ => throw new UnreachableException()
         };
     }
 
     /// <summary>
-    /// Returns the value, or <paramref name="fallback"/> for an error or empty result.
+    /// Returns the value, or <paramref name="fallback"/> for an error.
     /// </summary>
     public static T GetValueOrDefault<TSelf, T, TError>(this IResult<TSelf, T, TError> result, T fallback)
         where TSelf : struct, IResult<TSelf, T, TError>
@@ -453,11 +395,11 @@ public static class ResultInterfaceExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError => fallback,
             T value => value,
-            _ => fallback
+            _ => throw new UnreachableException()
         };
     }
 
@@ -465,53 +407,48 @@ public static class ResultInterfaceExtensions
     /// Throws the error and returns the result if it holds a value. An exception is rethrown with its stack trace;
     /// any other error is thrown inside a <see cref="ResultErrorException"/>.
     /// </summary>
-    /// <exception cref="InvalidOperationException">The result is empty.</exception>
     public static TSelf Check<TSelf, T, TError>(this IResult<TSelf, T, TError> result)
         where TSelf : struct, IResult<TSelf, T, TError>
         where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        switch (result.Value)
+        switch (result.CaseOf())
         {
             case TError error when error is Exception exception:
-                ExceptionDispatchInfo.Capture(exception).Throw();
+                ExceptionDispatchInfo.Throw(exception);
                 break;
             case TError error:
                 throw new ResultErrorException(error);
-            case T:
-                return (TSelf)result;
         }
 
-        throw new InvalidOperationException($"Error property for {typeof(TSelf)} not set.");
+        return (TSelf)result;
     }
 
     /// <summary>
-    /// Leaves the result with a value: one callback for each state, so none of them is forgotten.
+    /// Leaves the result with one callback for the value and one for the error.
     /// </summary>
     public static TOut Match<TSelf, T, TError, TOut>(
         this IResult<TSelf, T, TError> result,
-        Func<T, TOut> onNext,
-        Func<TError, TOut> onError,
-        Func<TOut> onEmpty)
+        Func<T, TOut> onSuccess,
+        Func<TError, TOut> onError)
         where TSelf : struct, IResult<TSelf, T, TError>
         where TError : notnull
     {
         ArgumentNullException.ThrowIfNull(result);
-        ArgumentNullException.ThrowIfNull(onNext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
         ArgumentNullException.ThrowIfNull(onError);
-        ArgumentNullException.ThrowIfNull(onEmpty);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => onError(error),
-            T value => onNext(value),
-            _ => onEmpty()
+            T value => onSuccess(value),
+            _ => throw new UnreachableException()
         };
     }
 
     /// <summary>
-    /// Keeps the value of a successful result. Errors and empty results give an option without a value.
+    /// Keeps the value of a successful result. An error gives an option without a value.
     /// </summary>
     public static Option<T> ToOption<TSelf, T, TError>(this IResult<TSelf, T, TError> result)
         where TSelf : struct, IResult<TSelf, T, TError>
@@ -519,17 +456,17 @@ public static class ResultInterfaceExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError => Option<T>.NoValue,
             T value => Option<T>.Of(value),
-            _ => Option<T>.NoValue
+            _ => throw new UnreachableException()
         };
     }
 
     /// <summary>
     /// Turns a finished result into a loaded or failed state. An error that is not an exception is wrapped in a
-    /// <see cref="ResultErrorException"/>. An empty result counts as not loaded.
+    /// <see cref="ResultErrorException"/>.
     /// </summary>
     public static Loadable<T> ToLoadable<TSelf, T, TError>(this IResult<TSelf, T, TError> result)
         where TSelf : struct, IResult<TSelf, T, TError>
@@ -537,7 +474,7 @@ public static class ResultInterfaceExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => new Loadable<T>(error as Exception ?? new ResultErrorException(error)),
             T value => new Loadable<T>(value),
@@ -555,11 +492,11 @@ public static class ResultInterfaceExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => TInner.FromError(error),
             TInner inner => inner,
-            _ => default
+            _ => throw new UnreachableException()
         };
     }
 
@@ -576,11 +513,11 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => TOutResult.FromError(error),
             T value => Capture.Run<TOutResult, TError>(() => TOutResult.FromValue(selector(value))),
-            _ => default
+            _ => throw new UnreachableException()
         };
     }
 
@@ -598,12 +535,12 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(map);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => Capture.Run<TOutResult, TOutError>(() => TOutResult.FromError(
                 map(error) ?? throw new InvalidOperationException("The error mapping returned null.", error as Exception))),
             T value => TOutResult.FromValue(value),
-            _ => default
+            _ => throw new UnreachableException()
         };
     }
 
@@ -620,18 +557,18 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => Task.FromResult(TOutResult.FromError(error)),
             T value => Capture.RunAsync<TOutResult, TError>(
                 async () => TOutResult.FromValue(await selector(value).ConfigureAwait(false))),
-            _ => Task.FromResult(default(TOutResult))
+            _ => throw new UnreachableException()
         };
     }
 
     /// <summary>
-    /// Combines two results with a selector into another result type. The first error wins, then an empty side makes
-    /// the result empty. Needs explicit type arguments.
+    /// Combines two results with a selector into another result type. The first error wins.
+    /// Needs explicit type arguments.
     /// </summary>
     public static TOutResult Zip<TSelf, T, TError, TOtherResult, TOther, TOutResult, TOut>(
         this IResult<TSelf, T, TError> first,
@@ -646,17 +583,17 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(second);
         ArgumentNullException.ThrowIfNull(resultSelector);
 
-        return (first.Value, second.Value) switch
+        return (first.CaseOf(), second.CaseOf()) switch
         {
             (TError error, _) => TOutResult.FromError(error),
             (_, TError error) => TOutResult.FromError(error),
             (T a, TOther b) => Capture.Run<TOutResult, TError>(() => TOutResult.FromValue(resultSelector(a, b))),
-            _ => default
+            _ => throw new UnreachableException()
         };
     }
 
     /// <summary>
-    /// Runs a dependent step and keeps both values as a tuple in another result type. An error or empty result passes
+    /// Runs a dependent step and keeps both values as a tuple in another result type. An error passes
     /// through and the selector does not run. Needs explicit type arguments.
     /// </summary>
     public static TOutResult BindAppend<TSelf, T, TError, TNextResult, TNext, TOutResult>(
@@ -670,22 +607,22 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(selector);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => TOutResult.FromError(error),
-            T value => Capture.Run<TOutResult, TError>(() => selector(value).Value switch
+            T value => Capture.Run<TOutResult, TError>(() => selector(value).CaseOf() switch
             {
                 TError nextError => TOutResult.FromError(nextError),
                 TNext next => TOutResult.FromValue((value, next)),
-                _ => default
+                _ => throw new UnreachableException()
             }),
-            _ => default
+            _ => throw new UnreachableException()
         };
     }
 
     /// <summary>
     /// Replaces the value of a successful result with <paramref name="value"/> in another result type. An error passes
-    /// through and an empty result stays empty. Needs explicit type arguments.
+    /// through. Needs explicit type arguments.
     /// </summary>
     public static TOutResult WithValue<TSelf, T, TError, TOutResult, TOut>(
         this IResult<TSelf, T, TError> result,
@@ -697,17 +634,17 @@ public static class ResultInterfaceExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(value);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => TOutResult.FromError(error),
             T => TOutResult.FromValue(value),
-            _ => default
+            _ => throw new UnreachableException()
         };
     }
 
     /// <summary>
-    /// Swaps a result of an option into an optional result: no value gives <c>None</c>, an error stays an error and an
-    /// empty result stays empty. Needs explicit type arguments.
+    /// Swaps a result of an option into an optional result: no value gives <c>None</c> and an error stays an
+    /// error. Needs explicit type arguments.
     /// </summary>
     public static Option<TOutResult> Transpose<TSelf, T, TError, TOutResult>(
         this IResult<TSelf, Option<T>, TError> result)
@@ -717,13 +654,38 @@ public static class ResultInterfaceExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return result.Value switch
+        return result.CaseOf() switch
         {
             TError error => Option<TOutResult>.Of(TOutResult.FromError(error)),
             Option<T> inner => inner.TryGetValue(out var value)
                 ? Option<TOutResult>.Of(TOutResult.FromValue(value))
                 : Option<TOutResult>.NoValue,
-            _ => Option<TOutResult>.Of(default(TOutResult))
+            _ => throw new UnreachableException()
         };
     }
+
+    /// <summary>
+    /// Gets the error, if the custom result holds one. A <c>default</c> result holds the error that
+    /// <c>FromException</c> makes of an <see cref="InvalidOperationException"/>.
+    /// </summary>
+    public static bool TryGetError<TSelf, TError>(this IErrorResult<TSelf, TError> result, [MaybeNullWhen(false)] out TError error)
+        where TSelf : struct, IErrorResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        if (result.CaseOf() is TError found)
+        {
+            error = found;
+            return true;
+        }
+
+        error = default;
+        return false;
+    }
+
+    private static object CaseOf<TSelf, TError>(this IErrorResult<TSelf, TError> result)
+        where TSelf : struct, IErrorResult<TSelf, TError>
+        where TError : notnull =>
+        result.Value ?? TSelf.FromException(ResultErrors.Uninitialized(typeof(TSelf)));
 }

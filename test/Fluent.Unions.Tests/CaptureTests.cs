@@ -16,7 +16,7 @@ public class CaptureTests
             .Chain(_ => Submit(customer, cart))
             .Select(text => $"{text} for {customer.Value.Name}");
 
-        Assert.That(order.GetOk(), Is.EqualTo("order#7-3 for Ada"));
+        Assert.That(order.GetValue(), Is.EqualTo("order#7-3 for Ada"));
         Assert.True(customer.HasValue);
         Assert.That(cart.Value.Items, Is.EqualTo(3));
     }
@@ -69,7 +69,7 @@ public class CaptureTests
     {
         Result<int> error = new InvalidOperationException();
 
-        Assert.That(((Result<int>)5).Out(out _).GetOk(), Is.EqualTo(5));
+        Assert.That(((Result<int>)5).Out(out _).GetValue(), Is.EqualTo(5));
         Assert.That(error.Out(out _).GetError(), Is.SameAs(error.GetError()));
         Assert.That(default(Result<int>).Out(out _).Value, Is.Null);
     }
@@ -97,7 +97,7 @@ public class CaptureTests
         var failed = await GetCustomerAsync(0).Out(out var missing)
             .ChainAwait(GetCartAsync);
 
-        Assert.That(order.GetOk(), Is.EqualTo("order#7-3 for Ada"));
+        Assert.That(order.GetValue(), Is.EqualTo("order#7-3 for Ada"));
         Assert.That(failed.GetError(), Is.SameAs(NotFound));
         Assert.False(missing.HasValue);
     }

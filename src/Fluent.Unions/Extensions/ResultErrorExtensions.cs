@@ -1,7 +1,7 @@
-﻿namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
-/// Rx-style operators that run only when a result holds an exception. Values and empty results pass through.
+/// Rx-style operators that run only when a result holds an exception. Values pass through.
 /// </summary>
 public static class ResultErrorExtensions
 {
@@ -12,7 +12,7 @@ public static class ResultErrorExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is Exception error ? Capture.Run(() => handler(error)) : result;
+        return result.Case is Exception error ? Capture.Run(() => handler(error)) : result;
     }
 
     /// <summary>
@@ -23,14 +23,14 @@ public static class ResultErrorExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is TException error ? Capture.Run(() => handler(error)) : result;
+        return result.Case is TException error ? Capture.Run(() => handler(error)) : result;
     }
 
     /// <summary>
     /// Replaces the error with <paramref name="fallback"/>.
     /// </summary>
     public static Result<T> Catch<T>(this Result<T> result, Result<T> fallback) =>
-        result.Value is Exception ? fallback : result;
+        result.Case is Exception ? fallback : result;
 
     /// <summary>
     /// Handles the error. Return <see cref="Result.Ok"/> to recover, or an exception to replace the error.
@@ -39,7 +39,7 @@ public static class ResultErrorExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is Exception error ? Capture.Run(() => handler(error)) : result;
+        return result.Case is Exception error ? Capture.Run(() => handler(error)) : result;
     }
 
     /// <summary>
@@ -50,12 +50,12 @@ public static class ResultErrorExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
 
-        return result.Value is TException error ? Capture.Run(() => handler(error)) : result;
+        return result.Case is TException error ? Capture.Run(() => handler(error)) : result;
     }
 
     /// <summary>
     /// Replaces the error with <paramref name="fallback"/>.
     /// </summary>
     public static Result Catch(this Result result, Result fallback) =>
-        result.Value is Exception ? fallback : result;
+        result.Case is Exception ? fallback : result;
 }

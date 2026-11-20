@@ -70,7 +70,7 @@ public class LoadableTests
     {
         Assert.That(((Result<int>)5).ToLoadable().GetValueOrDefault(-1), Is.EqualTo(5));
         Assert.True(((Result<int>)Failure).ToLoadable().IsFaulted);
-        Assert.True(default(Result<int>).ToLoadable().IsNotLoaded);
+        Assert.True(default(Result<int>).ToLoadable().IsFaulted);
         Assert.That((await Task.FromResult<Result<int>>(7).ToLoadable()).GetValueOrDefault(-1), Is.EqualTo(7));
         Assert.That((await Task.FromException<Result<int>>(Failure).ToLoadable()).Value, Is.SameAs(Failure));
     }

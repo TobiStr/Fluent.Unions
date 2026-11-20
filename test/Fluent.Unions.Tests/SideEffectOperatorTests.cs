@@ -13,7 +13,7 @@ public class SideEffectOperatorTests
         var same = result.Do(value => seen = value);
 
         Assert.That(seen, Is.EqualTo(5));
-        Assert.That(same.GetOk(), Is.EqualTo(5));
+        Assert.That(same.GetValue(), Is.EqualTo(5));
     }
 
     [Test]
@@ -39,7 +39,7 @@ public class SideEffectOperatorTests
         error.Do(value => log.Add($"next {value}"), e => log.Add($"error {e.Message}"));
         default(Result<int>).Do(value => log.Add("next"), e => log.Add("error"));
 
-        Assert.That(log, Is.EqualTo(new[] { "next 5", "error Failure" }));
+        Assert.That(log, Is.EqualTo(new[] { "next 5", "error Failure", "error" }));
     }
 
     [Test]
@@ -90,8 +90,10 @@ public class SideEffectOperatorTests
         var errorResult = error.OnErrorDo(seen.Add);
         default(Result<int>).OnErrorDo(seen.Add);
 
-        Assert.That(seen, Is.EqualTo(new[] { Failure }));
-        Assert.That(okResult.GetOk(), Is.EqualTo(5));
+        Assert.That(seen, Has.Count.EqualTo(2));
+        Assert.That(seen[0], Is.SameAs(Failure));
+        Assert.That(seen[1].Message, Does.Contain("holds neither a value nor an error"));
+        Assert.That(okResult.GetValue(), Is.EqualTo(5));
         Assert.That(errorResult.GetError(), Is.SameAs(Failure));
     }
 
@@ -115,7 +117,7 @@ public class SideEffectOperatorTests
         var error = Result.Error(Failure).OnErrorDo(seen.Add);
 
         Assert.That(seen, Is.EqualTo(new[] { Failure }));
-        Assert.True(ok.Success);
+        Assert.True(ok.IsSuccess);
         Assert.That(error.GetError(), Is.SameAs(Failure));
     }
 
@@ -147,7 +149,7 @@ public class SideEffectOperatorTests
         Result.Ok.Finally(() => calls++);
 
         Assert.That(calls, Is.EqualTo(4));
-        Assert.That(okResult.GetOk(), Is.EqualTo(5));
+        Assert.That(okResult.GetValue(), Is.EqualTo(5));
         Assert.That(errorResult.GetError(), Is.SameAs(Failure));
     }
 

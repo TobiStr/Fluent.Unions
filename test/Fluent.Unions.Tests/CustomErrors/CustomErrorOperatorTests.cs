@@ -21,19 +21,19 @@ public class CustomErrorOperatorTests
         Assert.That(kept.Value, Is.EqualTo("Ada"));
         Assert.That(((Exception)failed.Value!).Message, Is.EqualTo("Too short: Ada"));
         Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.TryGetError(out _), Is.True);
         Assert.That(calls, Is.EqualTo(0));
     }
 
     [Test]
-    public void EnsureWithMessageBecomesValidationExceptionThroughFromException()
+    public void EnsureWithMessageBecomesValidationErrorThroughFromException()
     {
         var kept = GetName("Ada").Ensure(name => name.Length == 3, "Wrong length");
         var failed = GetName("Ada").Ensure(name => name.Length > 3, "Too short");
 
         Assert.That(kept.Value, Is.EqualTo("Ada"));
         Assert.That(failed.Value, Is.TypeOf<UnexpectedDomainException>());
-        Assert.That(((Exception)failed.Value!).InnerException, Is.TypeOf<ValidationException>());
+        Assert.That(((Exception)failed.Value!).InnerException, Is.TypeOf<ValidationError>());
         Assert.That(((Exception)failed.Value!).Message, Is.EqualTo("Too short"));
     }
 
@@ -81,7 +81,7 @@ public class CustomErrorOperatorTests
         var empty = default(Result<string>).Validate(Combine, name => CountName(ref calls, name));
 
         Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.TryGetError(out _), Is.True);
         Assert.That(calls, Is.EqualTo(0));
     }
 
@@ -145,7 +145,7 @@ public class CustomErrorOperatorTests
 
         Assert.That(value.Value, Is.EqualTo("Ada"));
         Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.TryGetError(out _), Is.True);
         Assert.That(log, Is.EqualTo(new[] { "Ada" }));
         Assert.That(thrown.Value, Is.TypeOf<UnexpectedDomainException>());
         Assert.That(((Exception)thrown.Value!).InnerException, Is.SameAs(failure));
@@ -163,7 +163,7 @@ public class CustomErrorOperatorTests
 
         Assert.That(value.Value, Is.EqualTo("Ada"));
         Assert.That(recovered.Value, Is.EqualTo("Guest"));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.Value, Is.EqualTo("Guest"));
         Assert.That(thrown.Value, Is.TypeOf<UnexpectedDomainException>());
         Assert.That(((Exception)thrown.Value!).InnerException, Is.SameAs(failure));
     }
@@ -181,28 +181,9 @@ public class CustomErrorOperatorTests
 
         Assert.That(value.Value, Is.EqualTo("Ada"));
         Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.TryGetError(out _), Is.True);
         Assert.That(log, Is.EqualTo(new[] { "value", "error", "empty" }));
         Assert.That(thrown.Value, Is.TypeOf<UnexpectedDomainException>());
-    }
-
-    [Test]
-    public async Task WhereAwaitFiltersAValue()
-    {
-        var failure = new InvalidOperationException("Boom");
-
-        var kept = await GetName("Ada").WhereAwait(name => TestAsync(name.Length == 3));
-        var dropped = await GetName("Ada").WhereAwait(name => TestAsync(name.Length > 3));
-        var error = await GetName(null).WhereAwait(name => TestAsync(name.Length == 3));
-        var empty = await default(Result<string>).WhereAwait(name => TestAsync(name.Length == 3));
-        var thrown = await GetName("Ada").WhereAwait(Task<bool> (_) => throw failure);
-
-        Assert.That(kept.Value, Is.EqualTo("Ada"));
-        Assert.That(dropped.Value, Is.Null);
-        Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
-        Assert.That(thrown.Value, Is.TypeOf<UnexpectedDomainException>());
-        Assert.That(((Exception)thrown.Value!).InnerException, Is.SameAs(failure));
     }
 
     [Test]
@@ -224,7 +205,7 @@ public class CustomErrorOperatorTests
 
         Assert.That(loaded.Value, Is.EqualTo("Ada"));
         Assert.That(failed.Value, Is.SameAs(NotFound));
-        Assert.That(empty.IsNotLoaded, Is.True);
+        Assert.That(empty.IsFaulted, Is.True);
         Assert.That(wrapped.Value, Is.TypeOf<ResultErrorException>());
     }
 
@@ -239,7 +220,7 @@ public class CustomErrorOperatorTests
         Assert.That(value.Value, Is.EqualTo(5));
         Assert.That(inner.Value, Is.SameAs(NotFound));
         Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.Value, Is.TypeOf<UnexpectedDomainException>());
     }
 
     [Test]
@@ -261,8 +242,8 @@ public class CustomErrorOperatorTests
         Assert.That(failed.StatusDescription, Is.EqualTo("Not found"));
         Assert.That(failed.Events.Single().Name, Is.EqualTo("exception"));
         Assert.That(empty.Status, Is.EqualTo(ActivityStatusCode.Error));
-        Assert.That(empty.StatusDescription, Is.EqualTo("Result is empty"));
-        Assert.That(empty.Events, Is.Empty);
+        Assert.That(empty.StatusDescription, Does.Contain("holds neither a value nor an error"));
+        Assert.That(empty.Events.Count(), Is.EqualTo(1));
         Assert.That(wrapped.Status, Is.EqualTo(ActivityStatusCode.Error));
     }
 
@@ -281,7 +262,7 @@ public class CustomErrorOperatorTests
 
         Assert.That(length.Value, Is.EqualTo(3));
         Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.Value, Is.TypeOf<UnexpectedDomainException>());
         Assert.That(thrown.Value, Is.TypeOf<UnexpectedDomainException>());
     }
 
@@ -307,7 +288,7 @@ public class CustomErrorOperatorTests
         Assert.That(zipped.Value, Is.EqualTo("Ada:3"));
         Assert.That(firstError.Value, Is.SameAs(NotFound));
         Assert.That(((Exception)secondError.Value!).Message, Is.EqualTo("Second"));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.Value, Is.TypeOf<UnexpectedDomainException>());
         Assert.That(thrown.Value, Is.TypeOf<UnexpectedDomainException>());
     }
 
@@ -340,7 +321,7 @@ public class CustomErrorOperatorTests
 
         Assert.That(value.Value, Is.EqualTo(7));
         Assert.That(error.Value, Is.SameAs(NotFound));
-        Assert.That(empty.Value, Is.Null);
+        Assert.That(empty.Value, Is.TypeOf<UnexpectedDomainException>());
     }
 
     [Test]
@@ -361,7 +342,7 @@ public class CustomErrorOperatorTests
         Assert.That(error.TryGetValue(out var failed), Is.True);
         Assert.That(failed.Value, Is.SameAs(NotFound));
         Assert.That(empty.TryGetValue(out var blank), Is.True);
-        Assert.That(blank.Value, Is.Null);
+        Assert.That(blank.Value, Is.TypeOf<UnexpectedDomainException>());
     }
 
     [Test]

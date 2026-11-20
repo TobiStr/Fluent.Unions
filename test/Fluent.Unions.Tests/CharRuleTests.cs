@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.Tests;
@@ -36,13 +35,13 @@ public class CharRuleTests
     ];
 
     private static IEnumerable<string> Members(Result<char> result) =>
-        ((ValidationException)result.GetError()).ValidationResult.MemberNames;
+        ((ValidationError)result.GetError()).MemberName is { } member ? new[] { member } : Array.Empty<string>();
 
     [TestCaseSource(nameof(Rules))]
     public void PassingValueIsReturnedInBothForms(RuleCase rule)
     {
-        Assert.That(rule.OnValue(rule.Passing).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
-        Assert.That(rule.OnResult(Result<char>.Ok(rule.Passing)).GetOk(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnValue(rule.Passing).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
+        Assert.That(rule.OnResult(Result<char>.Ok(rule.Passing)).GetValue(), NUnit.Framework.Is.EqualTo(rule.Passing));
     }
 
     [TestCaseSource(nameof(Rules))]
@@ -51,10 +50,10 @@ public class CharRuleTests
         Result<char> onValue = rule.OnValue(rule.Failing);
         Result<char> onResult = rule.OnResult(Result<char>.Ok(rule.Failing));
 
-        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo(rule.Message));
-        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationException>());
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onValue.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
+        Assert.That(onResult.GetError(), NUnit.Framework.Is.TypeOf<ValidationError>());
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo(rule.Message));
         Assert.That(Members(onValue), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
         Assert.That(Members(onResult), NUnit.Framework.Is.EqualTo(new[] { "Field" }));
     }
@@ -79,7 +78,7 @@ public class CharRuleTests
 
         Result<char> result = code.Prefix.EnsureUpper();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Prefix must be uppercase."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Prefix must be uppercase."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "Prefix" }));
     }
 
@@ -88,7 +87,7 @@ public class CharRuleTests
     {
         Result<char> result = Result<char>.Ok('x').EnsureDigit();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must be a digit."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must be a digit."));
         Assert.That(Members(result), NUnit.Framework.Is.Empty);
     }
 
@@ -98,8 +97,8 @@ public class CharRuleTests
         Result<char> onValue = 'x'.EnsureDigit("Enter a {Name}.", "Field");
         Result<char> onResult = Result<char>.Ok('x').EnsureDigit("Enter a {Name}.", "Field");
 
-        Assert.That(onValue.Message, NUnit.Framework.Is.EqualTo("Enter a {Name}."));
-        Assert.That(onResult.Message, NUnit.Framework.Is.EqualTo("Enter a {Name}."));
+        Assert.That(onValue.GetError().Message, NUnit.Framework.Is.EqualTo("Enter a {Name}."));
+        Assert.That(onResult.GetError().Message, NUnit.Framework.Is.EqualTo("Enter a {Name}."));
     }
 
     private sealed record Coupon(char Prefix);

@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Operators for asynchronous streams of results and options, and timeouts for result tasks.
@@ -22,7 +22,7 @@ public static class AsyncStreamExtensions
         {
             await foreach (var result in results.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
-                if (result.Value is not Exception && result.Value is T value)
+                if (result.Case is not Exception && result.Case is T value)
                     yield return value;
             }
         }
@@ -43,7 +43,7 @@ public static class AsyncStreamExtensions
         {
             await foreach (var result in results.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
-                if (result.Value is Exception error)
+                if (result.Case is Exception error)
                     yield return error;
             }
         }
@@ -65,7 +65,7 @@ public static class AsyncStreamExtensions
 
             await foreach (var result in results.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
-                switch (result.Value)
+                switch (result.Case)
                 {
                     case Exception error:
                         return error;
@@ -75,7 +75,7 @@ public static class AsyncStreamExtensions
                 }
             }
 
-            return new Result<IReadOnlyList<T>>(values);
+            return Result<IReadOnlyList<T>>.Of(values);
         });
     }
 

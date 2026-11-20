@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.Tests;
@@ -12,7 +11,7 @@ public class RuleNameTests
     private static string GetName() => "";
 
     private static IEnumerable<string> Members(Result<string> result) =>
-        ((ValidationException)result.GetError()).ValidationResult.MemberNames;
+        ((ValidationError)result.GetError()).MemberName is { } member ? new[] { member } : Array.Empty<string>();
 
     [Test]
     public void MemberAccessKeepsTheLastSegment()
@@ -21,7 +20,7 @@ public class RuleNameTests
 
         Result<string> result = c.Name.EnsureNotEmpty();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Name must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Name must not be empty."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "Name" }));
     }
 
@@ -32,7 +31,7 @@ public class RuleNameTests
 
         Result<string> result = customer.Address.Zip.EnsureNotEmpty();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Zip must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Zip must not be empty."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "Zip" }));
     }
 
@@ -43,7 +42,7 @@ public class RuleNameTests
 
         Result<string> result = c.Name!.EnsureNotEmpty();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Name must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Name must not be empty."));
     }
 
     [Test]
@@ -53,7 +52,7 @@ public class RuleNameTests
 
         Result<string> result = age.EnsureNotEmpty();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("age must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("age must not be empty."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "age" }));
     }
 
@@ -62,7 +61,7 @@ public class RuleNameTests
     {
         Result<string> result = GetName().EnsureNotEmpty();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
         Assert.That(Members(result), NUnit.Framework.Is.Empty);
     }
 
@@ -71,7 +70,7 @@ public class RuleNameTests
     {
         Result<string> result = "".EnsureNotEmpty();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
     }
 
     [Test]
@@ -79,7 +78,7 @@ public class RuleNameTests
     {
         Result<string> result = Result<string>.Ok("").EnsureNotEmpty();
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
         Assert.That(Members(result), NUnit.Framework.Is.Empty);
     }
 
@@ -88,7 +87,7 @@ public class RuleNameTests
     {
         Result<string> result = Result<string>.Ok("").EnsureNotEmpty(name: "Zip");
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Zip must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Zip must not be empty."));
         Assert.That(Members(result), NUnit.Framework.Is.EqualTo(new[] { "Zip" }));
     }
 
@@ -99,7 +98,7 @@ public class RuleNameTests
 
         Result<string> result = c.Name.EnsureNotEmpty(name: "Surname");
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Surname must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Surname must not be empty."));
     }
 
     [Test]
@@ -107,6 +106,6 @@ public class RuleNameTests
     {
         Result<string> result = Result<string>.Ok("").EnsureNotEmpty(name: "Order total");
 
-        Assert.That(result.Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
+        Assert.That(result.GetError().Message, NUnit.Framework.Is.EqualTo("Value must not be empty."));
     }
 }

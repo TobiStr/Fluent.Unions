@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Fluent.Unions.Extensions;
+namespace Fluent.Unions;
 
 /// <summary>
 /// Helpers for any C# union, including your own. A union value type is boxed for the call.

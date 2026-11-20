@@ -43,11 +43,11 @@ public static class StringRuleExtensions
     public static Result<string> EnsureWhiteSpace(this Result<string> result, string? message = null, string? name = null) =>
         RuleFailure.Check(result, Is.WhiteSpace, "{Name} must be empty or white space.", message, name);
 
-    /// <summary>Fails unless the string is a valid email address.</summary>
+    /// <summary>Fails unless the string has exactly one <c>@</c> that is neither the first nor the last character (the DataAnnotations email rule). The domain is not checked.</summary>
     public static Result<string> EnsureMatchesEmail(this string? value, string? message = null, [CallerArgumentExpression(nameof(value))] string? name = null) =>
         RuleFailure.Lift(value, message, name).EnsureMatchesEmail(message, name);
 
-    /// <summary>Fails unless the string is a valid email address.</summary>
+    /// <summary>Fails unless the string has exactly one <c>@</c> that is neither the first nor the last character (the DataAnnotations email rule). The domain is not checked.</summary>
     public static Result<string> EnsureMatchesEmail(this Result<string> result, string? message = null, string? name = null) =>
         RuleFailure.Check(result, Is.MatchesEmail, "{Name} must be a valid email address.", message, name);
 
@@ -75,11 +75,11 @@ public static class StringRuleExtensions
     public static Result<string> EnsureMatchesIpAddress(this Result<string> result, string? message = null, string? name = null) =>
         RuleFailure.Check(result, Is.MatchesIpAddress, "{Name} must be a valid IP address.", message, name);
 
-    /// <summary>Fails unless the string is a valid phone number.</summary>
+    /// <summary>Fails unless the string has only digits, spaces and <c>+ - . ( )</c>, with an optional extension (the DataAnnotations phone rule).</summary>
     public static Result<string> EnsureMatchesPhoneNumber(this string? value, string? message = null, [CallerArgumentExpression(nameof(value))] string? name = null) =>
         RuleFailure.Lift(value, message, name).EnsureMatchesPhoneNumber(message, name);
 
-    /// <summary>Fails unless the string is a valid phone number.</summary>
+    /// <summary>Fails unless the string has only digits, spaces and <c>+ - . ( )</c>, with an optional extension (the DataAnnotations phone rule).</summary>
     public static Result<string> EnsureMatchesPhoneNumber(this Result<string> result, string? message = null, string? name = null) =>
         RuleFailure.Check(result, Is.MatchesPhoneNumber, "{Name} must be a valid phone number.", message, name);
 
