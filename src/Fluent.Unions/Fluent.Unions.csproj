@@ -14,7 +14,19 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
-    <None Include="..\Fluent.Unions.Analyzers\bin\$(Configuration)\netstandard2.0\Fluent.Unions.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeAnalyzerInPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <Target Name="IncludeAnalyzerInPackage">
+    <MSBuild Projects="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="AnalyzerAssembly" />
+    </MSBuild>
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="@(AnalyzerAssembly)" PackagePath="analyzers/dotnet/cs" />
+    </ItemGroup>
+  </Target>
 
 </Project>
