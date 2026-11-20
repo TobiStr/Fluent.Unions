@@ -5,8 +5,8 @@ using Microsoft.Extensions.Options;
 namespace Fluent.Unions.AspNetCore;
 
 /// <summary>
-/// Writes an error as ProblemDetails, with the status code from <see cref="ResultHttpOptions"/>.
-/// The exception message is only exposed for client errors (4xx).
+/// Writes an error as ProblemDetails with the status code from <see cref="ResultHttpOptions"/>. Validation errors
+/// become a ValidationProblemDetails grouped by member; other messages are exposed only when mapped to be.
 /// </summary>
 internal sealed class ErrorHttpResult(Exception error) : IResult
 {
@@ -15,16 +15,17 @@ internal sealed class ErrorHttpResult(Exception error) : IResult
         ArgumentNullException.ThrowIfNull(httpContext);
 
         var options = httpContext.RequestServices.GetService<IOptions<ResultHttpOptions>>()?.Value ?? new ResultHttpOptions();
-        var statusCode = options.GetStatusCode(error);
-        var isClientError = statusCode is >= 400 and < 500;
-        var extensions = isClientError && error is AggregateException aggregate
-            ? new Dictionary<string, object?> { ["errors"] = aggregate.InnerExceptions.Select(e => e.Message).ToArray() }
-            : null;
+        var mapping = options.Resolve(error);
 
-        return TypedResults.Problem(
-                detail: isClientError ? error.Message : null,
-                statusCode: statusCode,
-                extensions: extensions)
-            .ExecuteAsync(httpContext);
+        var result = error switch
+        {
+            ValidationErrors errors => Results.ValidationProblem(errors.ToDictionary(), statusCode: mapping.StatusCode),
+            ValidationError single => Results.ValidationProblem(
+                new Dictionary<string, string[]> { [single.MemberName ?? ""] = [single.Message] },
+                statusCode: mapping.StatusCode),
+            _ => Results.Problem(detail: mapping.ExposeMessage ? error.Message : null, statusCode: mapping.StatusCode)
+        };
+
+        return result.ExecuteAsync(httpContext);
     }
 }

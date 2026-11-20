@@ -14,7 +14,7 @@ dotnet add package Fluent.Unions.AspNetCore
 
 ## Usage
 
-Convert a result in the handler with `ToHttpResult`. A value gives 200, a succeeded `Result` gives 204, an empty result or `None` gives 404, and an error gives `ProblemDetails`.
+Convert a result in the handler with `ToHttpResult`. A value gives 200, a succeeded `Result` gives 204, `None` gives 404, and an error gives `ProblemDetails`. Validation errors give 400 with a `ValidationProblemDetails` grouped by property.
 
 ```csharp
 using Fluent.Unions.AspNetCore;
@@ -23,7 +23,7 @@ app.MapGet("/orders/{id}", async (Guid id, IOrders orders) => await orders.LoadO
 app.MapDelete("/orders/{id}", (Guid id, IOrders orders) => orders.CancelAsync(id).ToHttpResult());
 ```
 
-Let handlers return results directly. `WithResultMapping` works on one endpoint or a whole route group.
+Let handlers return results directly. `WithResultMapping` works on one endpoint or a whole route group, and publishes the value type and the error responses to OpenAPI.
 
 ```csharp
 var group = app.MapGroup("/v2/orders").WithResultMapping();
@@ -31,17 +31,17 @@ var group = app.MapGroup("/v2/orders").WithResultMapping();
 group.MapGet("/{id}", (Guid id, IOrders orders) => orders.LoadOrderAsync(id)); // Task<Result<Order>>
 ```
 
-Return a custom result type that implements `IResult<TSelf, T, TError>`, or `Result<T, TError>`, from a filtered endpoint. A value gives 200, an empty result gives 404, and an error that is not an exception gives 500 unless you map `ResultErrorException`. `ToHttpResult(onError)` takes over the mapping.
+Return a custom result type that implements `IResult<TSelf, T, TError>`, or `Result<T, TError>`, from a filtered endpoint. A value gives 200, and an error that is not an exception gives 500 unless you map `ResultErrorException`. `ToHttpResult(onError)` takes over the mapping.
 
 ```csharp
 group.MapGet("/customers/{id}", (Guid id) => GetCustomer(id)); // your own IResult type
 ```
 
-Change the status code of an exception type, including its subclasses.
+By default `ValidationError` and `ValidationErrors` give 400, `KeyNotFoundException` 404, `UnauthorizedAccessException` 403 and `TimeoutException` 504. Everything else gives 500. Only validation errors show their messages to the client. Map your own exception types, including their subclasses, and choose whether the message is safe to expose:
 
 ```csharp
 builder.Services.Configure<ResultHttpOptions>(o => o
-    .Map<OrderShippedException>(StatusCodes.Status409Conflict));
+    .Map<OrderShippedException>(StatusCodes.Status409Conflict, exposeMessage: true));
 ```
 
 Map errors that are data with `onError`. The `switch` makes the compiler check every case.

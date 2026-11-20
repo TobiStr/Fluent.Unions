@@ -1,30 +1,27 @@
 using Microsoft.AspNetCore.Http;
 using Fluent.Unions.Abstractions;
-using Fluent.Unions.Extensions;
 
 namespace Fluent.Unions.AspNetCore;
 
 /// <summary>
 /// Turns results and options into HTTP responses: a value gives 200, an error gives ProblemDetails,
-/// and an empty result or <see cref="None"/> gives 404.
+/// and <see cref="None"/> gives 404.
 /// </summary>
 public static class HttpResultExtensions
 {
     /// <summary>
-    /// Gives 200 with the value, ProblemDetails for an error, or 404 for an empty result.
+    /// Gives 200 with the value, or ProblemDetails for the error.
     /// </summary>
     public static IResult ToHttpResult<T>(this Result<T> result) => result.Match<T, IResult>(
         value => TypedResults.Ok(value),
-        error => new ErrorHttpResult(error),
-        () => TypedResults.NotFound());
+        error => new ErrorHttpResult(error));
 
     /// <summary>
-    /// Gives 204 for success, ProblemDetails for an error, or 404 for an empty result.
+    /// Gives 204 for success, or ProblemDetails for the error.
     /// </summary>
     public static IResult ToHttpResult(this Result result) => result.Match<IResult>(
         () => TypedResults.NoContent(),
-        error => new ErrorHttpResult(error),
-        () => TypedResults.NotFound());
+        error => new ErrorHttpResult(error));
 
     /// <summary>
     /// Gives 200 with the value, or 404 when the option holds none.
@@ -34,19 +31,18 @@ public static class HttpResultExtensions
         () => TypedResults.NotFound());
 
     /// <summary>
-    /// Gives 200 with the value, the response from <paramref name="onError"/> for an error, or 404 for an empty result.
+    /// Gives 200 with the value, or the response from <paramref name="onError"/> for the error.
     /// </summary>
     public static IResult ToHttpResult<T, TError>(this Result<T, TError> result, Func<TError, IResult> onError)
         where TError : notnull, IFromException<TError>
     {
         ArgumentNullException.ThrowIfNull(onError);
 
-        return result.Match(value => TypedResults.Ok(value), onError, () => TypedResults.NotFound());
+        return result.Match(value => TypedResults.Ok(value), onError);
     }
 
     /// <summary>
-    /// Gives 200 with the value, the response from <paramref name="onError"/> for an error, or 404 for an empty
-    /// custom result.
+    /// Gives 200 with the value, or the response from <paramref name="onError"/> for the error of a custom result.
     /// </summary>
     public static IResult ToHttpResult<TSelf, T, TError>(
         this IResult<TSelf, T, TError> result,
@@ -57,7 +53,7 @@ public static class HttpResultExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(onError);
 
-        return result.Match(value => (IResult)TypedResults.Ok(value), onError, () => TypedResults.NotFound());
+        return result.Match(value => (IResult)TypedResults.Ok(value), onError);
     }
 
     /// <inheritdoc cref="ToHttpResult{T}(Result{T})"/>
@@ -65,8 +61,12 @@ public static class HttpResultExtensions
         (await Settle(task).ConfigureAwait(false)).ToHttpResult();
 
     /// <inheritdoc cref="ToHttpResult(Result)"/>
-    public static async Task<IResult> ToHttpResult(this Task<Result> task) =>
-        (await Result.TryAsync(() => task).ConfigureAwait(false)).ToHttpResult();
+    public static async Task<IResult> ToHttpResult(this Task<Result> task)
+    {
+        ArgumentNullException.ThrowIfNull(task);
+
+        return (await Result.TryAsync(() => task).ConfigureAwait(false)).ToHttpResult();
+    }
 
     /// <inheritdoc cref="ToHttpResult{T}(Option{T})"/>
     public static async Task<IResult> ToHttpResult<T>(this Task<Option<T>> task) =>

@@ -5,10 +5,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Fluent.Unions.Abstractions;
-using Fluent.Unions.Extensions;
 
 namespace Fluent.Unions.AspNetCore.Tests;
 
@@ -33,21 +36,21 @@ public class HttpResultTests
     }
 
     [Test]
-    public async Task EmptyAndNoneGiveNotFoundAndPlainOkGivesNoContent()
+    public async Task DefaultResultGivesServerErrorNoneGivesNotFoundAndPlainOkGivesNoContent()
     {
-        Assert.That((await Execute(default(Result<int>).ToHttpResult())).Status, Is.EqualTo(404));
+        Assert.That((await Execute(default(Result<int>).ToHttpResult())).Status, Is.EqualTo(500));
         Assert.That((await Execute(((Option<int>)Option.None).ToHttpResult())).Status, Is.EqualTo(404));
         Assert.That((await Execute(((Option<string>)"Ada").ToHttpResult())).Body, Is.EqualTo("\"Ada\""));
         Assert.That((await Execute(Result.Ok.ToHttpResult())).Status, Is.EqualTo(204));
     }
 
     [Test]
-    public async Task ClientErrorsExposeTheirMessage()
+    public async Task KeyNotFoundGivesNotFoundWithoutTheMessage()
     {
         var (status, body) = await Execute(((Result<int>)new KeyNotFoundException("No order 7")).ToHttpResult());
 
         Assert.That(status, Is.EqualTo(404));
-        Assert.That(Problem(body).GetProperty("detail").GetString(), Is.EqualTo("No order 7"));
+        Assert.That(body, Does.Not.Contain("No order 7"));
     }
 
     [Test]
@@ -64,22 +67,75 @@ public class HttpResultTests
     {
         Result<string> name = "x";
         var invalid = name.Validate(
-            n => n.Length > 2 ? Result.Ok : new ArgumentException("Too short"),
-            n => char.IsUpper(n[0]) ? Result.Ok : new ArgumentException("Not upper case"));
+            n => n.Length > 2 ? Result.Ok : new ValidationError("Too short", "length"),
+            n => char.IsUpper(n[0]) ? Result.Ok : new ValidationError("Not upper case", "casing"),
+            n => n.Length > 3 ? Result.Ok : new ValidationError("Way too short", "length"),
+            n => n != "x" ? Result.Ok : new ValidationError("Reserved"));
 
         var (status, body) = await Execute(invalid.ToHttpResult());
 
         Assert.That(status, Is.EqualTo(400));
-        var errors = Problem(body).GetProperty("errors").EnumerateArray().Select(e => e.GetString());
-        Assert.That(errors, Is.EqualTo(new[] { "Too short", "Not upper case" }));
+        var errors = Problem(body).GetProperty("errors");
+        Assert.That(errors.GetProperty("length").EnumerateArray().Select(e => e.GetString()), Is.EqualTo(new[] { "Too short", "Way too short" }));
+        Assert.That(errors.GetProperty("casing").EnumerateArray().Select(e => e.GetString()), Is.EqualTo(new[] { "Not upper case" }));
+        Assert.That(errors.GetProperty("").EnumerateArray().Select(e => e.GetString()), Is.EqualTo(new[] { "Reserved" }));
     }
 
     [Test]
-    public async Task StatusCodesAreConfigurable()
+    public async Task SingleValidationErrorGivesBadRequestGroupedByMember()
+    {
+        Result<int> result = Result<int>.Ok(2).Ensure(value => value > 3, "Too small.");
+
+        var (status, body) = await Execute(result.ToHttpResult());
+
+        Assert.That(status, Is.EqualTo(400));
+        Assert.That(Problem(body).GetProperty("errors").GetProperty("").EnumerateArray().Single().GetString(), Is.EqualTo("Too small."));
+    }
+
+    [Test]
+    public async Task ArgumentExceptionGivesServerErrorWithoutDetail()
+    {
+        var (status, body) = await Execute(((Result<int>)new ArgumentException("Bad id")).ToHttpResult());
+
+        Assert.That(status, Is.EqualTo(500));
+        Assert.That(body, Does.Not.Contain("Bad id"));
+    }
+
+    [Test]
+    public async Task AggregateExceptionGivesServerError()
+    {
+        var aggregate = new AggregateException(new InvalidOperationException("Inner secret"));
+
+        var (status, body) = await Execute(((Result<int>)aggregate).ToHttpResult());
+
+        Assert.That(status, Is.EqualTo(500));
+        Assert.That(body, Does.Not.Contain("Inner secret"));
+    }
+
+    [Test]
+    public async Task UnauthorizedAndTimeoutUseTheirDefaultStatusCodes()
+    {
+        Assert.That((await Execute(((Result<int>)new UnauthorizedAccessException("No")).ToHttpResult())).Status, Is.EqualTo(403));
+        Assert.That((await Execute(((Result<int>)new TimeoutException("Slow")).ToHttpResult())).Status, Is.EqualTo(504));
+    }
+
+    [Test]
+    public async Task StatusCodesAreConfigurableAndHideTheMessageByDefault()
     {
         var (status, body) = await Execute(
             ((Result<int>)new InvalidOperationException("Already shipped")).ToHttpResult(),
             services => services.Configure<ResultHttpOptions>(o => o.Map<InvalidOperationException>(409)));
+
+        Assert.That(status, Is.EqualTo(409));
+        Assert.That(body, Does.Not.Contain("Already shipped"));
+    }
+
+    [Test]
+    public async Task MappingCanExposeTheMessage()
+    {
+        var (status, body) = await Execute(
+            ((Result<int>)new InvalidOperationException("Already shipped")).ToHttpResult(),
+            services => services.Configure<ResultHttpOptions>(o => o.Map<InvalidOperationException>(409, exposeMessage: true)));
 
         Assert.That(status, Is.EqualTo(409));
         Assert.That(Problem(body).GetProperty("detail").GetString(), Is.EqualTo("Already shipped"));
@@ -140,12 +196,61 @@ public class HttpResultTests
         Assert.That(found.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         Assert.That(await found.Content.ReadAsStringAsync(), Is.EqualTo("7"));
         Assert.That(missing.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-        Assert.That(Problem(await missing.Content.ReadAsStringAsync()).GetProperty("detail").GetString(), Is.EqualTo("No order 0"));
+        Assert.That(await missing.Content.ReadAsStringAsync(), Does.Not.Contain("No order 0"));
         Assert.That(await asyncFound.Content.ReadAsStringAsync(), Is.EqualTo("\"order 3\""));
         Assert.That(asyncMissing.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         Assert.That(saved.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         Assert.That(plain, Is.EqualTo("untouched"));
     }
+
+    [Test]
+    public async Task EndpointReturningADefaultResultGivesServerError()
+    {
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        await using var app = builder.Build();
+        app.MapGroup("/orders").WithResultMapping().MapGet("/default", () => default(Result<int>));
+
+        await app.StartAsync();
+        var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.First();
+        using var client = new HttpClient { BaseAddress = new Uri(address) };
+
+        var response = await client.GetAsync("/orders/default");
+        await app.StopAsync();
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+    }
+
+    [Test]
+    public async Task WithResultMappingDescribesTheResponsesOfTheHandlerReturnType()
+    {
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Services.AddEndpointsApiExplorer();
+        await using var app = builder.Build();
+        var api = app.MapGroup("/orders").WithResultMapping();
+        api.MapGet("/value", () => (Result<int>)1);
+        api.MapGet("/save", () => Result.Ok);
+        api.MapGet("/find", () => (Option<string>)"Ada");
+
+        await app.StartAsync();
+        var responses = ResponsesByPath(app);
+        await app.StopAsync();
+
+        Assert.That(responses.Keys, Is.EquivalentTo(new[] { "orders/value", "orders/save", "orders/find" }));
+        var value = responses["orders/value"];
+        Assert.That(value.Select(r => r.StatusCode).Distinct(), Is.EquivalentTo(new[] { 200, 400, 500 }));
+        Assert.That(value.First(r => r.StatusCode == 200).Type, Is.EqualTo(typeof(int)));
+        Assert.That(value.Single(r => r.StatusCode == 400).Type, Is.EqualTo(typeof(HttpValidationProblemDetails)));
+        Assert.That(value.Single(r => r.StatusCode == 500).Type, Is.EqualTo(typeof(ProblemDetails)));
+        Assert.That(responses["orders/save"].Select(r => r.StatusCode), Does.Contain(204));
+        Assert.That(responses["orders/find"].Select(r => r.StatusCode), Does.Contain(404));
+    }
+
+    private static Dictionary<string, IList<ApiResponseType>> ResponsesByPath(WebApplication app) =>
+        app.Services.GetRequiredService<IApiDescriptionGroupCollectionProvider>().ApiDescriptionGroups.Items
+            .SelectMany(group => group.Items)
+            .ToDictionary(description => description.RelativePath!, description => description.SupportedResponseTypes);
 
     private static async Task<(int Status, string Body)> Execute(IResult result, Action<IServiceCollection>? configure = null)
     {

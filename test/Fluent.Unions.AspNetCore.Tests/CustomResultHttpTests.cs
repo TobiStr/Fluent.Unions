@@ -61,7 +61,7 @@ public class CustomResultHttpTests
     }
 
     [Test]
-    public async Task ToHttpResultGivesNotFoundForEmptyAndDoesNotCallTheMapping()
+    public async Task ToHttpResultPassesTheErrorOfADefaultResultToTheMapping()
     {
         var calls = 0;
 
@@ -71,8 +71,8 @@ public class CustomResultHttpTests
             return TypedResults.StatusCode(500);
         }));
 
-        Assert.That(status, Is.EqualTo(404));
-        Assert.That(calls, Is.EqualTo(0));
+        Assert.That(status, Is.EqualTo(500));
+        Assert.That(calls, Is.EqualTo(1));
     }
 
     [Test]
@@ -105,13 +105,13 @@ public class CustomResultHttpTests
     }
 
     [Test]
-    public async Task FilterGivesNotFoundForEmpty()
+    public async Task FilterGivesServerErrorForADefaultResult()
     {
         await using var host = await Host(api => api.MapGet("/empty", () => default(OrderResult<int>)));
 
         var response = await host.Client.GetAsync("/empty");
 
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
     }
 
     [Test]
@@ -130,7 +130,7 @@ public class CustomResultHttpTests
     {
         await using var host = await Host(
             api => api.MapGet("/data", () => OutOfStockFor("Tea")),
-            services => services.Configure<ResultHttpOptions>(o => o.Map<ResultErrorException>(StatusCodes.Status409Conflict)));
+            services => services.Configure<ResultHttpOptions>(o => o.Map<ResultErrorException>(StatusCodes.Status409Conflict, exposeMessage: true)));
 
         var response = await host.Client.GetAsync("/data");
 
@@ -156,10 +156,8 @@ public class CustomResultHttpTests
         var conflict = await host.Client.GetAsync("/conflict");
         var unmapped = await host.Client.GetAsync("/unmapped");
 
-        Assert.That(argument.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-        Assert.That(
-            JsonDocument.Parse(await argument.Content.ReadAsStringAsync()).RootElement.GetProperty("detail").GetString(),
-            Is.EqualTo("Bad id"));
+        Assert.That(argument.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+        Assert.That(await argument.Content.ReadAsStringAsync(), Does.Not.Contain("Bad id"));
         Assert.That(conflict.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
         Assert.That(unmapped.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         Assert.That(await unmapped.Content.ReadAsStringAsync(), Does.Not.Contain("Secret"));
@@ -182,7 +180,7 @@ public class CustomResultHttpTests
         Assert.That(value.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         Assert.That(await value.Content.ReadAsStringAsync(), Is.EqualTo("5"));
         Assert.That(data.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-        Assert.That(empty.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        Assert.That(empty.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
     }
 
     [Test]
