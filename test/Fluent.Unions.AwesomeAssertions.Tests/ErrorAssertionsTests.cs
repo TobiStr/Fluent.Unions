@@ -3,7 +3,6 @@ using AwesomeAssertions;
 using AwesomeAssertions.Execution;
 using NUnit.Framework;
 using Fluent.Unions.AwesomeAssertions;
-using Fluent.Unions.Extensions;
 using Fluent.Unions.Validation;
 
 namespace Fluent.Unions.AwesomeAssertions.Tests;
@@ -17,7 +16,7 @@ public class ErrorAssertionsTests
     private static Result<Customer> InvalidCustomer()
     {
         return Result<Customer>.Ok(new Customer("", "not-an-email"))
-            .Validate(c => c.Name.EnsureNotEmpty(), c => c.Email.EnsureMatchesEmail());
+            .Validate(c => c.Name.EnsureNotEmpty(), c => Result.Error(new InvalidOperationException("Email service is down.")));
     }
 
     [Test]
@@ -111,7 +110,7 @@ public class ErrorAssertionsTests
 
         Assert.That(message, Does.Contain("to have 3 inner exception(s)"));
         Assert.That(message, Does.Contain("but it had 2"));
-        Assert.That(message, Does.Contain("System.ComponentModel.DataAnnotations.ValidationException"));
+        Assert.That(message, Does.Contain("Fluent.Unions.ValidationError"));
     }
 
     [Test]
@@ -119,7 +118,7 @@ public class ErrorAssertionsTests
     {
         var result = InvalidCustomer();
 
-        var inner = result.Should().BeAggregateError().WithInner<ValidationException>().Which;
+        var inner = result.Should().BeAggregateError().WithInner<ValidationError>().Which;
 
         Assert.That(inner, NUnit.Framework.Is.SameAs(((AggregateException)result.GetError()).Flatten().InnerExceptions[0]));
     }

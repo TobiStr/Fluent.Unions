@@ -94,10 +94,10 @@ public class CustomResultAssertionsTests
     }
 
     [Test]
-    public void BeOk_FailsForEmpty()
+    public void BeOk_FailsForDefault()
     {
-        Assert.That(FailureOf(() => default(StockResult<int>).Should().BeOk()), Does.Contain("but it was empty"));
-        Assert.That(FailureOf(() => default(Result<int, StockError>).Should().BeOk()), Does.Contain("but it was empty"));
+        Assert.That(FailureOf(() => default(StockResult<int>).Should().BeOk()), Does.Contain("holds neither a value nor an error"));
+        Assert.That(FailureOf(() => default(Result<int, StockError>).Should().BeOk()), Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -113,10 +113,10 @@ public class CustomResultAssertionsTests
     }
 
     [Test]
-    public void BeOkWithValue_FailsForErrorAndEmpty()
+    public void BeOkWithValue_FailsForErrorAndDefault()
     {
         Assert.That(FailureOf(() => Missing("KB-1").Should().BeOkWithValue(1)), Does.Contain("KB-1"));
-        Assert.That(FailureOf(() => default(StockResult<int>).Should().BeOkWithValue(1)), Does.Contain("empty"));
+        Assert.That(FailureOf(() => default(StockResult<int>).Should().BeOkWithValue(1)), Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -138,16 +138,6 @@ public class CustomResultAssertionsTests
     }
 
     [Test]
-    public void BeEmpty_PassesOnlyForEmpty()
-    {
-        default(StockResult<int>).Should().BeEmpty();
-        default(Result<int, StockError>).Should().BeEmpty();
-
-        Assert.That(FailureOf(() => Ok(1).Should().BeEmpty()), Does.Contain("but it was Ok"));
-        Assert.That(FailureOf(() => Missing("KB-1").Should().BeEmpty()), Does.Contain("KB-1"));
-    }
-
-    [Test]
     public void BeError_ExposesTheErrorThroughWhich()
     {
         var error = Missing("KB-1").Should().BeError().Which;
@@ -157,10 +147,10 @@ public class CustomResultAssertionsTests
     }
 
     [Test]
-    public void BeError_FailsForOkAndEmpty()
+    public void BeError_FailsForOkAndPassesForDefault()
     {
         Assert.That(FailureOf(() => Ok(1).Should().BeError()), Does.Contain("but it was Ok"));
-        Assert.That(FailureOf(() => default(StockResult<int>).Should().BeError()), Does.Contain("but it was empty"));
+        default(StockResult<int>).Should().BeError();
     }
 
     [Test]

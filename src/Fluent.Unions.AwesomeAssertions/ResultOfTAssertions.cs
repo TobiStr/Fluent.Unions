@@ -22,15 +22,17 @@ public class ResultAssertions<T>
     /// </summary>
     public Result<T> Subject { get; }
 
+    private object? Case => Subject.TryGetError(out var error) ? error : Subject.Value;
+
     /// <summary>
     /// Asserts that the result is Ok and exposes its value through <c>Which</c>.
     /// </summary>
     [CustomAssertion]
     public AndWhichConstraint<ResultAssertions<T>, T> BeOk(string because = "", params object[] becauseArgs)
     {
-        ResultChecks.ExpectOk(assertionChain, Subject.Value, Subject.Success, because, becauseArgs);
+        ResultChecks.ExpectOk(assertionChain, Case, Subject.IsSuccess, because, becauseArgs);
 
-        return new AndWhichConstraint<ResultAssertions<T>, T>(this, Subject.Success ? (T)Subject.Value! : default!, assertionChain, ".Value");
+        return new AndWhichConstraint<ResultAssertions<T>, T>(this, Subject.IsSuccess ? (T)Case! : default!, assertionChain, ".Value");
     }
 
     /// <summary>
@@ -39,11 +41,11 @@ public class ResultAssertions<T>
     [CustomAssertion]
     public AndConstraint<ResultAssertions<T>> BeOkWithValue(T expected, string because = "", params object[] becauseArgs)
     {
-        ResultChecks.ExpectOk(assertionChain, Subject.Value, Subject.Success, because, becauseArgs);
+        ResultChecks.ExpectOk(assertionChain, Case, Subject.IsSuccess, because, becauseArgs);
 
-        if (Subject.Success)
+        if (Subject.IsSuccess)
         {
-            var actual = (T)Subject.Value!;
+            var actual = (T)Case!;
 
             assertionChain
                 .ForCondition(EqualityComparer<T>.Default.Equals(actual, expected))
@@ -61,11 +63,11 @@ public class ResultAssertions<T>
     {
         ArgumentNullException.ThrowIfNull(predicate);
 
-        ResultChecks.ExpectOk(assertionChain, Subject.Value, Subject.Success, because, becauseArgs);
+        ResultChecks.ExpectOk(assertionChain, Case, Subject.IsSuccess, because, becauseArgs);
 
-        if (Subject.Success)
+        if (Subject.IsSuccess)
         {
-            var actual = (T)Subject.Value!;
+            var actual = (T)Case!;
 
             assertionChain
                 .ForCondition(predicate.Compile()(actual))
@@ -83,26 +85,12 @@ public class ResultAssertions<T>
     {
         ArgumentNullException.ThrowIfNull(assertion);
 
-        ResultChecks.ExpectOk(assertionChain, Subject.Value, Subject.Success, because, becauseArgs);
+        ResultChecks.ExpectOk(assertionChain, Case, Subject.IsSuccess, because, becauseArgs);
 
-        if (Subject.Success)
+        if (Subject.IsSuccess)
         {
-            assertion((T)Subject.Value!);
+            assertion((T)Case!);
         }
-
-        return new AndConstraint<ResultAssertions<T>>(this);
-    }
-
-    /// <summary>
-    /// Asserts that the result is empty: neither a value nor an error.
-    /// </summary>
-    [CustomAssertion]
-    public AndConstraint<ResultAssertions<T>> BeEmpty(string because = "", params object[] becauseArgs)
-    {
-        assertionChain
-            .BecauseOf(because, becauseArgs)
-            .ForCondition(Subject.Value is null)
-            .FailWith("Expected {context:result} to be empty{reason}, but it was {0}.", ResultChecks.Describe(Subject.Value));
 
         return new AndConstraint<ResultAssertions<T>>(this);
     }
@@ -113,7 +101,7 @@ public class ResultAssertions<T>
     [CustomAssertion]
     public ErrorAssertions<Exception> BeError(string because = "", params object[] becauseArgs)
     {
-        return ResultChecks.ExpectError<Exception>(assertionChain, Subject.Value, null, because, becauseArgs);
+        return ResultChecks.ExpectError<Exception>(assertionChain, Case, null, because, becauseArgs);
     }
 
     /// <summary>
@@ -123,7 +111,7 @@ public class ResultAssertions<T>
     public ErrorAssertions<TException> BeError<TException>(string because = "", params object[] becauseArgs)
         where TException : Exception
     {
-        return ResultChecks.ExpectError<TException>(assertionChain, Subject.Value, null, because, becauseArgs);
+        return ResultChecks.ExpectError<TException>(assertionChain, Case, null, because, becauseArgs);
     }
 
     /// <summary>
@@ -135,7 +123,7 @@ public class ResultAssertions<T>
     {
         ArgumentNullException.ThrowIfNull(predicate);
 
-        return ResultChecks.ExpectError(assertionChain, Subject.Value, predicate, because, becauseArgs);
+        return ResultChecks.ExpectError(assertionChain, Case, predicate, because, becauseArgs);
     }
 
     /// <summary>
@@ -144,6 +132,6 @@ public class ResultAssertions<T>
     [CustomAssertion]
     public AggregateErrorAssertions BeAggregateError(string because = "", params object[] becauseArgs)
     {
-        return ResultChecks.ExpectAggregateError(assertionChain, Subject.Value, because, becauseArgs);
+        return ResultChecks.ExpectAggregateError(assertionChain, Case, because, becauseArgs);
     }
 }

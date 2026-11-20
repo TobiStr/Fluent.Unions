@@ -23,13 +23,15 @@ public class ResultAssertions
     /// </summary>
     public Result Subject { get; }
 
+    private object? Case => Subject.TryGetError(out var error) ? error : Subject.Value;
+
     /// <summary>
     /// Asserts that the result is Ok.
     /// </summary>
     [CustomAssertion]
     public AndConstraint<ResultAssertions> BeOk(string because = "", params object[] becauseArgs)
     {
-        ResultChecks.ExpectOk(assertionChain, Subject.Value, Subject.Success, because, becauseArgs);
+        ResultChecks.ExpectOk(assertionChain, Case, Subject.IsSuccess, because, becauseArgs);
 
         return new AndConstraint<ResultAssertions>(this);
     }
@@ -40,7 +42,7 @@ public class ResultAssertions
     [CustomAssertion]
     public ErrorAssertions<Exception> BeError(string because = "", params object[] becauseArgs)
     {
-        return ResultChecks.ExpectError<Exception>(assertionChain, Subject.Value, null, because, becauseArgs);
+        return ResultChecks.ExpectError<Exception>(assertionChain, Case, null, because, becauseArgs);
     }
 
     /// <summary>
@@ -50,7 +52,7 @@ public class ResultAssertions
     public ErrorAssertions<TException> BeError<TException>(string because = "", params object[] becauseArgs)
         where TException : Exception
     {
-        return ResultChecks.ExpectError<TException>(assertionChain, Subject.Value, null, because, becauseArgs);
+        return ResultChecks.ExpectError<TException>(assertionChain, Case, null, because, becauseArgs);
     }
 
     /// <summary>
@@ -62,7 +64,7 @@ public class ResultAssertions
     {
         ArgumentNullException.ThrowIfNull(predicate);
 
-        return ResultChecks.ExpectError(assertionChain, Subject.Value, predicate, because, becauseArgs);
+        return ResultChecks.ExpectError(assertionChain, Case, predicate, because, becauseArgs);
     }
 
     /// <summary>
@@ -71,7 +73,7 @@ public class ResultAssertions
     [CustomAssertion]
     public AggregateErrorAssertions BeAggregateError(string because = "", params object[] becauseArgs)
     {
-        return ResultChecks.ExpectAggregateError(assertionChain, Subject.Value, because, becauseArgs);
+        return ResultChecks.ExpectAggregateError(assertionChain, Case, because, becauseArgs);
     }
 }
 

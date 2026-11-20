@@ -35,11 +35,11 @@ public class ResultAssertionsTests
     }
 
     [Test]
-    public void Result_BeOk_FailsForEmpty()
+    public void Result_BeOk_FailsForDefault()
     {
         var message = FailureOf(() => default(Result).Should().BeOk());
 
-        Assert.That(message, Does.Contain("but it was empty"));
+        Assert.That(message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -136,11 +136,11 @@ public class ResultAssertionsTests
     }
 
     [Test]
-    public void ResultOfT_BeOk_FailsForEmptyAndNamesTheState()
+    public void ResultOfT_BeOk_FailsForDefaultAndNamesTheState()
     {
         var message = FailureOf(() => default(Result<int>).Should().BeOk());
 
-        Assert.That(message, Does.Contain("but it was empty"));
+        Assert.That(message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -157,12 +157,12 @@ public class ResultAssertionsTests
     }
 
     [Test]
-    public void ResultOfT_BeOkWithValue_FailsForErrorAndEmpty()
+    public void ResultOfT_BeOkWithValue_FailsForErrorAndDefault()
     {
         var error = Result<int>.Error(new InvalidOperationException("boom"));
 
         Assert.That(FailureOf(() => error.Should().BeOkWithValue(1)), Does.Contain("boom"));
-        Assert.That(FailureOf(() => default(Result<int>).Should().BeOkWithValue(1)), Does.Contain("empty"));
+        Assert.That(FailureOf(() => default(Result<int>).Should().BeOkWithValue(1)), Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
@@ -193,48 +193,37 @@ public class ResultAssertionsTests
     }
 
     [Test]
-    public void ResultOfT_BeOkSatisfying_DoesNotRunTheAssertionForEmpty()
+    public void ResultOfT_BeOkSatisfying_DoesNotRunTheAssertionForDefault()
     {
         var calls = 0;
 
         var message = FailureOf(() => default(Result<int>).Should().BeOkSatisfying(_ => calls++));
 
         Assert.That(calls, Is.EqualTo(0));
-        Assert.That(message, Does.Contain("empty"));
+        Assert.That(message, Does.Contain("holds neither a value nor an error"));
     }
 
     [Test]
-    public void ResultOfT_BeEmpty_PassesOnlyForEmpty()
-    {
-        default(Result<int>).Should().BeEmpty();
-
-        Assert.That(FailureOf(() => Result<int>.Ok(1).Should().BeEmpty()), Does.Contain("but it was Ok"));
-        Assert.That(
-            FailureOf(() => Result<int>.Error(new InvalidOperationException("boom")).Should().BeEmpty()),
-            Does.Contain("boom"));
-    }
-
-    [Test]
-    public void ResultOfT_BeError_PassesForErrorAndFailsForEmpty()
+    public void ResultOfT_BeError_PassesForErrorAndForDefault()
     {
         var error = Result<int>.Error(new TimeoutException("slow"));
 
         error.Should().BeError<TimeoutException>().WithMessageContaining("slow");
 
-        Assert.That(FailureOf(() => default(Result<int>).Should().BeError<TimeoutException>()), Does.Contain("but it was empty"));
-        Assert.That(FailureOf(() => default(Result<int>).Should().BeError()), Does.Contain("but it was empty"));
-        Assert.That(FailureOf(() => default(Result<int>).Should().BeAggregateError()), Does.Contain("but it was empty"));
+        default(Result<int>).Should().BeError<InvalidOperationException>().WithMessageContaining("holds neither a value nor an error");
+        default(Result<int>).Should().BeError();
+        Assert.That(FailureOf(() => default(Result<int>).Should().BeError<TimeoutException>()), Does.Contain("holds neither a value nor an error"));
+        Assert.That(FailureOf(() => default(Result<int>).Should().BeAggregateError()), Does.Contain("aggregate error"));
     }
 
     [Test]
-    public void ResultOfT_BeErrorWithPredicate_FailsForEmptyWithoutRunningThePredicate()
+    public void ResultOfT_BeErrorWithPredicate_RunsThePredicateForDefault()
     {
         Calls = 0;
 
-        var message = FailureOf(() => default(Result<int>).Should().BeError<Exception>(_ => Track()));
+        default(Result<int>).Should().BeError<Exception>(_ => Track());
 
-        Assert.That(Calls, Is.EqualTo(0));
-        Assert.That(message, Does.Contain("but it was empty"));
+        Assert.That(Calls, Is.EqualTo(1));
     }
 
     [Test]

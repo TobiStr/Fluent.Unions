@@ -26,6 +26,8 @@ public class CustomResultAssertions<TSelf, T, TError>
     /// </summary>
     public TSelf Subject { get; }
 
+    private object? Case => Subject.TryGetError(out var error) ? error : Subject.Value;
+
     /// <summary>
     /// Asserts that the result is Ok and exposes its value through <c>Which</c>.
     /// </summary>
@@ -77,20 +79,6 @@ public class CustomResultAssertions<TSelf, T, TError>
                 .ForCondition(predicate.Compile()(actual))
                 .FailWith("Expected {context:result} to be Ok with a value matching {0}{reason}, but it was Ok with value {1}.", predicate.Body, actual);
         }
-
-        return new AndConstraint<CustomResultAssertions<TSelf, T, TError>>(this);
-    }
-
-    /// <summary>
-    /// Asserts that the result is empty: neither a value nor an error.
-    /// </summary>
-    [CustomAssertion]
-    public AndConstraint<CustomResultAssertions<TSelf, T, TError>> BeEmpty(string because = "", params object[] becauseArgs)
-    {
-        assertionChain
-            .BecauseOf(because, becauseArgs)
-            .ForCondition(Subject.Value is null)
-            .FailWith("Expected {context:result} to be empty{reason}, but it was {0}.", Describe());
 
         return new AndConstraint<CustomResultAssertions<TSelf, T, TError>>(this);
     }
@@ -156,7 +144,7 @@ public class CustomResultAssertions<TSelf, T, TError>
 
     private bool TryGetValue(out T value)
     {
-        if (Subject.Value is not TError && Subject.Value is T payload)
+        if (Case is not TError && Case is T payload)
         {
             value = payload;
             return true;
@@ -168,7 +156,7 @@ public class CustomResultAssertions<TSelf, T, TError>
 
     private bool TryGetCase<TCase>(out TCase match)
     {
-        if (Subject.Value is TError error)
+        if (Case is TError error)
         {
             switch (error)
             {
@@ -187,13 +175,13 @@ public class CustomResultAssertions<TSelf, T, TError>
 
     private Described Describe()
     {
-        if (Subject.Value is TError error and not Exception)
+        if (Case is TError error and not Exception)
         {
             var shown = error is IUnion { Value: { } inner } ? inner : error;
 
             return new Described($"an error of type {shown.GetType().FullName} ({shown})");
         }
 
-        return ResultChecks.Describe(Subject.Value);
+        return ResultChecks.Describe(Case);
     }
 }

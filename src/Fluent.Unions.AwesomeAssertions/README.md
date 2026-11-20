@@ -51,7 +51,7 @@ StockResult<Reservation> reserved = await stock.ReserveAsync(sku, quantity);
 reserved.Should().BeError<OutOfStock>().Which.Sku.Should().Be("KB-1");
 ```
 
-An empty `Result<T>` fails every Ok and error assertion. Only `BeEmpty()` passes for it.
+A `default` result counts as an error, so `BeError()` passes for it and `BeOk()` fails.
 
 ## Documentation
 
