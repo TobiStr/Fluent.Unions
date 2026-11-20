@@ -30,6 +30,7 @@ dotnet add package Fluent.Unions.Serilog   # optional: structured logging of res
 dotnet add package Fluent.Unions.NewtonsoftJson   # optional: Newtonsoft.Json converters for Option<T>, your own unions and results
 dotnet add package Fluent.Unions.Mediator   # optional: pipeline behaviors for Mediator that return a failed result
 dotnet add package Fluent.Unions.MediatR   # optional: pipeline behaviors for MediatR that return a failed result
+dotnet add package Fluent.Unions.MongoDB   # optional: store Option<T> as a value or BSON null with MongoDB.Bson
 ```
 
 Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed.
@@ -203,6 +204,7 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **Serilog:** `.Destructure.WithFluentUnions()` logs results and options as structured values.
   - **Newtonsoft.Json:** the same option, union and result behavior as with System.Text.Json.
   - **Mediator and MediatR:** pipeline behaviors that return a failed result for an exception or an invalid request.
+  - **MongoDB:** `Option<T>` as a value or BSON null; results refuse to serialize.
   - **OpenTelemetry:** `Activity.RecordResult` sets the status and records the exception.
 
 ## Documentation
@@ -255,6 +257,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | Serilog | [Serilog](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/serilog/README.md) | `.Destructure.WithFluentUnions()` logs results, options and loadables as structured values |
 | Newtonsoft.Json | [Newtonsoft.Json](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/newtonsoft-json/README.md) | Option, union and result serialization for Newtonsoft.Json |
 | Mediator and MediatR | [Mediator and MediatR](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mediator/README.md) | Behaviors that return a failed result for an exception or an invalid request |
+| MongoDB | [MongoDB](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mongodb/README.md) | `FluentUnionsBson.Register()` stores `Option<T>` as a value or BSON null |
 | Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                                     |
 | Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013`: ignored results, async lambdas, overlapping cases and more, with code fixes                     |
 
@@ -282,6 +285,7 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions.NewtonsoftJson` | The `Fluent.Unions.NewtonsoftJson` package |
 | `src/Fluent.Unions.Mediator` | The `Fluent.Unions.Mediator` package |
 | `src/Fluent.Unions.MediatR` | The `Fluent.Unions.MediatR` package |
+| `src/Fluent.Unions.MongoDB` | The `Fluent.Unions.MongoDB` package |
 | `test/`                               | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/`                               | The documentation                                                                                    |
 | `assets/`                             | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |

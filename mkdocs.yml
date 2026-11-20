@@ -100,4 +100,5 @@ nav:
       - Serilog: serilog/README.md
       - Newtonsoft.Json: newtonsoft-json/README.md
       - Mediator and MediatR: mediator/README.md
+      - MongoDB: mongodb/README.md
   - Reference: reference.md

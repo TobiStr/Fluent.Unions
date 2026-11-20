@@ -288,6 +288,17 @@ Package `Fluent.Unions.MediatR`, namespace `Fluent.Unions.MediatR`.
 | `ExceptionToResultBehavior<TRequest, TResponse>` | pipeline behavior, `TResponse` implements `IErrorResult<TResponse, Exception>` | [Mediator and MediatR](mediator/README.md#the-behaviors) |
 | `ValidationToResultBehavior<TRequest, TResponse>` | pipeline behavior, same constraint | [Mediator and MediatR](mediator/README.md#the-behaviors) |
 
+## MongoDB
+
+Package `Fluent.Unions.MongoDB`, namespace `Fluent.Unions.MongoDB`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `Register()` | `FluentUnionsBson` | [MongoDB](mongodb/README.md) |
+| `OptionSerializer<T>` | `Option<T>` | [MongoDB](mongodb/README.md#options) |
+| `OmitNoneConvention` | `ConventionPack`, `Option<T>` members | [MongoDB](mongodb/README.md#none-and-missing-elements) |
+| `ResultSerializer<TResult>` | `Result`, `Result<T>`, `Result<T, TError>` (refuses) | [MongoDB](mongodb/README.md#results-refuse-to-serialize) |
+
 ## Tracing
 
 | Member | On | Docs |

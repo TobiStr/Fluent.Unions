@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Fluent.Unions.MongoDB</PackageId>
+    <Description>MongoDB integration for Fluent.Unions: store Option&lt;T&gt; as a value or BSON null with a BSON serializer, and refuse to serialize results.</Description>
+    <PackageTags>result;option;union;mongodb;bson</PackageTags>
+    <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluent.Unions\Fluent.Unions.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Bson" Version="3.14.1" />
+  </ItemGroup>
+
+</Project>

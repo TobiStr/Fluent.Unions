@@ -35,6 +35,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | [Serilog](serilog/README.md) | The `Fluent.Unions.Serilog` package: log results, options and loadables as structured Serilog values. |
 | [Newtonsoft.Json](newtonsoft-json/README.md) | The `Fluent.Unions.NewtonsoftJson` package: option, union and result serialization for Newtonsoft.Json. |
 | [Mediator and MediatR](mediator/README.md) | The `Fluent.Unions.Mediator` and `Fluent.Unions.MediatR` packages: pipeline behaviors that return a failed result instead of throwing. |
+| [MongoDB](mongodb/README.md) | The `Fluent.Unions.MongoDB` package: store `Option<T>` as a value or BSON null and refuse to serialize results. |
 | [Tracing](tracing/README.md) | `RecordResult` copies a result onto a `System.Diagnostics.Activity`: status and exception event. |
 | [Analyzer](analyzer/README.md) | Rules for ignored results, async lambdas that escape a result, overlapping cases and more. |
 

@@ -15,6 +15,7 @@
     <Project Path="src/Fluent.Unions.NewtonsoftJson/Fluent.Unions.NewtonsoftJson.csproj" />
     <Project Path="src/Fluent.Unions.Mediator/Fluent.Unions.Mediator.csproj" />
     <Project Path="src/Fluent.Unions.MediatR/Fluent.Unions.MediatR.csproj" />
+    <Project Path="src/Fluent.Unions.MongoDB/Fluent.Unions.MongoDB.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -31,5 +32,6 @@
     <Project Path="test/Fluent.Unions.NewtonsoftJson.Tests/Fluent.Unions.NewtonsoftJson.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Mediator.Tests/Fluent.Unions.Mediator.Tests.csproj" />
     <Project Path="test/Fluent.Unions.MediatR.Tests/Fluent.Unions.MediatR.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.MongoDB.Tests/Fluent.Unions.MongoDB.Tests.csproj" />
   </Folder>
 </Solution>
