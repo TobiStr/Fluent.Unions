@@ -92,7 +92,10 @@ nav:
       - Entity Framework Core: entity-framework-core/README.md
       - FluentValidation: fluent-validation/README.md
       - Polly: polly/README.md
-      - OpenAPI: openapi/README.md
+      - OpenAPI:
+          - openapi/README.md
+          - Swashbuckle: openapi/swashbuckle.md
+          - NSwag: openapi/nswag.md
       - AwesomeAssertions: awesome-assertions/README.md
       - Dapper: dapper/README.md
       - Refit: refit/README.md

@@ -299,6 +299,22 @@ Package `Fluent.Unions.MongoDB`, namespace `Fluent.Unions.MongoDB`.
 | `OmitNoneConvention` | `ConventionPack`, `Option<T>` members | [MongoDB](mongodb/README.md#none-and-missing-elements) |
 | `ResultSerializer<TResult>` | `Result`, `Result<T>`, `Result<T, TError>` (refuses) | [MongoDB](mongodb/README.md#results-refuse-to-serialize) |
 
+## Swashbuckle
+
+Package `Fluent.Unions.Swashbuckle`, namespace `Fluent.Unions.Swashbuckle`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `AddFluentUnions()`, `OptionSchemaFilter` | `SwaggerGenOptions`, `ISchemaFilter` | [Swashbuckle](openapi/swashbuckle.md) |
+
+## NSwag
+
+Package `Fluent.Unions.NSwag`, namespace `Fluent.Unions.NSwag`.
+
+| Member | On | Docs |
+| --- | --- | --- |
+| `AddFluentUnions()`, `OptionSchemaProcessor` | `OpenApiDocumentGeneratorSettings`, `ISchemaProcessor` | [NSwag](openapi/nswag.md) |
+
 ## Tracing
 
 | Member | On | Docs |

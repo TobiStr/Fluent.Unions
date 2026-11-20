@@ -4,7 +4,7 @@ The package `Fluent.Unions.OpenApi` (namespace `Fluent.Unions.OpenApi`) describe
 
 ## In this section
 
-This folder has one page. The topics are below.
+This folder has three pages: this one for Microsoft.AspNetCore.OpenApi, [Swashbuckle](swashbuckle.md) and [NSwag](nswag.md). The topics of this page are below.
 
 - [Quick example](#quick-example): register the transformer and see the schema.
 - [What you get](#what-you-get): the schema for each kind of `T`.
@@ -48,7 +48,7 @@ Without `AddFluentUnions()` the schema of an option is an object without a type,
 
 - **Nullable, not optional.** An option property stays in `required`, because the serializer always writes it, as `null` for none.
 - **Only `Option<T>` is changed.** `Result` types, and an option used as a route or query parameter, are not described yet.
-- **Microsoft.AspNetCore.OpenApi only.** Swashbuckle and NSwag are not supported.
+- **Microsoft.AspNetCore.OpenApi on this page.** For Swashbuckle see [Swashbuckle](swashbuckle.md), for NSwag see [NSwag](nswag.md). Those two leave an option property out of `required`, as they do for every struct property.
 - **Package version.** It builds on `Microsoft.AspNetCore.OpenApi` 11.0.0, which uses the `Microsoft.OpenApi` 3.x model.
 
 ---

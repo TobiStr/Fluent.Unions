@@ -31,7 +31,7 @@ public record Product(string Name, Option<string> Nickname, Option<int> Stock);
 // "nickname": type ["null", "string"], "stock": type ["null", "integer", "string"] with format int32
 ```
 
-An option property stays in `required`, because it is always written, as `null` for none. Swashbuckle and NSwag are not supported.
+An option property stays in `required`, because it is always written, as `null` for none. For Swashbuckle and NSwag, use `Fluent.Unions.Swashbuckle` and `Fluent.Unions.NSwag`.
 
 ## Documentation
 

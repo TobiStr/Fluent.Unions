@@ -16,6 +16,8 @@
     <Project Path="src/Fluent.Unions.Mediator/Fluent.Unions.Mediator.csproj" />
     <Project Path="src/Fluent.Unions.MediatR/Fluent.Unions.MediatR.csproj" />
     <Project Path="src/Fluent.Unions.MongoDB/Fluent.Unions.MongoDB.csproj" />
+    <Project Path="src/Fluent.Unions.Swashbuckle/Fluent.Unions.Swashbuckle.csproj" />
+    <Project Path="src/Fluent.Unions.NSwag/Fluent.Unions.NSwag.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
@@ -33,5 +35,7 @@
     <Project Path="test/Fluent.Unions.Mediator.Tests/Fluent.Unions.Mediator.Tests.csproj" />
     <Project Path="test/Fluent.Unions.MediatR.Tests/Fluent.Unions.MediatR.Tests.csproj" />
     <Project Path="test/Fluent.Unions.MongoDB.Tests/Fluent.Unions.MongoDB.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Swashbuckle.Tests/Fluent.Unions.Swashbuckle.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.NSwag.Tests/Fluent.Unions.NSwag.Tests.csproj" />
   </Folder>
 </Solution>

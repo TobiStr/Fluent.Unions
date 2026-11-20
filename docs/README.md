@@ -36,6 +36,8 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | [Newtonsoft.Json](newtonsoft-json/README.md) | The `Fluent.Unions.NewtonsoftJson` package: option, union and result serialization for Newtonsoft.Json. |
 | [Mediator and MediatR](mediator/README.md) | The `Fluent.Unions.Mediator` and `Fluent.Unions.MediatR` packages: pipeline behaviors that return a failed result instead of throwing. |
 | [MongoDB](mongodb/README.md) | The `Fluent.Unions.MongoDB` package: store `Option<T>` as a value or BSON null and refuse to serialize results. |
+| [Swashbuckle](openapi/swashbuckle.md) | The `Fluent.Unions.Swashbuckle` package: describe `Option<T>` as a nullable `T` in Swashbuckle documents. |
+| [NSwag](openapi/nswag.md) | The `Fluent.Unions.NSwag` package: describe `Option<T>` as a nullable `T` in NSwag documents. |
 | [Tracing](tracing/README.md) | `RecordResult` copies a result onto a `System.Diagnostics.Activity`: status and exception event. |
 | [Analyzer](analyzer/README.md) | Rules for ignored results, async lambdas that escape a result, overlapping cases and more. |
 
