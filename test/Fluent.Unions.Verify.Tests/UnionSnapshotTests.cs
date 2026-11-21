@@ -37,16 +37,16 @@ public class UnionSnapshotTests
     public Task ResultOfTDefault() => Verifier.Verify(default(Result<int>));
 
     [Test]
-    public Task ResultOfTErrorIsDataOk() => Verifier.Verify(new Result<string, AppError>("paid"));
+    public Task DataErrorResultOk() => Verifier.Verify(new AppResult<string>("paid"));
 
     [Test]
-    public Task ResultOfTErrorIsDataError() => Verifier.Verify(new Result<string, AppError>(new AppError(new Declined("insufficient funds"))));
+    public Task DataErrorResultError() => Verifier.Verify(new AppResult<string>(new AppError(new Declined("insufficient funds"))));
 
     [Test]
-    public Task ResultOfTErrorIsDataFromException() => Verifier.Verify(new Result<string, AppError>(AppError.FromException(Thrown("timeout"))));
+    public Task DataErrorResultFromException() => Verifier.Verify(new AppResult<string>(AppError.FromException(Thrown("timeout"))));
 
     [Test]
-    public Task ResultOfTErrorIsDataDefault() => Verifier.Verify(default(Result<string, AppError>));
+    public Task DataErrorResultDefault() => Verifier.Verify(default(AppResult<string>));
 
     [Test]
     public Task ResultValidationError() => Verifier.Verify(Result<int>.Error(new ValidationError("Name is required.", "Name")));
@@ -102,6 +102,12 @@ public class UnionSnapshotTests
     public Task ResultInsideResult() => Verifier.Verify(Result.From(Option.Some(5)));
 
     [Test]
+    public Task ResultInsideResultWithNone() => Verifier.Verify(Result.From(new Option<int>(Option.None)));
+
+    [Test]
+    public Task OptionInsideOption() => Verifier.Verify(Option.Some(Option.Some(5)));
+
+    [Test]
     public async Task NoStackTrace()
     {
         var verified = await Verifier.Verify(Result<int>.Error(Thrown("trace me")));
@@ -114,7 +120,7 @@ public class UnionSnapshotTests
     [Test]
     public async Task NoStackTraceInErrorData()
     {
-        var verified = await Verifier.Verify(new Result<string, AppError>(AppError.FromException(Thrown("trace me"))));
+        var verified = await Verifier.Verify(new AppResult<string>(AppError.FromException(Thrown("trace me"))));
 
         Assert.That(verified.Text, Does.Not.Contain("StackTrace"));
     }

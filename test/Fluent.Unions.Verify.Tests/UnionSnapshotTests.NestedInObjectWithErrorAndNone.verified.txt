@@ -1,6 +1,5 @@
 ﻿{
   Id: 2,
-  Note: None,
   Price: {
     Error: {
       Type: InvalidOperationException,

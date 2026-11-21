@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Fluent.Unions.Abstractions;
 using MediatR;
 
 namespace Fluent.Unions.MediatR.Tests;
@@ -7,15 +6,6 @@ namespace Fluent.Unions.MediatR.Tests;
 public static class Calls
 {
     public static int Count;
-}
-
-public union Outcome<T>(T, Exception) : IResult<Outcome<T>, T, Exception>
-{
-    public static Outcome<T> FromValue(T value) => value;
-
-    public static Outcome<T> FromError(Exception error) => error;
-
-    public static Exception FromException(Exception exception) => exception;
 }
 
 public record Circle(int Radius);
@@ -39,14 +29,6 @@ public sealed class GetNumberHandler : IRequestHandler<GetNumber, Result<int>>
             _ => Task.FromResult<Result<int>>(request.Id),
         };
     }
-}
-
-public sealed record GetOutcome(int Id) : IRequest<Outcome<int>>;
-
-public sealed class GetOutcomeHandler : IRequestHandler<GetOutcome, Outcome<int>>
-{
-    public Task<Outcome<int>> Handle(GetOutcome request, CancellationToken cancellationToken)
-        => request.Id < 0 ? throw new InvalidOperationException("negative") : Task.FromResult<Outcome<int>>(request.Id);
 }
 
 public sealed record GetShape(int Id) : IRequest<Shape>;
@@ -119,17 +101,4 @@ public sealed class AnnounceHandler : INotificationHandler<Announce>
 
         return Task.CompletedTask;
     }
-}
-
-public record Failure(string Reason) : IFromException<Failure>
-{
-    public static Failure FromException(Exception exception) => new(exception.Message);
-}
-
-public sealed record GetFailing(int Id) : IRequest<Result<int, Failure>>;
-
-public sealed class GetFailingHandler : IRequestHandler<GetFailing, Result<int, Failure>>
-{
-    public Task<Result<int, Failure>> Handle(GetFailing request, CancellationToken cancellationToken)
-        => throw new InvalidOperationException("negative");
 }

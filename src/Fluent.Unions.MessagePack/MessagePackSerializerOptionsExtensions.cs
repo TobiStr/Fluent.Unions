@@ -1,4 +1,5 @@
 using MessagePack;
+using MessagePack.Formatters;
 using MessagePack.Resolvers;
 
 namespace Fluent.Unions.MessagePack;
@@ -9,12 +10,19 @@ namespace Fluent.Unions.MessagePack;
 public static class MessagePackSerializerOptionsExtensions
 {
     /// <summary>
-    /// Returns options that resolve <see cref="UnionsResolver"/> first, then the resolver the options already use.
+    /// Returns options that resolve <see cref="UnionsResolver"/> first, then the resolver the options already use. Options that already have it are returned unchanged.
     /// </summary>
-    public static MessagePackSerializerOptions WithUnions(this MessagePackSerializerOptions options)
+    public static MessagePackSerializerOptions WithFluentUnions(this MessagePackSerializerOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        return options.WithResolver(CompositeResolver.Create(UnionsResolver.Instance, options.Resolver));
+        return options.Resolver is UnionsFirstResolver
+            ? options
+            : options.WithResolver(new UnionsFirstResolver(CompositeResolver.Create(UnionsResolver.Instance, options.Resolver)));
+    }
+
+    private sealed class UnionsFirstResolver(IFormatterResolver resolver) : IFormatterResolver
+    {
+        public IMessagePackFormatter<T>? GetFormatter<T>() => resolver.GetFormatter<T>();
     }
 }

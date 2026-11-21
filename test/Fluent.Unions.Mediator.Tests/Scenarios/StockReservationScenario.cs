@@ -61,14 +61,17 @@ public union StockProblem(UnknownSku, StockUnavailable) : IFromException<StockPr
     public static StockProblem FromException(Exception exception) => new StockUnavailable(exception.Message);
 }
 
-public sealed record CheckStock(string Sku) : IRequest<Result<int, StockProblem>>;
+[FluentResult<StockProblem>]
+public readonly partial struct StockResult<T>;
 
-public sealed class CheckStockHandler(IServiceProvider services) : IRequestHandler<CheckStock, Result<int, StockProblem>>
+public sealed record CheckStock(string Sku) : IRequest<StockResult<int>>;
+
+public sealed class CheckStockHandler(IServiceProvider services) : IRequestHandler<CheckStock, StockResult<int>>
 {
-    public ValueTask<Result<int, StockProblem>> Handle(CheckStock request, CancellationToken cancellationToken)
+    public ValueTask<StockResult<int>> Handle(CheckStock request, CancellationToken cancellationToken)
     {
         var warehouse = services.GetRequiredService<Warehouse>();
-        Result<int, StockProblem> result;
+        StockResult<int> result;
 
         if (request.Sku == "FLAKY")
         {
@@ -165,7 +168,7 @@ public class StockReservationScenario
         var unknown = await Mediator.Send(new CheckStock("NOPE"));
         var offline = await Mediator.Send(new CheckStock("FLAKY"));
 
-        string Describe(Result<int, StockProblem> result) => result.Match(
+        string Describe(StockResult<int> result) => result.Match(
             left => $"{left} left",
             problem => problem switch
             {

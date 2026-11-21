@@ -36,12 +36,12 @@ activity.RecordResult(order);
 | --- | --- | --- | --- |
 | value or `Result.Ok` | `Ok` | | no |
 | error | `Error` | the exception message | yes, through `AddException` |
-| `Result<T, TError>` error that is an exception | `Error` | the exception message | yes |
-| `Result<T, TError>` error that is not an exception | `Error` | the message of a `ResultErrorException` holding the error | yes, as `ResultErrorException` |
+| Your own result type, error that is an exception | `Error` | the exception message | yes |
+| Your own result type, error that is not an exception | `Error` | the message of a `ResultErrorException` holding the error | yes, as `ResultErrorException` |
 | `default` result | `Error` | the message of the `InvalidOperationException` it holds | yes |
 | `null` activity | nothing | | no |
 
-`RecordResult` has overloads for `Result`, `Result<T>` and `Result<T, TError>`. It also works on your own [result type](../errors/custom-error-types.md). An error that is not an exception is recorded as a `ResultErrorException`.
+`RecordResult` has overloads for `Result` and `Result<T>`. Your own [result type](../errors/custom-error-types.md) gets a generated `RecordResult` operator, so `activity.RecordResult(result)` works the same. An error that is not an exception is recorded as a `ResultErrorException`.
 
 ## When to use
 

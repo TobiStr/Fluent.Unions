@@ -50,7 +50,6 @@ public class ThrowInResultMethodAnalyzerTests
     [TestCase("int M() { throw new Exception(); }")]
     [TestCase("void M() { throw new Exception(); }")]
     [TestCase("Option<int> M() { throw new Exception(); }")]
-    [TestCase("Result<int, MyError> M() { throw new Exception(); }")]
     [TestCase("Task<Result> M() { throw new Exception(); }")]
     [TestCase("async Task M() { await Task.Yield(); throw new Exception(); }")]
     [TestCase("async Task<int> M() { await Task.Yield(); throw new Exception(); }")]

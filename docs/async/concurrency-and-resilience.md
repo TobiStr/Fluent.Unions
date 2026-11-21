@@ -84,10 +84,10 @@ Result<Payment> payment = await Result.RetryAsync(
 
 Details:
 
-- An exception thrown by the operation counts as a failure, like an error result.
+- An exception thrown by the operation counts as a failure, like an error result. That includes an `OperationCanceledException` that is not caused by your token, such as an `HttpClient` timeout: it is retried like any other failure.
 - `shouldRetry` is only called for errors, and not after the last attempt. An error it rejects is returned at once.
 - The `delay` is the same for every attempt. There is no backoff. Write your own `shouldRetry` and loop when you need one.
-- **Cancellation stops retrying.** When the token is cancelled, `RetryAsync` throws `OperationCanceledException` instead of waiting or retrying again.
+- **Cancellation stops retrying.** When your token is cancelled, `RetryAsync` throws `OperationCanceledException` instead of waiting or retrying again.
 - Retry only operations that are safe to repeat. A payment call needs an idempotency key.
 
 ## Timeout

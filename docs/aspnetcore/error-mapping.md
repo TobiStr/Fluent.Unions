@@ -8,7 +8,7 @@ The status code comes from the type of the exception. Without configuration:
 
 | Exception | Status |
 | --- | --- |
-| `ValidationError`, `ValidationErrors` | 400, as `ValidationProblemDetails` with every message under `errors` |
+| `ValidationError`, `ValidationErrors`, also as the `InnerException` of another error | 400, as `ValidationProblemDetails` with every message under `errors` |
 | `KeyNotFoundException` | 404 |
 | `UnauthorizedAccessException` | 403 |
 | `TimeoutException` | 504 |
@@ -37,7 +37,7 @@ A new mapping applies to the exception type and all its subclasses. Mapping an e
 // 409, "detail": "Order 7 has shipped."
 ```
 
-If `ResultHttpOptions` is not configured, the defaults above apply. `GetStatusCode(exception)` is public if you want to look up a code yourself.
+If `ResultHttpOptions` is not configured, the defaults above apply.
 
 ### The most specific type wins
 
@@ -46,13 +46,17 @@ The lookup starts at the exception's own type and walks up its base types. The f
 ```csharp
 builder.Services.Configure<ResultHttpOptions>(o => o
     .Map<DomainException>(400, exposeMessage: true)
-    .Map<OrderNotFoundException>(404, exposeMessage: true));
+    .Map<OrderNotFoundException>(404, exposeMessage: true)
+    .Map<UnexpectedDomainException>(500));
 ```
 
 | Error | Status |
 | --- | --- |
 | `OrderNotFoundException : DomainException` | 404, the specific mapping |
 | `CreditLimitExceededException : DomainException` | 400, the mapping of `DomainException` |
+| `UnexpectedDomainException : DomainException` | 500, mapped explicitly, without `detail` |
+
+Map the exception your `FromException` creates for unexpected failures, as `UnexpectedDomainException` here, to 500 without `exposeMessage`. Otherwise it inherits the mapping of `DomainException` and answers 400 with its message. Give that exception a fixed message and keep the original as `InnerException`, as in [Custom error types](../errors/custom-error-types.md).
 
 ## What the response contains
 
@@ -72,11 +76,13 @@ An error becomes `ProblemDetails` with the mapped status code as `status`.
 // 500, no "detail"
 ```
 
-Log server errors before you convert them, because the response will not tell you what went wrong:
+Every response with a status of 500 or more is logged at `Error` level with the exception, under the category `Fluent.Unions.AspNetCore`, because the response does not tell you what went wrong. Log the error yourself only when you need more context, such as the order id:
 
 ```csharp
 LoadOrderAsync(id).OnErrorDo(e => logger.LogError(e, "Loading order {Id} failed", id)).ToHttpResult();
 ```
+
+The mapped exception is logged, so a 500 for a mapped `ResultErrorException` or an unmapped exception always leaves a trace. A faulted `Task<Result<T>>` is not converted: the exception goes through ASP.NET Core's exception handling, which logs it.
 
 ## Validation errors
 
@@ -94,6 +100,7 @@ result.ToHttpResult();
 - **One shape for one failure or many.** A single `ValidationError` gives the same body with one entry.
 - **Messages without a member** use the key `""`.
 - **Change the status** with `Map<ValidationErrors>(422)` and `Map<ValidationError>(422)`; the body stays a validation problem.
+- **A wrapped validation error stays a validation problem.** An error whose `InnerException` is a `ValidationError` or `ValidationErrors`, as `FromException` of your own result type usually makes it, is written as a validation problem with the status of the inner validation error. The wrapper's own message is not shown.
 - **A mixed failure is not a validation problem.** When a rule throws another exception, `Validate` returns an `AggregateException`, which gives 500 without details.
 
 ## ProblemDetails integration
@@ -122,7 +129,7 @@ Without `AddProblemDetails()`, errors are still written as `ProblemDetails`. Onl
 
 ## Errors as data
 
-`Result<T, TError>` has no status table, because an error is a record and not an exception. You choose the response for each case, and the `switch` makes the compiler check that none is missing. `ResultHttpOptions` does not apply to these errors:
+A declared result type with a record error has no status table, because the error is not an exception. You choose the response for each case, and the `switch` makes the compiler check that none is missing. `ResultHttpOptions` does not apply to these errors:
 
 ```csharp
 using Microsoft.AspNetCore.Http;

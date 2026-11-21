@@ -1,6 +1,6 @@
-﻿class Fluent.Unions.Dapper.OptionHandlers
+﻿class Fluent.Unions.Dapper.FluentUnionsDapper
+  public static void Register()
   public static void Register<T>()
-  public static void RegisterCommon()
 
 class Fluent.Unions.Dapper.OptionTypeHandler<T> : Dapper.SqlMapper.TypeHandler<Fluent.Unions.Option<T>>
   public OptionTypeHandler()

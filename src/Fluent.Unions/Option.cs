@@ -15,7 +15,7 @@ public readonly record struct None;
 /// </summary>
 /// <typeparam name="T">The type of the value.</typeparam>
 [JsonConverter(typeof(OptionJsonConverter))]
-public union Option<T>(T, None)
+public union Option<T>(T, None) : IEquatable<Option<T>>
 {
     /// <summary>
     /// Indicates whether the option holds a value.
@@ -44,6 +44,27 @@ public union Option<T>(T, None)
     public T GetValue() => TryGetValue(out var value)
         ? value
         : throw new InvalidOperationException($"Option<{typeof(T)}> holds no value.");
+
+    /// <summary>
+    /// Indicates whether both options hold no value, or hold equal values.
+    /// </summary>
+    public bool Equals(Option<T> other) => HasValue ? other.HasValue && Equals(Value, other.Value) : !other.HasValue;
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj) => obj is Option<T> other && Equals(other);
+
+    /// <inheritdoc />
+    public override int GetHashCode() => HasValue ? Value!.GetHashCode() : 0;
+
+    /// <summary>
+    /// Indicates whether both options hold no value, or hold equal values.
+    /// </summary>
+    public static bool operator ==(Option<T> left, Option<T> right) => left.Equals(right);
+
+    /// <summary>
+    /// Indicates whether the options differ.
+    /// </summary>
+    public static bool operator !=(Option<T> left, Option<T> right) => !left.Equals(right);
 
     /// <inheritdoc />
     public override string ToString() => TryGetValue(out var value) ? value.ToString() ?? "" : "";

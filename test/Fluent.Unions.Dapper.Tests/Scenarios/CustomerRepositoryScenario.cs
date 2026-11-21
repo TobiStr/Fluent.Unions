@@ -57,7 +57,7 @@ public class CustomerRepositoryScenario
     private CustomerRepository repository = null!;
 
     [OneTimeSetUp]
-    public void RegisterHandlers() => OptionHandlers.RegisterCommon();
+    public void RegisterHandlers() => FluentUnionsDapper.Register();
 
     [SetUp]
     public void OpenDatabase()

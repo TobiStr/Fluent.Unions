@@ -4,7 +4,7 @@
   public OptionConverter()
 
 class Fluent.Unions.Orleans.SerializerBuilderExtensions
-  public static Orleans.Serialization.ISerializerBuilder AddUnions(this Orleans.Serialization.ISerializerBuilder builder)
+  public static Orleans.Serialization.ISerializerBuilder AddFluentUnions(this Orleans.Serialization.ISerializerBuilder builder)
 
 [EditorBrowsable] class OrleansCodeGen.Fluent.Unions.Orleans.Codec_OptionSurrogate<T> : Orleans.Serialization.Codecs.IFieldCodec, Orleans.Serialization.Codecs.IFieldCodec<Fluent.Unions.Orleans.OptionSurrogate<T>>, Orleans.Serialization.Serializers.IValueSerializer, Orleans.Serialization.Serializers.IValueSerializer<Fluent.Unions.Orleans.OptionSurrogate<T>>
   public Codec_OptionSurrogate(Orleans.Serialization.Serializers.ICodecProvider codecProvider)

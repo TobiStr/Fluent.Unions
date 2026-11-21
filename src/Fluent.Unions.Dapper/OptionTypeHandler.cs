@@ -61,7 +61,9 @@ public sealed class OptionTypeHandler<T> : SqlMapper.TypeHandler<Option<T>>
 
     private static object Convert(object value) => value switch
     {
-        _ when ValueType.IsEnum => Enum.ToObject(ValueType, value),
+        string text when ValueType.IsEnum => Enum.Parse(ValueType, text, ignoreCase: true),
+        _ when ValueType.IsEnum => Enum.ToObject(ValueType, System.Convert.ChangeType(value, Enum.GetUnderlyingType(ValueType), CultureInfo.InvariantCulture)),
+        DateTime dateTime when ValueType == typeof(DateTimeOffset) => new DateTimeOffset(dateTime),
         byte[] bytes when ValueType == typeof(Guid) => new Guid(bytes),
         string text when TypeDescriptor.GetConverter(ValueType) is { } converter && converter.CanConvertFrom(typeof(string)) =>
             converter.ConvertFromInvariantString(text)!,

@@ -13,7 +13,7 @@ public class DomainException(string message, Exception? inner = null) : Exceptio
 
 public sealed class MissingException(string message) : DomainException(message);
 
-[FluentResult<DomainException>(Companion = false)]
+[FluentResult<DomainException>]
 public readonly partial struct Result<T>;
 
 [FluentResult<DomainException>]

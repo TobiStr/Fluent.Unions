@@ -33,7 +33,7 @@ public class CachedProfile
 
 internal sealed class ProfileCache(Func<string, Result<CachedProfile>> load)
 {
-    private static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Standard.WithUnions();
+    private static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Standard.WithFluentUnions();
 
     private readonly Dictionary<string, byte[]> _entries = [];
 
@@ -134,7 +134,7 @@ public class ProfileCacheScenario
     [Test]
     public void SerializingTheResultItself_IsRefused()
     {
-        var options = MessagePackSerializerOptions.Standard.WithUnions();
+        var options = MessagePackSerializerOptions.Standard.WithFluentUnions();
         var result = Database["ada"];
 
         Assert.That(() => MessagePackSerializer.Serialize(result, options),

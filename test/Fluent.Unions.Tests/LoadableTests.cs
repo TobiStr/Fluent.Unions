@@ -109,4 +109,30 @@ public class LoadableTests
 
         Assert.That(text, Is.EqualTo(expected));
     }
+
+    [Test]
+    public void DefaultAndNotLoadedAreEqual()
+    {
+        Loadable<int> notLoaded = Loadable.NotLoaded;
+        Loadable<int> empty = default;
+
+        Assert.That(empty, Is.EqualTo(notLoaded));
+        Assert.That(empty == notLoaded, Is.True);
+        Assert.That(empty != notLoaded, Is.False);
+        Assert.That(empty.GetHashCode(), Is.EqualTo(notLoaded.GetHashCode()));
+        Assert.That(new HashSet<Loadable<int>> { default, notLoaded }, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void StatesCompareByCase()
+    {
+        Loadable<int> loading = Loadable.Loading;
+        Loadable<int> loaded = 5;
+
+        Assert.That(loading, Is.Not.EqualTo((Loadable<int>)default));
+        Assert.That(loaded, Is.EqualTo((Loadable<int>)5));
+        Assert.That(loaded, Is.Not.EqualTo(loading));
+        Assert.That(loaded.GetHashCode(), Is.EqualTo(((Loadable<int>)5).GetHashCode()));
+        Assert.That((Loadable<int>)Failure, Is.EqualTo((Loadable<int>)Failure));
+    }
 }

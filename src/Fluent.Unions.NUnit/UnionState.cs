@@ -26,9 +26,9 @@ internal readonly record struct UnionState(UnionKind Kind, object? Payload)
         var definition = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
         var payload = union.Value;
 
-        if (ResultTypes.ErrorType(type) is { } errorType)
+        if (ResultTypes.IsResult(type))
         {
-            return payload is null || errorType.IsInstanceOfType(payload) ? new UnionState(UnionKind.Error, payload) : new UnionState(UnionKind.Ok, payload);
+            return new UnionState(((IErrorResult)actual).IsSuccess ? UnionKind.Ok : UnionKind.Error, payload);
         }
 
         if (definition == typeof(Option<>))
@@ -38,6 +38,8 @@ internal readonly record struct UnionState(UnionKind Kind, object? Payload)
 
         return new UnionState(UnionKind.Other, actual);
     }
+
+    public object? ErrorCase => Kind == UnionKind.Error ? Payload is IUnion { Value: { } inner } ? inner : Payload : null;
 
     public void WriteTo(MessageWriter writer)
     {

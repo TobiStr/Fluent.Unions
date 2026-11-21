@@ -9,6 +9,10 @@ public sealed class Captured<T>
 {
     private T? value;
 
+    internal Captured()
+    {
+    }
+
     /// <summary>
     /// Indicates whether the chain reached this step with a value.
     /// </summary>

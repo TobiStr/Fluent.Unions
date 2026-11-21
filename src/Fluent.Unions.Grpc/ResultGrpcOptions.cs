@@ -3,7 +3,8 @@ using Grpc.Core;
 namespace Fluent.Unions.Grpc;
 
 /// <summary>
-/// Maps result errors to gRPC status codes. Unmapped errors give <see cref="StatusCode.Internal"/> without details.
+/// Maps result errors to gRPC status codes. Configure it with <c>services.Configure&lt;ResultGrpcOptions&gt;(...)</c>.
+/// Unmapped errors give <see cref="StatusCode.Internal"/> without details.
 /// </summary>
 public sealed class ResultGrpcOptions
 {

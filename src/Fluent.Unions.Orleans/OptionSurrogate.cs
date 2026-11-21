@@ -22,7 +22,7 @@ public struct OptionSurrogate<T>
 }
 
 /// <summary>
-/// Converts an <see cref="Option{T}"/> to and from its <see cref="OptionSurrogate{T}"/>. Registered with Orleans by <see cref="SerializerBuilderExtensions.AddUnions"/>.
+/// Converts an <see cref="Option{T}"/> to and from its <see cref="OptionSurrogate{T}"/>. Registered with Orleans by <see cref="SerializerBuilderExtensions.AddFluentUnions"/>.
 /// </summary>
 [RegisterConverter]
 public sealed class OptionConverter<T> : IConverter<Option<T>, OptionSurrogate<T>>

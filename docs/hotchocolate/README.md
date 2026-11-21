@@ -47,6 +47,7 @@ public class Mutation
 | `Result<int>` | `Int!` |
 | `Result<List<Book>>` | `[Book!]!` |
 | `Option<Book>`, `Task<Option<Book>>` | `Book` |
+| `Result<Option<Book>>` | `Book` |
 | `Option<int>` | `Int` |
 
 `AddFluentUnions` rewrites the field type before HotChocolate builds the schema, so no `Result` or `Option` type appears in it. A field middleware unwraps the value at run time. An `Option` without a value, or a `default` option, gives `null`.
@@ -57,6 +58,8 @@ public class Mutation
 | --- | --- |
 | an error result | the original exception is thrown from the field |
 | a `ValidationErrors` error | one GraphQL error per `ValidationError`, with `extensions.member` when the member is set |
+| a single `ValidationError` error | one GraphQL error with its message and `extensions.member` when the member is set |
+| an error of your own result type that is not an exception | the error is wrapped in a `ResultErrorException` and thrown from the field; HotChocolate hides its message |
 | a `default` result | an `InvalidOperationException` is thrown from the field |
 | a cancelled token | the request is cancelled; it is not reported as a field error |
 
@@ -96,7 +99,7 @@ public Result<Order> PlaceOrder(string sku, IOrders orders) => orders.Place(sku)
 
 ## Rules
 
-- **Errors are exceptions.** A failed result is rethrown unchanged, with its stack trace.
+- **Errors are exceptions.** A failed result is rethrown unchanged, with its stack trace. An error that is data, such as a record, is thrown inside a `ResultErrorException` whose `Error` property holds it. Map it in an `IErrorFilter` if the client should see it.
 - **`null` is never a value.** A `default` result is an error. Use `Option<T>` for a field that may be missing.
 - **Cancellation is not an error.** It is never turned into a field error or an error union entry.
 - **Order of registration does not matter.** `AddFluentUnions` works before and after `AddMutationConventions`.

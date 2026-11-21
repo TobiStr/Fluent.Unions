@@ -7,6 +7,7 @@ class Fluent.Unions.Xunit.ResultAssert
   public static System.Exception Error<T>(Fluent.Unions.Result<T> result)
   public static T Ok<T>(Fluent.Unions.Result<T> result)
   public static T Ok<TSelf, T, TError>(Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TCase Error<TCase>(System.Runtime.CompilerServices.IUnion result)
   public static TError Error<TSelf, T, TError>(Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static TError Error<TSelf, TError>(Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
   public static TException Error<TException>(Fluent.Unions.Result result) where TException : System.Exception

@@ -36,7 +36,9 @@ public sealed class LookupService : Lookup.LookupBase
             case "forbidden":
                 return new UnauthorizedAccessException("Secret reason");
             case "rpc":
-                return new RpcException(new Status(StatusCode.Aborted, "Retry later"));
+                return new RpcException(new Status(StatusCode.Aborted, "Retry later"), new Metadata { { "internal-detail", "secret" } });
+            case "deliberate":
+                return new RpcException(new Status(StatusCode.NotFound, "Order 5 not found"), new Metadata { { "hint", "check the id" } });
             case "custom":
                 return new LookupConflictException("Name is taken");
             case "slow":

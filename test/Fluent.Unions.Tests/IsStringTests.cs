@@ -228,6 +228,8 @@ public class IsStringTests
         Assert.Throws<ArgumentNullException>(() => Is.NotEndsWith(null!));
         Assert.Throws<ArgumentNullException>(() => Is.Matches((Regex)null!));
         Assert.Throws<ArgumentNullException>(() => Is.NotMatches((Regex)null!));
+        Assert.Throws<ArgumentNullException>(() => Is.Matches((string)null!));
+        Assert.Throws<ArgumentNullException>(() => Is.NotMatches((string)null!));
     }
 
     [Test]

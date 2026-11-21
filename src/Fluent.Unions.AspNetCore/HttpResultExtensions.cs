@@ -31,18 +31,7 @@ public static class HttpResultExtensions
         () => TypedResults.NotFound());
 
     /// <summary>
-    /// Gives 200 with the value, or the response from <paramref name="onError"/> for the error.
-    /// </summary>
-    public static IResult ToHttpResult<T, TError>(this Result<T, TError> result, Func<TError, IResult> onError)
-        where TError : notnull, IFromException<TError>
-    {
-        ArgumentNullException.ThrowIfNull(onError);
-
-        return result.Match(value => TypedResults.Ok(value), onError);
-    }
-
-    /// <summary>
-    /// Gives 200 with the value, or the response from <paramref name="onError"/> for the error of a custom result.
+    /// Gives 200 with the value, or the response from <paramref name="onError"/> for the error of your own result type.
     /// </summary>
     public static IResult ToHttpResult<TSelf, T, TError>(
         this IResult<TSelf, T, TError> result,
@@ -53,11 +42,14 @@ public static class HttpResultExtensions
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(onError);
 
-        return result.Match(value => (IResult)TypedResults.Ok(value), onError);
+        if (result.Value is null)
+            return ErrorHttpResult.ForEmpty(typeof(TSelf));
+
+        return result.TryGetError(out var error) ? onError(error) : TypedResults.Ok((T)result.Value!);
     }
 
     /// <summary>
-    /// Gives 200 with the value, or ProblemDetails for the exception error of a custom result.
+    /// Gives 200 with the value, or ProblemDetails for the exception error of your own result type.
     /// </summary>
     public static IResult ToHttpResult<TSelf, T, TError>(this IResult<TSelf, T, TError> result)
         where TSelf : struct, IResult<TSelf, T, TError>
@@ -65,30 +57,22 @@ public static class HttpResultExtensions
         result.ToHttpResult(error => new ErrorHttpResult(error));
 
     /// <inheritdoc cref="ToHttpResult{T}(Result{T})"/>
-    public static async Task<IResult> ToHttpResult<T>(this Task<Result<T>> task) =>
-        (await Settle(task).ConfigureAwait(false)).ToHttpResult();
+    public static async Task<IResult> ToHttpResult<T>(this Task<Result<T>> task)
+    {
+        ArgumentNullException.ThrowIfNull(task);
+
+        return (await task.ConfigureAwait(false)).ToHttpResult();
+    }
 
     /// <inheritdoc cref="ToHttpResult(Result)"/>
     public static async Task<IResult> ToHttpResult(this Task<Result> task)
     {
         ArgumentNullException.ThrowIfNull(task);
 
-        return (await Result.TryAsync(() => task).ConfigureAwait(false)).ToHttpResult();
+        return (await task.ConfigureAwait(false)).ToHttpResult();
     }
 
     /// <inheritdoc cref="ToHttpResult{T}(Option{T})"/>
     public static async Task<IResult> ToHttpResult<T>(this Task<Option<T>> task) =>
         (await task.ConfigureAwait(false)).ToHttpResult();
-
-    /// <inheritdoc cref="ToHttpResult{T, TError}(Result{T, TError}, Func{TError, IResult})"/>
-    public static async Task<IResult> ToHttpResult<T, TError>(this Task<Result<T, TError>> task, Func<TError, IResult> onError)
-        where TError : notnull, IFromException<TError> =>
-        (await task.ConfigureAwait(false)).ToHttpResult(onError);
-
-    private static Task<Result<T>> Settle<T>(Task<Result<T>> task)
-    {
-        ArgumentNullException.ThrowIfNull(task);
-
-        return Result.TryAsync(() => task);
-    }
 }

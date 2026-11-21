@@ -5,7 +5,7 @@
 
 class Fluent.Unions.NUnit.IsResult
   public static Fluent.Unions.NUnit.UnionConstraint Error { get; }
-  public static Fluent.Unions.NUnit.UnionConstraint ErrorOfType<TException>() where TException : System.Exception
+  public static Fluent.Unions.NUnit.UnionConstraint ErrorOfType<TError>()
   public static Fluent.Unions.NUnit.UnionConstraint ErrorWith(NUnit.Framework.Constraints.IResolveConstraint expression)
   public static Fluent.Unions.NUnit.UnionConstraint Ok { get; }
   public static Fluent.Unions.NUnit.UnionConstraint OkWith(NUnit.Framework.Constraints.IResolveConstraint expression)

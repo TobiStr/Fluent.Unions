@@ -39,7 +39,7 @@ public override async Task<UserReply> GetUser(UserRequest request, ServerCallCon
 | Outcome of the call | Result |
 | --- | --- |
 | a response | `Result<TResponse>` holding it |
-| the call fails with an `RpcException` | error holding that exception |
+| the call fails with an `RpcException` | error holding a new `RpcException` with the same status code, an empty detail and no trailers; the original is its `Status.DebugException` |
 | the status is `Cancelled` | `OperationCanceledException` is thrown, the `RpcException` is its inner exception |
 | any other exception | thrown |
 
@@ -51,7 +51,7 @@ var message = result.Match(
     error => error is RpcException { StatusCode: StatusCode.DeadlineExceeded } ? "Too slow." : "Failed.");
 ```
 
-A deadline gives `DeadlineExceeded`, which is an error. Only `Cancelled` is thrown, because it means the caller or the server cancelled the call.
+The error carries only the status code, so returning it to your own caller does not leak the message or trailers of the downstream service. Log or inspect the original through `((RpcException)error.Status.DebugException!)`. A deadline gives `DeadlineExceeded`, which is an error. Only `Cancelled` is thrown, because it means the caller or the server cancelled the call.
 
 For a call with a streaming response, read `call.ResponseStream` as usual: an `RpcException` comes out of `MoveNext`. `ToResult()` does not cover it.
 
@@ -62,13 +62,13 @@ A gRPC service method returns a protobuf message. The generated base class has n
 1. The service method turns a result into its value with `result.Check().GetValue()`. `Check()` throws the error with its stack trace.
 2. `ResultServerInterceptor` catches the exception and throws an `RpcException` with the mapped status code.
 
-The interceptor wraps unary, client-streaming, server-streaming and duplex-streaming methods. Once the client has cancelled the call, any exception becomes status `Cancelled`, so the client's `ToResult()` throws `OperationCanceledException` instead of returning an `Unknown` error. Otherwise it leaves an `RpcException` and an `OperationCanceledException` alone, and it rethrows an exception without a mapping, so gRPC logs it and reports it as usual.
+The interceptor wraps unary, client-streaming, server-streaming and duplex-streaming methods. Once the client has cancelled the call, an `OperationCanceledException` becomes status `Cancelled`, so the client's `ToResult()` throws `OperationCanceledException` instead of returning an `Unknown` error. Any other exception after a cancellation is mapped like it would be before. An `RpcException` is left as it is, so a service can throw or return one with its own detail and trailers. The interceptor rethrows an exception without a mapping, so gRPC logs it and reports it as usual.
 
-Register it once, and add the options if you changed the mapping:
+Register it once, and configure the options with the options pattern if you changed the mapping:
 
 ```csharp
 builder.Services.AddGrpc(grpc => grpc.Interceptors.Add<ResultServerInterceptor>());
-builder.Services.AddSingleton(new ResultGrpcOptions().Map<OutOfStockException>(StatusCode.FailedPrecondition, exposeMessage: true));
+builder.Services.Configure<ResultGrpcOptions>(options => options.Map<OutOfStockException>(StatusCode.FailedPrecondition, exposeMessage: true));
 ```
 
 To map one error by hand, call `error.ToRpcException(options)`. It returns an `RpcException` you can throw. An `RpcException` is returned as it is.
@@ -77,7 +77,8 @@ To map one error by hand, call `error.ToRpcException(options)`. It returns an `R
 
 | Exception | Status code | Message sent |
 | --- | --- | --- |
-| `ValidationError`, `ValidationErrors` | `InvalidArgument` | yes |
+| `ValidationError`, `ValidationErrors` | `InvalidArgument` | yes, with the member names |
+| `RpcException` | its own status code | its own detail and trailers; a downstream error captured by `ToResult()` has neither |
 | `KeyNotFoundException` | `NotFound` | no |
 | `UnauthorizedAccessException` | `PermissionDenied` | no |
 | `TimeoutException` | `DeadlineExceeded` | no |
@@ -85,7 +86,7 @@ To map one error by hand, call `error.ToRpcException(options)`. It returns an `R
 
 `Map<TException>(statusCode, exposeMessage)` maps `TException` and its subclasses. The most specific mapping wins, and a mapping replaces a default. The `Internal` row applies to `ToRpcException`. The interceptor does not convert an unmapped exception, so gRPC reports it as `Unknown`, and sends the message only if you enabled `EnableDetailedErrors`.
 
-Only the status code and a message are sent. Structured details such as `google.rpc.BadRequest` are not part of this package, and neither are the member names of a validation error.
+Only the status code and a message are sent. A validation error is written as `Name: is required; Age: must be positive`, with the member name before each message that has one. Structured details such as `google.rpc.BadRequest` are not part of this package.
 
 ## Code generation
 
@@ -106,6 +107,7 @@ Shop.Result<UserReply> mine = (await client.GetUserAsync(request).ToResult())
 - `ToResult()` covers unary and client-streaming calls. Other exceptions than `RpcException` are thrown.
 - A `Cancelled` call throws `OperationCanceledException`.
 - The interceptor only maps exceptions that have a mapping. Add yours with `Map<TException>`.
+- `ResultGrpcOptions` comes from `IOptions<ResultGrpcOptions>`, so use `services.Configure<ResultGrpcOptions>(...)`. A `ResultGrpcOptions` registered as a singleton is not used.
 - There is no client interceptor, and no helper for streaming responses.
 
 ## See also

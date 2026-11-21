@@ -26,16 +26,15 @@ public sealed class UnionDestructuringPolicy : IDestructuringPolicy
         }
 
         var type = value.GetType();
-        if (ResultTypes.ErrorType(type) is { } errorType)
+        if (ResultTypes.IsResult(type))
         {
-            if (ResultTypes.ValueType(type) is null && union.Value is Ok)
+            if (!((IErrorResult)value).IsSuccess)
             {
-                result = new ScalarValue("Ok");
+                result = Error(((IErrorResult)value).Error!, propertyValueFactory);
                 return true;
             }
 
-            var inner = union.Value ?? GetError(value);
-            result = errorType.IsInstanceOfType(inner) ? Error(inner, propertyValueFactory) : propertyValueFactory.CreatePropertyValue(inner, true);
+            result = ResultTypes.ValueType(type) is null ? new ScalarValue("Ok") : propertyValueFactory.CreatePropertyValue(union.Value, true);
             return true;
         }
 
@@ -65,8 +64,6 @@ public sealed class UnionDestructuringPolicy : IDestructuringPolicy
 
         return false;
     }
-
-    private static object GetError(object result) => result.GetType().GetMethod(nameof(Result.GetError))!.Invoke(result, null)!;
 
     private static StructureValue Error(object error, ILogEventPropertyValueFactory propertyValueFactory)
     {

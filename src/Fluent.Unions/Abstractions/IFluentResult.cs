@@ -13,11 +13,6 @@ public interface IFluentResult<TSelf, T, TError> : IResult<TSelf, T, TError>
     /// Gets the value, if the result holds one.
     /// </summary>
     bool TryGetValue([MaybeNullWhen(false)] out T value);
-
-    /// <summary>
-    /// Gets the error, if the result holds one. An empty result holds the error for an uninitialized result.
-    /// </summary>
-    bool TryGetError([MaybeNullWhen(false)] out TError error);
 }
 
 /// <summary>
@@ -31,14 +26,4 @@ public interface IFluentUnitResult<TSelf, TError> : IErrorResult<TSelf, TError>
     /// The successful result.
     /// </summary>
     static abstract TSelf Success { get; }
-
-    /// <summary>
-    /// Indicates whether the result is successful.
-    /// </summary>
-    bool IsSuccess { get; }
-
-    /// <summary>
-    /// Gets the error, if the result holds one. An empty result holds the error for an uninitialized result.
-    /// </summary>
-    bool TryGetError([MaybeNullWhen(false)] out TError error);
 }

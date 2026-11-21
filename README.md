@@ -14,41 +14,22 @@
 
 `Result`, `Result<T>` and `Option<T>` for .NET, built on the C# 15 `union` keyword. A method returns either its value or an error, and the compiler checks that callers handle both. Fluent operators are named after LINQ and Rx.NET, so a whole flow reads as one expression.
 
+- **Your own Result in one line.** `[FluentResult<TError>]` on a `partial struct` lets the source generator build a complete `Result<T>` around your error type, with every operator and `Task` overload. Make the error a union and the compiler checks that every case is handled.
+- **Built for hot paths.** Results store their value without boxing, and a chain of operators with static lambdas allocates nothing.
+- **Every outcome in the signature.** `Option<T>` replaces `null`, and failures are typed values instead of hidden exceptions. What a method can return is visible in its type and checked by the compiler, so flows stay flat, readable and free of `null` checks and `try`/`catch`.
+
 ## Installation
 
 ```
 dotnet add package Fluent.Unions
 dotnet add package Fluent.Unions.AspNetCore   # optional: HTTP responses for ASP.NET Core
 dotnet add package Fluent.Unions.FluentValidation   # optional: FluentValidation validators as results
-dotnet add package Fluent.Unions.Polly   # optional: Polly strategies that handle results
-dotnet add package Fluent.Unions.OpenApi   # optional: Option<T> as nullable T in OpenAPI documents
-dotnet add package Fluent.Unions.AwesomeAssertions   # optional: AwesomeAssertions for results and options
-dotnet add package Fluent.Unions.Dapper   # optional: map Option<T> to and from database NULL with Dapper
-dotnet add package Fluent.Unions.Refit   # optional: Refit API responses as Result, Result<T> and Result<Option<T>>
-dotnet add package Fluent.Unions.FluentAssertions   # optional: FluentAssertions 8 for results and options (commercial license for commercial use)
-dotnet add package Fluent.Unions.Serilog   # optional: structured logging of results, options and loadables
-dotnet add package Fluent.Unions.NewtonsoftJson   # optional: Newtonsoft.Json converters for Option<T>, your own unions and results
-dotnet add package Fluent.Unions.Mediator   # optional: pipeline behaviors for Mediator that return a failed result
-dotnet add package Fluent.Unions.MediatR   # optional: pipeline behaviors for MediatR that return a failed result
-dotnet add package Fluent.Unions.MongoDB   # optional: store Option<T> as a value or BSON null with MongoDB.Bson
-dotnet add package Fluent.Unions.Swashbuckle   # optional: Option<T> as nullable T in Swashbuckle documents
-dotnet add package Fluent.Unions.NSwag   # optional: Option<T> as nullable T in NSwag documents
-dotnet add package Fluent.Unions.Shouldly   # optional: ShouldBeOk and ShouldBeNone assertions for Shouldly
-dotnet add package Fluent.Unions.TUnit   # optional: IsOk and IsNone assertions for TUnit
-dotnet add package Fluent.Unions.NUnit   # optional: IsResult and IsOption constraints for NUnit
-dotnet add package Fluent.Unions.Xunit   # optional: ResultAssert and OptionAssert for xUnit v3
-dotnet add package Fluent.Unions.Mapster   # optional: map Option<T> to and from T? with Mapster
-dotnet add package Fluent.Unions.AutoMapper   # optional: map Option<T> to and from T? with AutoMapper (AutoMapper: RPL-1.5 or commercial)
-dotnet add package Fluent.Unions.HotChocolate   # optional: return Result<T> and Option<T> from HotChocolate resolvers
-dotnet add package Fluent.Unions.MessagePack   # optional: MessagePack formatter and resolver for Option<T>
-dotnet add package Fluent.Unions.Orleans   # optional: Orleans serialization for Option<T> in grain calls and state
-dotnet add package Fluent.Unions.Grpc   # optional: gRPC calls as Result<T> and errors as status codes
-dotnet add package Fluent.Unions.Verify   # optional: readable Verify snapshots of results, options and loadables
+... # And many more, see below
 ```
 
 Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed.
 
-`using Fluent.Unions;` brings in the types and every operator. The ready-made validation rules live in `Fluent.Unions.Validation`. In ASP.NET Core code that also imports `Microsoft.AspNetCore.Http.HttpResults`, the success case `Ok` has the same name as the HTTP result; add `using Ok = Fluent.Unions.Ok;` to the file.
+`using Fluent.Unions;` brings in the types and every operator. The ready-made validation rules live in `Fluent.Unions.Validation`, and `IFromException<T>` for declaring your own result type lives in `Fluent.Unions.Abstractions`. In ASP.NET Core code that also imports `Microsoft.AspNetCore.Http.HttpResults`, the success case `Ok` has the same name as the HTTP result; add `using Ok = Fluent.Unions.Ok;` to the file.
 
 ## Choose your Result
 
@@ -57,6 +38,9 @@ Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, s
 **Or declare your own.** One declaration gives you a `Result<T>` whose error is your own type, with every operator, every `Task` overload, and the value-less `Result` next to it:
 
 ```csharp
+using Fluent.Unions;
+using Fluent.Unions.Abstractions;
+
 namespace Shop;
 
 public class DomainException(string message, Exception? inner = null)
@@ -65,6 +49,9 @@ public class DomainException(string message, Exception? inner = null)
     public static DomainException FromException(Exception exception) =>
         exception as DomainException ?? new UnexpectedDomainException(exception);
 }
+
+public sealed class UnexpectedDomainException(Exception inner)
+    : DomainException("An unexpected error occurred.", inner);
 
 [FluentResult<DomainException>]
 public readonly partial struct Result<T>;
@@ -203,9 +190,10 @@ public static Result<Receipt> PlaceOrder(Shop shop, ILogger logger, CheckoutRequ
             r => r.Quantity.EnsureInRange(1, 10))
         .Chain(r => FindCustomer(shop, r.CustomerId)
             .Zip(FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
-        .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}.")).Out(out var order)
+        .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}."))
+            .Out(out var order) // makes the order accessible from steps below
         .Chain(o => Result.Try(() => shop.Charge(o.Customer, o.Total))
-            .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
+        .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
         .Do(shop.Save)
         .Do(receipt => logger.LogInformation(
             "Placed {Quantity} x {Sku} for customer {CustomerId}, payment {PaymentId}",
@@ -254,7 +242,7 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **Matching:** `switch` over a result or option warns when a case is missing.
   - **Analyzers:** warn when a result is ignored, an async lambda escapes a result, a union cannot tell its cases apart, a result is serialized, and more.
 - **LINQ and Rx operators:**
-  - **On the value:** `Select`, `Chain`, `Ensure`, `Zip`, `BindAppend`, `Out`.
+  - **On the value:** `Select`, `Chain`, `Ensure`, `Zip`, `ChainAppend`, `Out`.
   - **On the error and side effects:** `Catch`, `Do`, `OnErrorDo`, `Finally`.
   - **Leaving the chain:** `Match`, `TryGetValue`, `GetValueOrDefault`.
   - **Query syntax** works too.
@@ -289,64 +277,64 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
 
 The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) explain every concern with several examples. The [reference](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/reference.md) lists every type and operator on one page.
 
-| Area                  | Page                                                                                                                      | What you learn                                                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Getting started       | [Introduction](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/README.md)                         | What the library is and which package to use                                                                                |
-|                       | [Installation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/installation.md)                   | Requirements, packages, namespaces, the analyzer, CS8509 as an error                                                        |
-|                       | [Quick start](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/quick-start.md)                     | A 10-minute walkthrough from `return` to an HTTP endpoint                                                                   |
-|                       | [Limitations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/limitations.md)                     | What the library cannot do                                                                                                  |
-| Result                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/README.md)                                      | `Result` and `Result<T>` in short                                                                                           |
-|                       | [Core concepts](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/core-concepts.md)                          | The two states, creating results, members, matching, deconstruction, `Check()`                                              |
-|                       | [Operations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/operations.md)                                | `Select`, `Chain`, `Ensure`, `Zip`, `CombineAll`, `BindAppend`, `Do`, `Out`, `Finally`, `Unwrap`, `Match` and more         |
-|                       | [Error handling](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/error-handling.md)                        | `Catch`, `OnErrorDo`, `Try`, `Retry`, and what still throws                                                                 |
-|                       | [Collections](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/collections.md)                              | `Combine`, `CombineAll`, `Partition`, `Values`, `Errors`                                                                    |
-|                       | [Patterns](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/patterns.md)                                    | Pipelines, query syntax, using earlier values, early returns, service layers                                                |
-| Option                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/README.md)                                      | `Option<T>` in short                                                                                                        |
-|                       | [Core concepts](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/core-concepts.md)                          | Creating options, members, matching, why `default` means no value                                                           |
-|                       | [Operations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/operations.md)                                | `Select`, `Chain`, `Where`, `Or`, `OnNoneDo`, `Match` and more                                                              |
-|                       | [Collections](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/collections.md)                              | `FirstOrNone`, `SingleOrNone`, `ElementAtOrNone`, `GetValueOrNone`, `Combine`                                               |
-|                       | [Conversions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/conversions.md)                              | `ToOption`, `ToNullable`, `ToResult`, `Transpose`                                                                           |
-|                       | [Patterns](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/patterns.md)                                    | Replacing `null`, fallbacks, optional settings and DTO fields                                                               |
-| Async                 | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/README.md)                                       | How `Task` pipelines behave                                                                                                 |
-|                       | [Task pipelines](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/task-pipelines.md)                         | `Task` overloads, `...Await` operators, async query syntax                                                                  |
-|                       | [Concurrency and resilience](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/concurrency-and-resilience.md) | `WhenAll`, `Retry`, `RetryAsync`, `Timeout`                                                                                 |
-|                       | [Streams](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/streams.md)                                       | `IAsyncEnumerable` of results and options                                                                                   |
-| Validation            | [Validation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/validation/README.md)                                | `Validate`, `CombineAll`, the rule catalogue, and validation errors over HTTP                                               |
-| Errors                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/README.md)                                      | Choosing between exceptions, custom types and errors as data                                                                |
-|                       | [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md)              | `[FluentResult<TError>]`: your error type, every operator, a closed set of errors                                           |
-|                       | [Errors as data](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/errors-as-data.md)                        | `Result<T, TError>` with a union of error records                                                                           |
-| Unions                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/README.md)                                      | Helpers for unions in short                                                                                                 |
-|                       | [Your own unions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/your-own-unions.md)                      | `Is`, `As`, and the JSON converter for your unions                                                                          |
-|                       | [Loadable](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/loadable.md)                                    | `Loadable<T>` for asynchronously loaded UI state                                                                            |
-|                       | [Modeling](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/modeling.md)                                    | State machines and event sourcing with unions                                                                               |
-| Serialization         | [Serialization](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/serialization/README.md)                          | `System.Text.Json` for options, results and your unions                                                                     |
-| ASP.NET Core          | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/README.md)                                  | The `Fluent.Unions.AspNetCore` package in short                                                                             |
-|                       | [HTTP results](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/http-results.md)                        | `ToHttpResult` for results, options and errors as data                                                                      |
-|                       | [Endpoint filter](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/endpoint-filter.md)                  | Returning results straight from handlers with `WithResultMapping`                                                           |
-|                       | [Error mapping](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/error-mapping.md)                      | Status codes, ProblemDetails, and what is exposed                                                                           |
-| Entity Framework Core | [Entity Framework Core](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/entity-framework-core/README.md)          | Storing options with nullable backing fields                                                                                |
-| FluentValidation      | [FluentValidation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/fluent-validation/README.md)                   | `ValidateToResult` and `Validate(validator)` with every failure collected                                                   |
-| Polly                 | [Polly](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/polly/README.md)                                          | `HandleError`, `ExecuteResultAsync` and `ToResult` for resilience pipelines                                                 |
-| OpenAPI               | [OpenAPI](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/README.md)                                      | `AddFluentUnions()` describes `Option<T>` as a nullable `T`                                                                 |
-| AwesomeAssertions     | [AwesomeAssertions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/awesome-assertions/README.md)                 | Assertions for `Result`, `Result<T>`, `Option<T>` and the error inside                                                      |
-| Dapper | [Dapper](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/dapper/README.md) | `OptionHandlers.Register<T>()` maps `Option<T>` to and from database `NULL` |
-| Refit | [Refit](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/refit/README.md) | Refit API responses as `Result`, `Result<T>` and `Result<Option<T>>` |
-| FluentAssertions | [FluentAssertions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/fluent-assertions/README.md) | Assertions for `Result`, `Result<T>`, `Option<T>` and the error inside, for FluentAssertions 8 |
-| Serilog | [Serilog](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/serilog/README.md) | `.Destructure.WithFluentUnions()` logs results, options and loadables as structured values |
-| Newtonsoft.Json | [Newtonsoft.Json](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/newtonsoft-json/README.md) | Option, union and result serialization for Newtonsoft.Json |
-| Mediator and MediatR | [Mediator and MediatR](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mediator/README.md) | Behaviors that return a failed result for an exception or an invalid request |
-| MongoDB | [MongoDB](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mongodb/README.md) | `FluentUnionsBson.Register()` stores `Option<T>` as a value or BSON null |
-| Swashbuckle | [Swashbuckle](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/swashbuckle.md) | `options.AddFluentUnions()` describes `Option<T>` as a nullable `T` in Swashbuckle documents |
-| NSwag | [NSwag](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/nswag.md) | `settings.AddFluentUnions()` describes `Option<T>` as a nullable `T` in NSwag documents |
-| Testing | [Testing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/testing/README.md) | Assertions for Shouldly, TUnit, NUnit and xUnit v3 |
-| Mapping | [Mapping](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mapping/README.md) | Map `Option<T>` with Mapster and AutoMapper |
-| HotChocolate | [HotChocolate](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/hotchocolate/README.md) | Return `Result<T>` and `Option<T>` from GraphQL resolvers |
-| MessagePack | [MessagePack](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/messagepack/README.md) | MessagePack formatter and resolver for `Option<T>`; results refuse to serialize |
-| Orleans | [Orleans](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/orleans/README.md) | Orleans surrogate for `Option<T>` in grain calls and state; results refuse to serialize |
-| gRPC | [gRPC](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/grpc/README.md) | `ToResult()` on gRPC calls and a server interceptor that maps errors to status codes |
-| Verify | [Verify](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/verify/README.md) | Readable Verify snapshots of `Result`, `Option` and `Loadable` |
-| Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                                     |
-| Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013` and the generator's `FLU0101` to `FLU0103`, with code fixes                                     |
+| Area                  | Page                                                                                                                      | What you learn                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Getting started       | [Introduction](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/README.md)                         | What the library is and which package to use                                                                       |
+|                       | [Installation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/installation.md)                   | Requirements, packages, namespaces, the analyzer, CS8509 as an error                                               |
+|                       | [Quick start](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/quick-start.md)                     | A 10-minute walkthrough from `return` to an HTTP endpoint                                                          |
+|                       | [Limitations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/limitations.md)                     | What the library cannot do                                                                                         |
+| Result                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/README.md)                                      | `Result` and `Result<T>` in short                                                                                  |
+|                       | [Core concepts](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/core-concepts.md)                          | The two states, creating results, members, matching, deconstruction, `Check()`                                     |
+|                       | [Operations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/operations.md)                                | `Select`, `Chain`, `Ensure`, `Zip`, `CombineAll`, `ChainAppend`, `Do`, `Out`, `Finally`, `Unwrap`, `Match` and more |
+|                       | [Error handling](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/error-handling.md)                        | `Catch`, `OnErrorDo`, `Try`, `Retry`, and what still throws                                                        |
+|                       | [Collections](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/collections.md)                              | `Combine`, `CombineAll`, `Partition`, `Values`, `Errors`                                                           |
+|                       | [Patterns](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/patterns.md)                                    | Pipelines, query syntax, using earlier values, early returns, service layers                                       |
+| Option                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/README.md)                                      | `Option<T>` in short                                                                                               |
+|                       | [Core concepts](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/core-concepts.md)                          | Creating options, members, matching, why `default` means no value                                                  |
+|                       | [Operations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/operations.md)                                | `Select`, `Chain`, `Where`, `Or`, `OnNoneDo`, `Match` and more                                                     |
+|                       | [Collections](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/collections.md)                              | `FirstOrNone`, `SingleOrNone`, `ElementAtOrNone`, `GetValueOrNone`, `Combine`                                      |
+|                       | [Conversions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/conversions.md)                              | `ToOption`, `ToNullable`, `ToResult`, `Transpose`                                                                  |
+|                       | [Patterns](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/patterns.md)                                    | Replacing `null`, fallbacks, optional settings and DTO fields                                                      |
+| Async                 | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/README.md)                                       | How `Task` pipelines behave                                                                                        |
+|                       | [Task pipelines](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/task-pipelines.md)                         | `Task` overloads, `...Await` operators, async query syntax                                                         |
+|                       | [Concurrency and resilience](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/concurrency-and-resilience.md) | `WhenAll`, `Retry`, `RetryAsync`, `Timeout`                                                                        |
+|                       | [Streams](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/streams.md)                                       | `IAsyncEnumerable` of results and options                                                                          |
+| Validation            | [Validation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/validation/README.md)                                | `Validate`, `CombineAll`, the rule catalogue, and validation errors over HTTP                                      |
+| Errors                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/README.md)                                      | Choosing between exceptions, custom types and errors as data                                                       |
+|                       | [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md)              | `[FluentResult<TError>]`: your error type, every operator, a closed set of errors                                  |
+|                       | [Errors as data](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/errors-as-data.md)                        | A `[FluentResult]` type whose error is a union of error records                                                    |
+| Unions                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/README.md)                                      | Helpers for unions in short                                                                                        |
+|                       | [Your own unions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/your-own-unions.md)                      | `Is`, `As`, and the JSON converter for your unions                                                                 |
+|                       | [Loadable](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/loadable.md)                                    | `Loadable<T>` for asynchronously loaded UI state                                                                   |
+|                       | [Modeling](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/modeling.md)                                    | State machines and event sourcing with unions                                                                      |
+| Serialization         | [Serialization](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/serialization/README.md)                          | `System.Text.Json` for options, results and your unions                                                            |
+| ASP.NET Core          | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/README.md)                                  | The `Fluent.Unions.AspNetCore` package in short                                                                    |
+|                       | [HTTP results](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/http-results.md)                        | `ToHttpResult` for results, options and errors as data                                                             |
+|                       | [Endpoint filter](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/endpoint-filter.md)                  | Returning results straight from handlers with `WithResultMapping`                                                  |
+|                       | [Error mapping](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/aspnetcore/error-mapping.md)                      | Status codes, ProblemDetails, and what is exposed                                                                  |
+| Entity Framework Core | [Entity Framework Core](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/entity-framework-core/README.md)          | Storing options with nullable backing fields                                                                       |
+| FluentValidation      | [FluentValidation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/fluent-validation/README.md)                   | `ValidateToResult` and `Validate(validator)` with every failure collected                                          |
+| Polly                 | [Polly](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/polly/README.md)                                          | `HandleError`, `ExecuteResultAsync` and `ToResult` for resilience pipelines                                        |
+| OpenAPI               | [OpenAPI](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/README.md)                                      | `AddFluentUnions()` describes `Option<T>` as a nullable `T`                                                        |
+| AwesomeAssertions     | [AwesomeAssertions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/awesome-assertions/README.md)                 | Assertions for `Result`, `Result<T>`, `Option<T>` and the error inside                                             |
+| Dapper                | [Dapper](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/dapper/README.md)                                        | `FluentUnionsDapper.Register<T>()` maps `Option<T>` to and from database `NULL`                                    |
+| Refit                 | [Refit](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/refit/README.md)                                          | Refit API responses as `Result`, `Result<T>` and `Result<Option<T>>`                                               |
+| FluentAssertions      | [FluentAssertions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/fluent-assertions/README.md)                   | Assertions for `Result`, `Result<T>`, `Option<T>` and the error inside, for FluentAssertions 8                     |
+| Serilog               | [Serilog](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/serilog/README.md)                                      | `.Destructure.WithFluentUnions()` logs results, options and loadables as structured values                         |
+| Newtonsoft.Json       | [Newtonsoft.Json](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/newtonsoft-json/README.md)                      | Option, union and result serialization for Newtonsoft.Json                                                         |
+| Mediator and MediatR  | [Mediator and MediatR](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mediator/README.md)                        | Behaviors that return a failed result for an exception or an invalid request                                       |
+| MongoDB               | [MongoDB](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mongodb/README.md)                                      | `FluentUnionsBson.Register()` stores `Option<T>` as a value or BSON null                                           |
+| Swashbuckle           | [Swashbuckle](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/swashbuckle.md)                             | `options.AddFluentUnions()` describes `Option<T>` as a nullable `T` in Swashbuckle documents                       |
+| NSwag                 | [NSwag](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/openapi/nswag.md)                                         | `settings.AddFluentUnions()` describes `Option<T>` as a nullable `T` in NSwag documents                            |
+| Testing               | [Testing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/testing/README.md)                                      | Assertions for Shouldly, TUnit, NUnit and xUnit v3                                                                 |
+| Mapping               | [Mapping](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/mapping/README.md)                                      | Map `Option<T>` with Mapster and AutoMapper                                                                        |
+| HotChocolate          | [HotChocolate](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/hotchocolate/README.md)                            | Return `Result<T>` and `Option<T>` from GraphQL resolvers                                                          |
+| MessagePack           | [MessagePack](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/messagepack/README.md)                              | MessagePack formatter and resolver for `Option<T>`; results refuse to serialize                                    |
+| Orleans               | [Orleans](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/orleans/README.md)                                      | Orleans surrogate for `Option<T>` in grain calls and state; results refuse to serialize                            |
+| gRPC                  | [gRPC](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/grpc/README.md)                                            | `ToResult()` on gRPC calls and a server interceptor that maps errors to status codes                               |
+| Verify                | [Verify](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/verify/README.md)                                        | Readable Verify snapshots of `Result`, `Option` and `Loadable`                                                     |
+| Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                            |
+| Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013` and the generator's `FLU0101` to `FLU0103`, with code fixes                           |
 
 ## Build and test
 
@@ -355,44 +343,44 @@ dotnet build Fluent.Unions.slnx
 dotnet test Fluent.Unions.slnx
 ```
 
-| Folder                                | Contents                                                                                             |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `src/Fluent.Unions`                   | The `Fluent.Unions` package                                                                          |
-| `src/Fluent.Unions.Analyzers`         | The analyzers packed into `Fluent.Unions`                                                            |
-| `src/Fluent.Unions.Analyzers.CodeFixes` | The code fixes for the analyzers, packed into `Fluent.Unions`                                      |
-| `src/Fluent.Unions.Generators` | The source generator behind `[FluentResult]`, packed into `Fluent.Unions` |
-| `src/Fluent.Unions.AspNetCore`        | The `Fluent.Unions.AspNetCore` package                                                               |
-| `src/Fluent.Unions.FluentValidation`  | The `Fluent.Unions.FluentValidation` package                                                         |
-| `src/Fluent.Unions.Polly`             | The `Fluent.Unions.Polly` package                                                                    |
-| `src/Fluent.Unions.OpenApi`           | The `Fluent.Unions.OpenApi` package                                                                  |
-| `src/Fluent.Unions.AwesomeAssertions` | The `Fluent.Unions.AwesomeAssertions` package                                                        |
-| `src/Fluent.Unions.Dapper` | The `Fluent.Unions.Dapper` package |
-| `src/Fluent.Unions.Refit` | The `Fluent.Unions.Refit` package |
-| `src/Fluent.Unions.FluentAssertions` | The `Fluent.Unions.FluentAssertions` package |
-| `src/Fluent.Unions.Serilog` | The `Fluent.Unions.Serilog` package |
-| `src/Fluent.Unions.NewtonsoftJson` | The `Fluent.Unions.NewtonsoftJson` package |
-| `src/Fluent.Unions.Mediator` | The `Fluent.Unions.Mediator` package |
-| `src/Fluent.Unions.MediatR` | The `Fluent.Unions.MediatR` package |
-| `src/Fluent.Unions.MongoDB` | The `Fluent.Unions.MongoDB` package |
-| `src/Fluent.Unions.Swashbuckle` | The `Fluent.Unions.Swashbuckle` package |
-| `src/Fluent.Unions.NSwag` | The `Fluent.Unions.NSwag` package |
-| `src/Fluent.Unions.Shouldly` | The `Fluent.Unions.Shouldly` package |
-| `src/Fluent.Unions.TUnit` | The `Fluent.Unions.TUnit` package |
-| `src/Fluent.Unions.NUnit` | The `Fluent.Unions.NUnit` package |
-| `src/Fluent.Unions.Xunit` | The `Fluent.Unions.Xunit` package |
-| `src/Fluent.Unions.Mapster` | The `Fluent.Unions.Mapster` package |
-| `src/Fluent.Unions.AutoMapper` | The `Fluent.Unions.AutoMapper` package |
-| `src/Fluent.Unions.HotChocolate` | The `Fluent.Unions.HotChocolate` package |
-| `src/Fluent.Unions.MessagePack` | The `Fluent.Unions.MessagePack` package |
-| `src/Fluent.Unions.Orleans` | The `Fluent.Unions.Orleans` package |
-| `src/Fluent.Unions.Grpc` | The `Fluent.Unions.Grpc` package |
-| `src/Fluent.Unions.Verify` | The `Fluent.Unions.Verify` package |
-| `test/Fluent.Unions.Scenarios.Tests` | Real-world scenarios that show the core library end to end |
-| `test/Fluent.Unions.Api.Tests` | Snapshots of every package's public API |
-| `test/Fluent.Unions.Generators.Tests` | Tests for the generator: diagnostics, caching, and one forwarder per core operator |
-| `bench/Fluent.Unions.Benchmarks` | BenchmarkDotNet benchmarks; run with `dotnet run -c Release -- --filter "*" --inProcess` |
-| `test/`                               | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
-| `docs/`                               | The documentation                                                                                    |
-| `assets/`                             | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |
+| Folder                                  | Contents                                                                                             |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `src/Fluent.Unions`                     | The `Fluent.Unions` package                                                                          |
+| `src/Fluent.Unions.Analyzers`           | The analyzers packed into `Fluent.Unions`                                                            |
+| `src/Fluent.Unions.Analyzers.CodeFixes` | The code fixes for the analyzers, packed into `Fluent.Unions`                                        |
+| `src/Fluent.Unions.Generators`          | The source generator behind `[FluentResult]`, packed into `Fluent.Unions`                            |
+| `src/Fluent.Unions.AspNetCore`          | The `Fluent.Unions.AspNetCore` package                                                               |
+| `src/Fluent.Unions.FluentValidation`    | The `Fluent.Unions.FluentValidation` package                                                         |
+| `src/Fluent.Unions.Polly`               | The `Fluent.Unions.Polly` package                                                                    |
+| `src/Fluent.Unions.OpenApi`             | The `Fluent.Unions.OpenApi` package                                                                  |
+| `src/Fluent.Unions.AwesomeAssertions`   | The `Fluent.Unions.AwesomeAssertions` package                                                        |
+| `src/Fluent.Unions.Dapper`              | The `Fluent.Unions.Dapper` package                                                                   |
+| `src/Fluent.Unions.Refit`               | The `Fluent.Unions.Refit` package                                                                    |
+| `src/Fluent.Unions.FluentAssertions`    | The `Fluent.Unions.FluentAssertions` package                                                         |
+| `src/Fluent.Unions.Serilog`             | The `Fluent.Unions.Serilog` package                                                                  |
+| `src/Fluent.Unions.NewtonsoftJson`      | The `Fluent.Unions.NewtonsoftJson` package                                                           |
+| `src/Fluent.Unions.Mediator`            | The `Fluent.Unions.Mediator` package                                                                 |
+| `src/Fluent.Unions.MediatR`             | The `Fluent.Unions.MediatR` package                                                                  |
+| `src/Fluent.Unions.MongoDB`             | The `Fluent.Unions.MongoDB` package                                                                  |
+| `src/Fluent.Unions.Swashbuckle`         | The `Fluent.Unions.Swashbuckle` package                                                              |
+| `src/Fluent.Unions.NSwag`               | The `Fluent.Unions.NSwag` package                                                                    |
+| `src/Fluent.Unions.Shouldly`            | The `Fluent.Unions.Shouldly` package                                                                 |
+| `src/Fluent.Unions.TUnit`               | The `Fluent.Unions.TUnit` package                                                                    |
+| `src/Fluent.Unions.NUnit`               | The `Fluent.Unions.NUnit` package                                                                    |
+| `src/Fluent.Unions.Xunit`               | The `Fluent.Unions.Xunit` package                                                                    |
+| `src/Fluent.Unions.Mapster`             | The `Fluent.Unions.Mapster` package                                                                  |
+| `src/Fluent.Unions.AutoMapper`          | The `Fluent.Unions.AutoMapper` package                                                               |
+| `src/Fluent.Unions.HotChocolate`        | The `Fluent.Unions.HotChocolate` package                                                             |
+| `src/Fluent.Unions.MessagePack`         | The `Fluent.Unions.MessagePack` package                                                              |
+| `src/Fluent.Unions.Orleans`             | The `Fluent.Unions.Orleans` package                                                                  |
+| `src/Fluent.Unions.Grpc`                | The `Fluent.Unions.Grpc` package                                                                     |
+| `src/Fluent.Unions.Verify`              | The `Fluent.Unions.Verify` package                                                                   |
+| `test/Fluent.Unions.Scenarios.Tests`    | Real-world scenarios that show the core library end to end                                           |
+| `test/Fluent.Unions.Api.Tests`          | Snapshots of every package's public API                                                              |
+| `test/Fluent.Unions.Generators.Tests`   | Tests for the generator: diagnostics, caching, and one forwarder per core operator                   |
+| `bench/Fluent.Unions.Benchmarks`        | BenchmarkDotNet benchmarks; run with `dotnet run -c Release -- --filter "*" --inProcess`             |
+| `test/`                                 | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
+| `docs/`                                 | The documentation                                                                                    |
+| `assets/`                               | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |
 
 Shared package settings live in `src/Directory.Build.props`. Each package's NuGet readme is the `README.md` in its project folder, so this file is shown on GitHub only. The license is in `LICENSE`.

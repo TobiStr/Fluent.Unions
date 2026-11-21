@@ -11,7 +11,6 @@ public class SerializedResultAnalyzerTests
 
     [TestCase("string M(Result<int> r) => JsonSerializer.Serialize(r);", "Result<int>")]
     [TestCase("string M(Result r) => JsonSerializer.Serialize(r);", "Result")]
-    [TestCase("string M(Result<int, MyError> r) => JsonSerializer.Serialize(r);", "Result<int, MyError>")]
     [TestCase("string M(Result<int> r) => JsonSerializer.Serialize<Result<int>>(r);", "Result<int>")]
     [TestCase("string M(Result<int> r) => JsonSerializer.Serialize(r, new JsonSerializerOptions());", "Result<int>")]
     [TestCase("string M(Result<int> r) => JsonSerializer.Serialize((object)r);", "Result<int>")]

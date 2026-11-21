@@ -155,7 +155,7 @@ The `GetValue()` in the repository sits inside `TryAsync`, so a failed `ToResult
 - **Absence without cause.** Use `Option<T>`. A lookup that finds nothing is not a failure.
 - **Operations that cannot fail.** Return the value. A result there only adds states for callers to handle.
 - **Errors that need no handling.** When every caller would just rethrow, let the exception propagate.
-- **Errors with structure.** If callers must branch on many specific cases, consider errors as data with `Result<T, TError>`, so the compiler checks every case. For a closed set of errors, prefer your own result type with a union error. See [Errors as data](../errors/errors-as-data.md).
+- **Errors with structure.** If callers must branch on many specific cases, consider errors as data: your own result type with a union error, so the compiler checks every case. See [Errors as data](../errors/errors-as-data.md).
 
 ## Pitfalls
 

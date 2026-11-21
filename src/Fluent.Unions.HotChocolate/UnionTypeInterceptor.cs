@@ -9,8 +9,6 @@ namespace Fluent.Unions.HotChocolate;
 
 internal sealed class UnionTypeInterceptor : TypeInterceptor
 {
-    private const string MiddlewareKey = "Fluent.Unions.HotChocolate";
-
     public override void OnBeforeRegisterDependencies(
         ITypeDiscoveryContext discoveryContext,
         TypeSystemConfiguration configuration)
@@ -28,14 +26,33 @@ internal sealed class UnionTypeInterceptor : TypeInterceptor
 
     private static void Rewrite(ITypeInspector inspector, ObjectFieldConfiguration field)
     {
-        if (field.Type is not ExtendedTypeReference reference || Classify(reference.Type) is not { } kind)
+        if (field.Type is not ExtendedTypeReference reference)
         {
             return;
         }
 
-        var valueType = inspector.ChangeNullability(reference.Type.TypeArguments![0], kind.IsNullable);
-        field.Type = reference.WithType(valueType);
-        field.MiddlewareConfigurations.Add(new FieldMiddlewareConfiguration(kind.Middleware, false, MiddlewareKey));
+        var type = reference.Type;
+        var isNullable = false;
+        var middlewares = new List<Kind>();
+
+        while (Classify(type) is { } kind)
+        {
+            type = inspector.ChangeNullability(type.TypeArguments![0], kind.IsNullable);
+            isNullable |= kind.IsNullable;
+            middlewares.Insert(0, kind);
+        }
+
+        if (middlewares.Count == 0)
+        {
+            return;
+        }
+
+        field.Type = reference.WithType(isNullable ? inspector.ChangeNullability(type, true) : type);
+
+        foreach (var middleware in middlewares)
+        {
+            field.MiddlewareConfigurations.Add(new FieldMiddlewareConfiguration(middleware.Middleware, false, middleware.Key));
+        }
     }
 
     private static Kind? Classify(IExtendedType type)
@@ -47,11 +64,11 @@ internal sealed class UnionTypeInterceptor : TypeInterceptor
 
         if (ResultTypes.ValueType(type.Type) is not null)
         {
-            return new Kind(false, UnionFieldMiddleware.UnwrapResult);
+            return new Kind(false, UnionFieldMiddleware.UnwrapResult, "Fluent.Unions.HotChocolate.Result");
         }
 
-        return type.Type.GetGenericTypeDefinition() == typeof(Option<>) ? new Kind(true, UnionFieldMiddleware.UnwrapOption) : null;
+        return type.Type.GetGenericTypeDefinition() == typeof(Option<>) ? new Kind(true, UnionFieldMiddleware.UnwrapOption, "Fluent.Unions.HotChocolate.Option") : null;
     }
 
-    private readonly record struct Kind(bool IsNullable, FieldMiddleware Middleware);
+    private readonly record struct Kind(bool IsNullable, FieldMiddleware Middleware, string Key);
 }

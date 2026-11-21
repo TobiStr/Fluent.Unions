@@ -28,11 +28,6 @@ public sealed class ResultHttpOptions
         return this;
     }
 
-    /// <summary>
-    /// Returns the status code for <paramref name="error"/>.
-    /// </summary>
-    public int GetStatusCode(Exception error) => Resolve(error).StatusCode;
-
     internal ErrorMapping Resolve(Exception error)
     {
         ArgumentNullException.ThrowIfNull(error);

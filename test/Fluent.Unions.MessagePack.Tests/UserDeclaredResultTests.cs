@@ -7,7 +7,7 @@ namespace MessagePackDomain.Tests;
 
 public class UserDeclaredResultTests
 {
-    private static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Standard.WithUnions();
+    private static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Standard.WithFluentUnions();
     private static readonly byte[] Nil = [MessagePackCode.Nil];
 
     [Test]

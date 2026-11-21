@@ -35,27 +35,32 @@ public sealed class ResultEndpointFilter : IEndpointFilter
         _ => returned
     };
 
-    private static object FromResult(object returned, ResultShape shape) => shape.Value.GetValue(returned) switch
+    private static object FromResult(object returned, ResultShape shape) => shape.ReadValue(returned) switch
     {
-        null => new ErrorHttpResult(DefaultResult(returned.GetType())),
+        null => ErrorHttpResult.ForEmpty(returned.GetType()),
         Exception error when shape.ErrorType.IsInstanceOfType(error) => new ErrorHttpResult(error),
         { } error when shape.ErrorType.IsInstanceOfType(error) => new ErrorHttpResult(new ResultErrorException(error)),
         Ok when shape.ValueType is null => TypedResults.NoContent(),
         var value => TypedResults.Ok(value)
     };
 
-    private static InvalidOperationException DefaultResult(Type type) =>
-        new($"The endpoint returned a default {type.Name} that holds neither a value nor an error.");
-
     internal static ResultShape? ShapeOf(Type type) => Shapes.GetOrAdd(type, static candidate =>
         ResultTypes.ErrorType(candidate) is { } errorType
             ? new ResultShape(
                 ResultTypes.ValueType(candidate),
                 errorType,
-                typeof(IErrorResult<,>).MakeGenericType(candidate, errorType).GetProperty(nameof(IErrorResult<,>.Value))!)
+                (Func<object, object?>)typeof(ResultEndpointFilter)
+                    .GetMethod(nameof(Read), BindingFlags.NonPublic | BindingFlags.Static)!
+                    .MakeGenericMethod(candidate, errorType)
+                    .CreateDelegate(typeof(Func<object, object?>)))
             : null);
 
-    internal sealed record ResultShape(Type? ValueType, Type ErrorType, PropertyInfo Value);
+    private static object? Read<TSelf, TError>(object result)
+        where TSelf : struct, IErrorResult<TSelf, TError>
+        where TError : notnull =>
+        ((TSelf)result).Value;
+
+    internal sealed record ResultShape(Type? ValueType, Type ErrorType, Func<object, object?> ReadValue);
 
     internal static bool Is(object value, Type genericDefinition) => Is(value.GetType(), genericDefinition);
 
@@ -74,7 +79,8 @@ public static class ResultEndpointFilterExtensions
     /// <summary>
     /// Lets the endpoints return results and options directly. Works on a single endpoint or a route group.
     /// The OpenAPI response types are taken from the handler's return type: the value type for 200, or 204 for
-    /// <see cref="Result"/>, 404 for <see cref="Option{T}"/>, and ProblemDetails for errors.
+    /// <see cref="Result"/>, 404 for <see cref="Option{T}"/>, and ProblemDetails for errors. Errors are described as
+    /// 400 and 500 only. Add <c>.Produces</c> for the other status codes you map.
     /// </summary>
     public static TBuilder WithResultMapping<TBuilder>(this TBuilder builder) where TBuilder : IEndpointConventionBuilder
     {

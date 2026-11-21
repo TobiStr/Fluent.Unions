@@ -30,7 +30,7 @@ public static class IsResult
     }
 
     /// <summary>
-    /// Matches an error result whose exception satisfies <paramref name="expression"/>.
+    /// Matches an error result whose error satisfies <paramref name="expression"/>. For an error union, the constraint applies to the case the union holds.
     /// </summary>
     public static UnionConstraint ErrorWith(IResolveConstraint expression)
     {
@@ -38,15 +38,14 @@ public static class IsResult
 
         var constraint = expression.Resolve();
 
-        return new($"an error result with exception {constraint.Description}", state => state.Kind == UnionKind.Error && constraint.ApplyTo(state.Payload).IsSuccess);
+        return new($"an error result with exception {constraint.Description}", state => state.ErrorCase is { } error && constraint.ApplyTo(error).IsSuccess);
     }
 
     /// <summary>
-    /// Matches an error result whose exception is a <typeparamref name="TException"/> or a derived type.
+    /// Matches an error result whose error is a <typeparamref name="TError"/> or a derived type, also when it is a case of an error union.
     /// </summary>
-    public static UnionConstraint ErrorOfType<TException>()
-        where TException : Exception
+    public static UnionConstraint ErrorOfType<TError>()
     {
-        return new($"an error result of type {typeof(TException).Name}", state => state is { Kind: UnionKind.Error, Payload: TException });
+        return new($"an error result of type {typeof(TError).Name}", state => state is { Kind: UnionKind.Error } && (state.Payload is TError || state.ErrorCase is TError));
     }
 }

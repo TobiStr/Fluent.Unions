@@ -4,7 +4,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.Verify.svg)](https://www.nuget.org/packages/Fluent.Unions.Verify) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.Verify.svg)](https://www.nuget.org/packages/Fluent.Unions.Verify) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2)](https://tobistr.github.io/Fluent.Unions/verify/)
 
-Makes [Verify](https://github.com/VerifyTests/Verify) snapshots of `Result`, `Result<T>`, `Result<T, TError>`, `Option<T>` and `Loadable<T>` readable: the case and its data, with no stack trace. It builds on Fluent.Unions and Verify.
+Makes [Verify](https://github.com/VerifyTests/Verify) snapshots of `Result`, `Result<T>`, your own result types, `Option<T>` and `Loadable<T>` readable: the case and its data, with no stack trace. It builds on Fluent.Unions and Verify.
 
 ## Installation
 
@@ -46,7 +46,7 @@ await Verify(Option.Some(7));
 }
 ```
 
-An error is written as `{ Error: { Type, Message } }`, an `Option<T>` as `None` or `{ Some: value }`, and a `Loadable<T>` as `NotLoaded`, `Loading`, `{ Value: value }` or `{ Error: ... }`. A `Result<T, TError>` writes its error as data. `Initialize` also tells Verify to leave stack traces out of exceptions.
+An error is written as `{ Error: { Type, Message } }`, an `Option<T>` as `None` or `{ Some: value }`, and a `Loadable<T>` as `NotLoaded`, `Loading`, `{ Value: value }` or `{ Error: ... }`. An error of your own result type is written as data. `Initialize` also tells Verify to leave stack traces out of exceptions.
 
 ## License of Verify
 

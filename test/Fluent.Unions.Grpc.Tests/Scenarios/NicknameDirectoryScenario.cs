@@ -39,10 +39,12 @@ internal sealed class NicknameClient(Lookup.LookupClient client)
             .Catch<Option<string>, RpcException>(error => error.StatusCode switch
             {
                 StatusCode.NotFound => Result<Option<string>>.Ok(Option.None),
-                StatusCode.InvalidArgument => new ValidationError(error.Status.Detail),
-                StatusCode.FailedPrecondition => new NameReservedException(error.Status.Detail),
+                StatusCode.InvalidArgument => new ValidationError(DownstreamDetail(error)),
+                StatusCode.FailedPrecondition => new NameReservedException(DownstreamDetail(error)),
                 _ => error
             });
+
+    private static string DownstreamDetail(RpcException error) => ((RpcException)error.Status.DebugException!).Status.Detail;
 }
 
 /// <summary>
@@ -61,7 +63,7 @@ public class NicknameDirectoryScenario
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Services.AddGrpc(grpc => grpc.Interceptors.Add<ResultServerInterceptor>());
-        builder.Services.AddSingleton(new ResultGrpcOptions().Map<NameReservedException>(StatusCode.FailedPrecondition, exposeMessage: true));
+        builder.Services.Configure<ResultGrpcOptions>(options => options.Map<NameReservedException>(StatusCode.FailedPrecondition, exposeMessage: true));
         _app = builder.Build();
         _app.MapGrpcService<NicknameService>();
         await _app.StartAsync();
@@ -101,7 +103,7 @@ public class NicknameDirectoryScenario
 
     [Test]
     public async Task ValidationFailureOnTheServer_ArrivesAsAValidationErrorWithItsMessage() =>
-        Assert.That(await Describe("al"), Is.EqualTo("invalid: name must be at least 3 characters long."));
+        Assert.That(await Describe("al"), Is.EqualTo("invalid: name: name must be at least 3 characters long."));
 
     [Test]
     public async Task DomainError_IsMappedByTheInterceptorAndRebuiltByTheClient() =>

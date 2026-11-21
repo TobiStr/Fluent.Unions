@@ -45,7 +45,6 @@ public class NestedSelectAnalyzerTests
     [TestCase("void M(Result<int> r) { var s = r.SelectAwait(async x => await LoadAsync()); }")]
     [TestCase("void M(Result<int> r) { var s = r.ChainAwait(async x => Result.From(await LoadAsync())); }")]
     [TestCase("void M(Loadable<int> l) { var s = l.Select(x => l); }")]
-    [TestCase("void M(Result<int, OrderError> r) { var s = r.Select(x => Result.From(x)); }")]
     [TestCase("void M(IEnumerable<int> e) { var s = e.Select(x => Result.From(x)); }")]
     public async Task IgnoresFlatSelectAndMixedKinds(string member)
     {

@@ -38,7 +38,7 @@ public class Query
 }
 ```
 
-An error in a result is thrown from the field, so it reaches error filters and mutation conventions as the original exception.
+An error in a result is thrown from the field, so it reaches error filters and mutation conventions as the original exception. An error that is not an exception, such as a record of your own result type, is thrown inside a `ResultErrorException`. A `Result<Option<T>>` field is a nullable `T`.
 
 ```csharp
 public class Mutation
@@ -48,7 +48,7 @@ public class Mutation
 }
 ```
 
-A `ValidationErrors` error becomes one GraphQL error per `ValidationError`, with the member in `extensions.member`.
+A `ValidationErrors` error becomes one GraphQL error per `ValidationError`, and a single `ValidationError` becomes one GraphQL error, with the member in `extensions.member`.
 
 ## Documentation
 

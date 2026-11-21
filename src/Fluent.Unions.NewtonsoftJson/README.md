@@ -6,6 +6,8 @@
 
 Newtonsoft.Json support for Fluent.Unions, for projects that do not use `System.Text.Json`. It does what the core does for `System.Text.Json`: `Option<T>` is written as its value or `null`, your own unions keep their case name, and results refuse to serialize. It depends on Newtonsoft.Json (MIT license).
 
+> **Warning:** without `AddFluentUnions()`, Newtonsoft.Json writes a `Result` as a plain object with the full exception, including its class name, message and `StackTraceString`. This also happens in ASP.NET Core with `AddNewtonsoftJson()`. Register `AddFluentUnions()` on every `JsonSerializerSettings` and convert results before returning them.
+
 ## Installation
 
 ```

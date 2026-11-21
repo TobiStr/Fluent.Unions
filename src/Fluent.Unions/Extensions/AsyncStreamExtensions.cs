@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Fluent.Unions.Core;
 
 namespace Fluent.Unions;
 
@@ -22,7 +23,7 @@ public static class AsyncStreamExtensions
         {
             await foreach (var result in results.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
-                if (result.Case is not Exception && result.Case is T value)
+                if (result.TryGetValue(out var value))
                     yield return value;
             }
         }
@@ -43,7 +44,7 @@ public static class AsyncStreamExtensions
         {
             await foreach (var result in results.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
-                if (result.Case is Exception error)
+                if (result.TryGetError(out var error))
                     yield return error;
             }
         }
@@ -65,14 +66,10 @@ public static class AsyncStreamExtensions
 
             await foreach (var result in results.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
-                switch (result.Case)
-                {
-                    case Exception error:
-                        return error;
-                    case T value:
-                        values.Add(value);
-                        break;
-                }
+                if (!result.TryGetValue(out var value))
+                    return Flow.ErrorOf<Result<T>, T, Exception>(result);
+
+                values.Add(value);
             }
 
             return Result<IReadOnlyList<T>>.Of(values);

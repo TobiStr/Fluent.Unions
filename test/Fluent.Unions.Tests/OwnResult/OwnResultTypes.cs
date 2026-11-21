@@ -31,3 +31,9 @@ public union CheckoutError(NotFoundException, OutOfStockException, Unexpected) :
 
 [FluentResult<CheckoutError>]
 public readonly partial struct Outcome<T>;
+
+[FluentResult<string>]
+public readonly partial struct TextResult<T>
+{
+    public static string FromException(Exception exception) => exception.Message;
+}

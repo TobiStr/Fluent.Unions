@@ -10,7 +10,7 @@ class Fluent.Unions.Grpc.ResultGrpcOptions
   public ResultGrpcOptions()
 
 class Fluent.Unions.Grpc.ResultServerInterceptor : Grpc.Core.Interceptors.Interceptor
-  public ResultServerInterceptor([Fluent.Unions.Grpc.ResultGrpcOptions? options = null])
+  public ResultServerInterceptor([Microsoft.Extensions.Options.IOptions<Fluent.Unions.Grpc.ResultGrpcOptions>? options = null])
   public override System.Threading.Tasks.Task DuplexStreamingServerHandler<TRequest, TResponse>(Grpc.Core.IAsyncStreamReader<TRequest> requestStream, Grpc.Core.IServerStreamWriter<TResponse> responseStream, Grpc.Core.ServerCallContext context, Grpc.Core.DuplexStreamingServerMethod<TRequest, TResponse> continuation) where TRequest : class where TResponse : class
   public override System.Threading.Tasks.Task ServerStreamingServerHandler<TRequest, TResponse>(TRequest request, Grpc.Core.IServerStreamWriter<TResponse> responseStream, Grpc.Core.ServerCallContext context, Grpc.Core.ServerStreamingServerMethod<TRequest, TResponse> continuation) where TRequest : class where TResponse : class
   public override System.Threading.Tasks.Task<TResponse> ClientStreamingServerHandler<TRequest, TResponse>(Grpc.Core.IAsyncStreamReader<TRequest> requestStream, Grpc.Core.ServerCallContext context, Grpc.Core.ClientStreamingServerMethod<TRequest, TResponse> continuation) where TRequest : class where TResponse : class

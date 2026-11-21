@@ -1,6 +1,5 @@
 using MessagePack;
 using MessagePack.Resolvers;
-using Fluent.Unions.Abstractions;
 using Fluent.Unions.MessagePack;
 using NUnit.Framework;
 
@@ -27,14 +26,9 @@ public class Scoreboard
     public Option<string> Title { get; set; }
 }
 
-public readonly record struct AppError(string Message) : IFromException<AppError>
-{
-    public static AppError FromException(Exception exception) => new(exception.Message);
-}
-
 public class UnionsResolverTests
 {
-    private static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Standard.WithUnions();
+    private static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Standard.WithFluentUnions();
     private static readonly byte[] Nil = [MessagePackCode.Nil];
 
     private static T RoundTrip<T>(T value) =>
@@ -166,8 +160,6 @@ public class UnionsResolverTests
             Throws.InstanceOf<MessagePackSerializationException>().With.InnerException.TypeOf<NotSupportedException>());
         Assert.That(() => MessagePackSerializer.Deserialize<Result<int>>(Nil, Options),
             Throws.InstanceOf<MessagePackSerializationException>().With.InnerException.TypeOf<NotSupportedException>());
-        Assert.That(() => MessagePackSerializer.Deserialize<Result<int, AppError>>(Nil, Options),
-            Throws.InstanceOf<MessagePackSerializationException>().With.InnerException.TypeOf<NotSupportedException>());
     }
 
     [Test]
@@ -178,11 +170,11 @@ public class UnionsResolverTests
     }
 
     [Test]
-    public void WithUnions_KeepsTheExistingResolver()
+    public void WithFluentUnions_KeepsTheExistingResolver()
     {
         var options = MessagePackSerializerOptions.Standard
             .WithResolver(ContractlessStandardResolver.Instance)
-            .WithUnions();
+            .WithFluentUnions();
 
         var bytes = MessagePackSerializer.Serialize(new { Name = "Ada", Nickname = (Option<string>)"Countess" }, options);
         var map = MessagePackSerializer.Deserialize<Dictionary<string, string>>(bytes);
@@ -191,6 +183,15 @@ public class UnionsResolverTests
     }
 
     [Test]
-    public void WithUnions_ThrowsForNullOptions() =>
-        Assert.Throws<ArgumentNullException>(() => MessagePackSerializerOptionsExtensions.WithUnions(null!));
+    public void WithFluentUnions_CalledAgain_ReturnsTheSameOptions()
+    {
+        var again = Options.WithFluentUnions();
+
+        Assert.That(again, Is.SameAs(Options));
+        Assert.That(MessagePackSerializer.Deserialize<Option<int>>(MessagePackSerializer.Serialize<Option<int>>(5, again), again).GetValue(), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void WithFluentUnions_ThrowsForNullOptions() =>
+        Assert.Throws<ArgumentNullException>(() => MessagePackSerializerOptionsExtensions.WithFluentUnions(null!));
 }

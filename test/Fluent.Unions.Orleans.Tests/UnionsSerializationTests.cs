@@ -1,4 +1,3 @@
-using Fluent.Unions.Abstractions;
 using Fluent.Unions.Orleans;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -10,12 +9,6 @@ namespace Fluent.Unions.Orleans.Tests;
 [GenerateSerializer]
 public sealed record Customer([property: Id(0)] string Name, [property: Id(1)] Option<string> Nickname);
 
-[GenerateSerializer]
-public readonly record struct AppError([property: Id(0)] string Message) : IFromException<AppError>
-{
-    public static AppError FromException(Exception exception) => new(exception.Message);
-}
-
 [TestFixture]
 public class UnionsSerializationTests
 {
@@ -23,7 +16,7 @@ public class UnionsSerializationTests
 
     [OneTimeSetUp]
     public void SetUp() =>
-        _provider = new ServiceCollection().AddSerializer(builder => builder.AddUnions()).BuildServiceProvider();
+        _provider = new ServiceCollection().AddSerializer(builder => builder.AddFluentUnions()).BuildServiceProvider();
 
     [OneTimeTearDown]
     public void TearDown() => _provider.Dispose();
@@ -115,7 +108,6 @@ public class UnionsSerializationTests
     public void ResultVariants_RefuseToSerialize()
     {
         Assert.Throws<NotSupportedException>(() => _provider.GetRequiredService<Serializer<Result>>().SerializeToArray(Result.Ok));
-        Assert.Throws<NotSupportedException>(() => _provider.GetRequiredService<Serializer<Result<int, AppError>>>().SerializeToArray(1));
     }
 
     [Test]
@@ -127,7 +119,7 @@ public class UnionsSerializationTests
     }
 
     [Test]
-    public void WithoutAddUnions_ResultStillFailsWithoutALeak()
+    public void WithoutAddFluentUnions_ResultStillFailsWithoutALeak()
     {
         using var provider = new ServiceCollection().AddSerializer().BuildServiceProvider();
         Result<int> error = new InvalidOperationException("Secret");
@@ -138,6 +130,30 @@ public class UnionsSerializationTests
     }
 
     [Test]
-    public void AddUnions_ThrowsForNullBuilder() =>
-        Assert.Throws<ArgumentNullException>(() => SerializerBuilderExtensions.AddUnions(null!));
+    public void AddFluentUnions_CalledTwice_RegistersOnce()
+    {
+        var services = new ServiceCollection();
+
+        services.AddSerializer(builder => builder.AddFluentUnions().AddFluentUnions());
+
+        Assert.That(services.Count(service => service.ImplementationType?.Name == "ResultRejectingCodec"), Is.EqualTo(1));
+        using var provider = services.BuildServiceProvider();
+        Assert.Throws<NotSupportedException>(() => provider.GetRequiredService<Serializer<Result<int>>>().SerializeToArray(Result<int>.Ok(1)));
+    }
+
+    [Test]
+    public void Result_DeepCopyFailsWithTheFriendlyException()
+    {
+        Result<int> error = new InvalidOperationException("Secret");
+
+        var exception = Assert.Throws<NotSupportedException>(() => Copy(error))!;
+
+        Assert.That(exception.Message, Does.Not.Contain("Secret"));
+        Assert.Throws<NotSupportedException>(() => Copy(Result<int>.Ok(1)));
+        Assert.Throws<NotSupportedException>(() => Copy(Result.Ok));
+    }
+
+    [Test]
+    public void AddFluentUnions_ThrowsForNullBuilder() =>
+        Assert.Throws<ArgumentNullException>(() => SerializerBuilderExtensions.AddFluentUnions(null!));
 }

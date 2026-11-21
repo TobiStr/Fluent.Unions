@@ -17,7 +17,7 @@ internal sealed class ResultRejectingCodec : IGeneralizedCodec
     public object ReadValue<TInput>(ref Reader<TInput> reader, Field field) =>
         throw NotSupported(field.FieldType ?? typeof(Result));
 
-    private static NotSupportedException NotSupported(Type? type) => new(
+    internal static NotSupportedException NotSupported(Type? type) => new(
         $"{type ?? typeof(Result)} is not serialized, because an error would expose exception details. " +
         "Convert it first, for example with Match, GetValueOrDefault or ToOption.");
 }

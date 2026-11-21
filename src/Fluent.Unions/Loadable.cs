@@ -17,7 +17,7 @@ public readonly record struct Loading;
 /// A <c>default</c> value counts as not loaded.
 /// </summary>
 /// <typeparam name="T">The type of the loaded value.</typeparam>
-public union Loadable<T>(NotLoaded, Loading, T, Exception)
+public union Loadable<T>(NotLoaded, Loading, T, Exception) : IEquatable<Loadable<T>>
 {
     /// <summary>
     /// Indicates whether loading has not started.
@@ -53,6 +53,27 @@ public union Loadable<T>(NotLoaded, Loading, T, Exception)
         value = default;
         return false;
     }
+
+    /// <summary>
+    /// Indicates whether both values are in the same state with equal contents. A <c>default</c> value equals <see cref="NotLoaded"/>.
+    /// </summary>
+    public bool Equals(Loadable<T> other) => IsNotLoaded ? other.IsNotLoaded : Equals(Value, other.Value);
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj) => obj is Loadable<T> other && Equals(other);
+
+    /// <inheritdoc />
+    public override int GetHashCode() => IsNotLoaded ? 0 : Value!.GetHashCode();
+
+    /// <summary>
+    /// Indicates whether both values are in the same state with equal contents.
+    /// </summary>
+    public static bool operator ==(Loadable<T> left, Loadable<T> right) => left.Equals(right);
+
+    /// <summary>
+    /// Indicates whether the values differ.
+    /// </summary>
+    public static bool operator !=(Loadable<T> left, Loadable<T> right) => !left.Equals(right);
 
     /// <inheritdoc />
     public override string ToString() => TryGetValue(out var value) ? value.ToString() ?? "" : "";

@@ -30,4 +30,4 @@ jobs:
         run: dotnet test Fluent.Unions.slnx -c Release --no-build
 
       - name: Pack
-        run: dotnet pack Fluent.Unions.slnx -c Release --no-build -o artifacts -p:PackageValidationBaselineVersion=
+        run: dotnet pack Fluent.Unions.slnx -c Release --no-build -o artifacts

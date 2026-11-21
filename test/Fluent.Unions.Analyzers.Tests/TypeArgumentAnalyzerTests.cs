@@ -20,11 +20,6 @@ public class TypeArgumentAnalyzerTests
     [TestCase("Loadable<NotLoaded>", "'NotLoaded'", "'NotLoaded'")]
     [TestCase("Loadable<Loading>", "'Loading'", "'Loading'")]
     [TestCase("Loadable<object>", "'object'", "'Exception'")]
-    [TestCase("Result<object, MyError>", "'object'", "'MyError'")]
-    [TestCase("Result<MyError, MyError>", "'MyError'", "'MyError'")]
-    [TestCase("Result<DerivedError, MyError>", "'DerivedError'", "'MyError'")]
-    [TestCase("Result<IComparable, StructError>", "'IComparable'", "'StructError'")]
-    [TestCase("Result<object, StructError>", "'object'", "'StructError'")]
     public async Task ReportsOverlappingTypeArguments(string type, string argument, string other)
     {
         var diagnostics = await Analyze($"{type} F;");
@@ -63,14 +58,11 @@ public class TypeArgumentAnalyzerTests
     [TestCase("Option<int> F;")]
     [TestCase("Option<string> F;")]
     [TestCase("Loadable<int> F;")]
-    [TestCase("Result<Order, OrderError> F;")]
-    [TestCase("Result<int, MyError> F;")]
-    [TestCase("Result<MyError, StructError> F;")]
     [TestCase("Result<Result<int>> F;")]
     [TestCase("Result<List<object>> F;")]
     [TestCase("Result<int[]> F;")]
     [TestCase("Result F;")]
-    [TestCase("class Box<T> { Result<T> F; Option<T> G; Result<T, MyError> H; }")]
+    [TestCase("class Box<T> { Result<T> F; Option<T> G; }")]
     [TestCase("Custom<object> F;")]
     [TestCase("Type F = typeof(Result<>);")]
     public async Task IgnoresDistinctTypeArguments(string member)
@@ -83,9 +75,6 @@ public class TypeArgumentAnalyzerTests
     [TestCase("Result<string?> F;", "Result<string?>")]
     [TestCase("Option<int?> F;", "Option<int?>")]
     [TestCase("Loadable<Order?> F;", "Loadable<Order?>")]
-    [TestCase("Result<int, MyError?> F;", "Result<int, MyError?>")]
-    [TestCase("Result<int?, MyError> F;", "Result<int?, MyError>")]
-    [TestCase("Result<Order?, OrderError> F;", "Result<Order?, OrderError>")]
     [TestCase("Result<int?> M() => default;", "Result<int?>")]
     [TestCase("void M() { Option<string?> o = default; }", "Option<string?>")]
     public async Task ReportsNullableTypeArguments(string member, string type)
@@ -106,7 +95,6 @@ public class TypeArgumentAnalyzerTests
 
     [TestCase("Result<int> F;")]
     [TestCase("Option<string> F;")]
-    [TestCase("Result<Order, OrderError> F;")]
     [TestCase("class Box<T> where T : class { Option<T?> F; Result<T?> G; }")]
     [TestCase("class Box<T> { Option<T?> F; }")]
     [TestCase("#nullable disable\nResult<string> F;")]

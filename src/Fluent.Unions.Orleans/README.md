@@ -19,7 +19,7 @@ Register it with the Orleans serializer, in the silo and in every client.
 ```csharp
 using Fluent.Unions.Orleans;
 
-builder.Services.AddSerializer(serializer => serializer.AddUnions());
+builder.Services.AddSerializer(serializer => serializer.AddFluentUnions());
 ```
 
 Then use `Option<T>` like any other type.
@@ -43,5 +43,5 @@ public sealed record Profile([property: Id(0)] string Name, [property: Id(1)] Op
 ## Rules
 
 - **Wire format.** An option is stored as `OptionSurrogate<T>`: `HasValue` (field 0) and `Value` (field 1). `None` and `default` are the same on the wire.
-- **Results throw.** `Result`, `Result<T>` and `Result<T, TError>` and your own result types declared with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md) throw `NotSupportedException` when serialized. An error would carry the exception details. Return an `Option<T>` or a DTO from a grain, or let the grain throw: Orleans carries exceptions by itself.
+- **Results throw.** `Result`, `Result<T>` and your own result types declared with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md) throw `NotSupportedException` when serialized. An error would carry the exception details. Return an `Option<T>` or a DTO from a grain, or let the grain throw: Orleans carries exceptions by itself.
 - **Code generation.** The Orleans code generator only sees the surrogate struct, so it does not depend on how C# 15 unions are compiled. AOT and trimming are not tested.

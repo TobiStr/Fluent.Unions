@@ -144,7 +144,7 @@ public class CustomResultAssertions<TSelf, T, TError>
 
     private bool TryGetValue(out T value)
     {
-        if (Case is not TError && Case is T payload)
+        if (Subject.IsSuccess && Subject.Value is T payload)
         {
             value = payload;
             return true;
@@ -156,7 +156,7 @@ public class CustomResultAssertions<TSelf, T, TError>
 
     private bool TryGetCase<TCase>(out TCase match)
     {
-        if (Case is TError error)
+        if (Subject.TryGetError(out var error))
         {
             switch (error)
             {
@@ -175,7 +175,7 @@ public class CustomResultAssertions<TSelf, T, TError>
 
     private Described Describe()
     {
-        if (Case is TError error and not Exception)
+        if (Subject.TryGetError(out var error) && error is not Exception)
         {
             var shown = error is IUnion { Value: { } inner } ? inner : error;
 

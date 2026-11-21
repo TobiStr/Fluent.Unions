@@ -7,7 +7,7 @@ using Is = NUnit.Framework.Is;
 
 namespace Fluent.Unions.Generators.Tests;
 
-public class GeneratorTests
+public partial class GeneratorTests
 {
     private const string Domain = """
         using System;
@@ -59,7 +59,7 @@ public class GeneratorTests
                 public static System.Threading.Tasks.Task<Result<int>> LengthAsync(string text) =>
                     System.Threading.Tasks.Task.FromResult(Result.From(text)).Select(t => t.Length);
 
-                public static Result<(int, string)> Both() => Result.From(1).BindAppend(n => Result.From(n.ToString()));
+                public static Result<(int, string)> Both() => Result.From(1).ChainAppend(n => Result.From(n.ToString()));
             }
             """);
 

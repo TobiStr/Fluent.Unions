@@ -19,7 +19,7 @@ using Fluent.Unions;
 using Fluent.Unions.Orleans;
 
 // silo and client
-builder.Services.AddSerializer(serializer => serializer.AddUnions());
+builder.Services.AddSerializer(serializer => serializer.AddFluentUnions());
 
 public interface IUserGrain : IGrainWithStringKey
 {
@@ -31,11 +31,11 @@ public interface IUserGrain : IGrainWithStringKey
 public sealed record Profile([property: Id(0)] string Name, [property: Id(1)] Option<string> Nickname);
 ```
 
-Call `AddUnions()` wherever the Orleans serializer is configured, in the silo and in every client. It registers the converter, and the codec that rejects results. Orleans can also find the converter on its own in a project that references the package, but only `AddUnions()` adds the rejecting codec. Without it, serializing a result still fails, with Orleans' own `CodecNotFoundException`.
+Call `AddFluentUnions()` wherever the Orleans serializer is configured, in the silo and in every client. It registers the converter, the codec that rejects results and a copier that rejects the default `Result` and `Result<T>`. Calling it again changes nothing. Orleans can also find the converter on its own in a project that references the package, but only `AddFluentUnions()` adds the rejecting codec. Without it, serializing a result still fails, with Orleans' own `CodecNotFoundException`.
 
 ## Options
 
-`AddUnions()` registers `OptionConverter<T>`, an Orleans surrogate converter. An option is converted to `OptionSurrogate<T>` and back:
+`AddFluentUnions()` registers `OptionConverter<T>`, an Orleans surrogate converter. An option is converted to `OptionSurrogate<T>` and back:
 
 | Field | Id | Content |
 | --- | --- | --- |
@@ -48,7 +48,7 @@ The surrogate is stored in grain state, so keep its field ids as they are in you
 
 ## Results refuse to serialize
 
-`Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException` when serialized, in a grain call and in grain state. Your own [result type](../errors/custom-error-types.md) is refused like the default type.
+`Result` and `Result<T>` throw `NotSupportedException` when serialized, in a grain call and in grain state. Your own [result type](../errors/custom-error-types.md) is refused like the default type.
 
 
 ```csharp
@@ -77,9 +77,10 @@ The Orleans code generator never sees `Option<T>`: it generates the serializer o
 
 ## Rules
 
-- Register `AddUnions()` in the silo and in every client.
+- Register `AddFluentUnions()` in the silo and in every client.
 - `Option<T>` needs no attribute on your types.
 - Results throw. Convert them before the grain returns.
+- A local call within a silo copies its arguments and result instead of serializing them. `Result` and `Result<T>` throw `NotSupportedException` there as well. A result type you declare is not covered by the copier, because Orleans treats it as a plain struct and copies it locally, so only serialization (a remote call, persisted state) refuses it.
 - Your own C# 15 unions are not covered. AOT and trimming have not been investigated or tested.
 
 ## See also

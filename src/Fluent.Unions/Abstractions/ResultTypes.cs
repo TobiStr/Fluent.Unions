@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace Fluent.Unions.Abstractions;
 
 /// <summary>
@@ -5,6 +7,9 @@ namespace Fluent.Unions.Abstractions;
 /// </summary>
 public static class ResultTypes
 {
+    private static readonly ConcurrentDictionary<Type, Type?> ErrorTypes = new();
+    private static readonly ConcurrentDictionary<Type, Type?> ValueTypes = new();
+
     /// <summary>
     /// Indicates whether <paramref name="type"/> is a result type.
     /// </summary>
@@ -17,7 +22,7 @@ public static class ResultTypes
     {
         ArgumentNullException.ThrowIfNull(type);
 
-        return type.IsValueType ? Contract(type, typeof(IErrorResult<,>))?.GetGenericArguments()[1] : null;
+        return ErrorTypes.GetOrAdd(type, static type => type.IsValueType ? Contract(type, typeof(IErrorResult<,>))?.GetGenericArguments()[1] : null);
     }
 
     /// <summary>
@@ -27,7 +32,7 @@ public static class ResultTypes
     {
         ArgumentNullException.ThrowIfNull(type);
 
-        return type.IsValueType ? Contract(type, typeof(IResult<,,>))?.GetGenericArguments()[1] : null;
+        return ValueTypes.GetOrAdd(type, static type => type.IsValueType ? Contract(type, typeof(IResult<,,>))?.GetGenericArguments()[1] : null);
     }
 
     private static Type? Contract(Type type, Type definition) =>

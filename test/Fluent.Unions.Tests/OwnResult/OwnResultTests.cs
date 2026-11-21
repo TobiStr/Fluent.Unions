@@ -48,6 +48,43 @@ public class OwnResultTests
         Assert.Throws<OperationCanceledException>(() => Result.From(1).Select<int, int>(_ => throw new OperationCanceledException()));
 
     [Test]
+    public void ToStringDescribesTheCase()
+    {
+        Assert.That(Find(5).ToString(), Is.EqualTo("5"));
+        Assert.That(Find(0).ToString(), Is.EqualTo("NotFoundException: No order 0."));
+        Assert.That(Result.Ok.ToString(), Is.EqualTo("Ok"));
+        Assert.That(Result.Error(new OutOfStockException("none left")).ToString(), Is.EqualTo("OutOfStockException: none left"));
+        Assert.That(default(Result<int>).ToString(), Does.StartWith("UnexpectedDomainException: Result<Int32> holds neither"));
+        Assert.That(FindOutcome(0).ToString(), Is.EqualTo("NotFoundException: No order 0."));
+    }
+
+    [Test]
+    public void ToStringOfAnErrorThatIsNotAnExceptionUsesTheErrorText()
+    {
+        Assert.That(TextResult<int>.Error("boom").ToString(), Is.EqualTo("boom"));
+        Assert.That(TextResult<int>.Ok(5).ToString(), Is.EqualTo("5"));
+        Assert.That(default(TextResult<int>).ToString(), Does.StartWith("TextResult<Int32> holds neither"));
+    }
+
+    [Test]
+    public void AValueOfTheErrorTypeIsNotMistakenForAnError()
+    {
+        var value = TextResult<string>.Ok("x");
+
+        Assert.That(value.IsSuccess, Is.True);
+        Assert.That(IsFailed<TextResult<string>, string>(value), Is.False);
+        Assert.That(IsFailed<TextResult<string>, string>(TextResult<string>.Error("x")), Is.True);
+        Assert.That(IsFailed<TextResult<string>, string>(default), Is.True);
+        Assert.That(IsFailed<Result, DomainException>(Result.Ok), Is.False);
+        Assert.That(IsFailed<Result, DomainException>(default), Is.True);
+    }
+
+    private static bool IsFailed<TSelf, TError>(TSelf result)
+        where TSelf : struct, Fluent.Unions.Abstractions.IErrorResult<TSelf, TError>
+        where TError : notnull =>
+        result.TryGetError(out _);
+
+    [Test]
     public void DefaultResultIsAnError()
     {
         var error = default(Result<int>).GetError();
@@ -78,7 +115,7 @@ public class OwnResultTests
     [Test]
     public void TupleAndFlatteningOperatorsKeepTheType()
     {
-        Result<(int, string)> both = Find(1).BindAppend(n => Result.From(n.ToString()));
+        Result<(int, string)> both = Find(1).ChainAppend(n => Result.From(n.ToString()));
         Result<(int First, int Second)> zipped = Find(1).Zip(Find(2));
         Result<int> flat = Result.From(Find(3)).Unwrap();
         Result unit = Find(4);

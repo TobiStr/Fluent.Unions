@@ -8,7 +8,7 @@ using Fluent.Unions;
 
 | Operators | ok | error |
 | --- | --- | --- |
-| `Select`, `Chain`, `Ensure`, `Zip`, `BindAppend`, `Do(onSuccess)` | runs | passes through |
+| `Select`, `Chain`, `Ensure`, `Zip`, `ChainAppend`, `Do(onSuccess)` | runs | passes through |
 | `Finally` | runs | runs |
 
 All of them also exist on `Task<Result<T>>`. Asynchronous lambdas use the `...Await` variants. See [Async](../async/README.md).
@@ -129,17 +129,17 @@ Result<(Customer, Cart, Shipping)> all = await Result.CombineAllAsync(
     LoadShippingAsync(id));
 ```
 
-## BindAppend
+## ChainAppend
 
 Runs a step that depends on the value and keeps both in a tuple. Later steps take the tuple elements as separate parameters, so a pipeline can collect values without nesting.
 
 ```csharp
 Result<(Customer, Cart, Shipping)> context = GetCustomer(id)
-    .BindAppend(GetCart)
-    .BindAppend((customer, cart) => Shipping(cart));
+    .ChainAppend(GetCart)
+    .ChainAppend((customer, cart) => Shipping(cart));
 ```
 
-It stops at the first error. An error passes through and the lambda does not run. `BindAppendAwait` takes an asynchronous step. Both forms exist on `Task<Result<T>>` and work up to a four-element tuple.
+It stops at the first error. An error passes through and the lambda does not run. `ChainAppendAwait` takes an asynchronous step. Both forms exist on `Task<Result<T>>` and work up to a four-element tuple.
 
 ## WithValue and DiscardValue
 

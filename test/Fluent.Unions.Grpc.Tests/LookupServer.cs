@@ -20,12 +20,12 @@ public sealed class LookupServer : IAsyncDisposable
 
     public Lookup.LookupClient Client { get; }
 
-    public static async Task<LookupServer> StartAsync(ResultGrpcOptions? options = null)
+    public static async Task<LookupServer> StartAsync(Action<ResultGrpcOptions>? configure = null)
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Services.AddGrpc(grpc => grpc.Interceptors.Add<ResultServerInterceptor>());
-        builder.Services.AddSingleton(options ?? new ResultGrpcOptions());
+        builder.Services.Configure<ResultGrpcOptions>(options => configure?.Invoke(options));
 
         var app = builder.Build();
         app.MapGrpcService<LookupService>();

@@ -40,9 +40,9 @@ The shape matches the JSON of [options](../serialization/README.md#options): a v
 | --- | --- |
 | `Option<T>` with a value | the value, destructured |
 | `Option<T>` `None` or `default` | `null` |
-| `Result<T>` or `Result<T, TError>` with a value | the value, destructured |
-| `Result<T>` with an exception | `{ Error: { Type, Message } }` |
-| `Result<T, TError>` with an error | `{ Error: <TError, destructured> }` |
+| `Result<T>` or your own result type with a value | the value, destructured |
+| `Result<T>` or your own result type with an exception | `{ Error: { Type, Message } }` |
+| Your own result type with an error that is not an exception | `{ Error: <TError, destructured> }` |
 | `Result` that is Ok | `"Ok"` |
 | `Result` with an exception | `{ Error: { Type, Message } }` |
 | `Loadable<T>` not loaded or `default` | `"NotLoaded"` |
@@ -52,7 +52,7 @@ The shape matches the JSON of [options](../serialization/README.md#options): a v
 
 `Type` is the full name of the exception type and `Message` is its message. A `default` result is an error, so it logs the uninitialized error. Values nest: an option property of a destructured object, or an option in an array, logs as its value or `null`.
 
-An error that is data (`Result<T, TError>`) is destructured like any other object, so its properties are logged: `{ Error: { Id: "42" } }`.
+An error that is not an exception, such as a record of an error union, is destructured like any other object, so its properties are logged: `{ Error: { Id: "42" } }`.
 
 ## Exceptions and stack traces
 
@@ -76,7 +76,7 @@ if (order.TryGetError(out var error))
 
 ## Rules
 
-- **Destructure with `@`.** `{Order}` renders with `ToString()`, which is the value or an empty string. Serilog applies destructuring policies only for `{@Order}`.
+- **Destructure with `@`.** `{Order}` renders with `ToString()`, which is the value, or `{ExceptionType}: {Message}` for an error, without the stack trace. Serilog applies destructuring policies only for `{@Order}`, so prefer `{@Order}` to get structured properties.
 - **Only the five types and result types are handled.** Other values, including your own unions, are left to Serilog and other policies.
 - **No `null` values.** An option or result never holds `null`. A `null` in the log means an option with no value.
 - **An error and a value can look alike.** A value that is a structure with only an `Error` property is indistinguishable from an error in the log. Use `Match` and log the cases yourself when that matters.

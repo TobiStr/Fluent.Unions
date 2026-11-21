@@ -193,7 +193,7 @@ Every row has both forms, `Ensure<Name>` on a `string?` and on a `Result<string>
 - The text rules take `(string text, StringComparison comparison = StringComparison.Ordinal)`. There are no separate ignore-case rules.
 - A `null` string fails every `Is` predicate except `Empty` and `WhiteSpace`, so `Option.Where(Is.NotEmpty)` and your own `Ensure` can use them directly.
 - The format rules use the BCL parsers instead of hand-written patterns. An empty string fails them. `Base64` rejects the empty string even though it decodes to nothing.
-- A string pattern compiles once per rule call and a match times out after one second. A timeout becomes the error. A pattern that does not parse throws when the rule is created, and `Ensure` forms on a `Result<string>` create it only when the result is Ok.
+- A string pattern is compiled once and cached by `Regex`'s static cache, and a match times out after one second. A timeout becomes the error. A pattern that does not parse throws when the rule is created, and `Ensure` forms on a `Result<string>` create it only when the result is Ok.
 
 ```csharp
 Result<string> password = Result<string>.Ok(input)

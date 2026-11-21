@@ -23,9 +23,9 @@ This folder has one page, this one. Each rule has its own section below, and the
 | [FLU0011](#flu0011) | Info | A cast of `Value` | |
 | [FLU0012](#flu0012) | Info | A `throw` in a method that returns a result | Return the exception |
 | [FLU0013](#flu0013) | Info | `ToOption()` that drops an error | |
-| [FLU0101](#flu0101) | Error | A `[FluentResult]` declaration of an unsupported shape | |
+| [FLU0101](#flu0101) | Error | A `[FluentResult]` declaration that is not supported, with the reason | |
 | [FLU0102](#flu0102) | Error | A `[FluentResult]` error type that cannot represent an unexpected exception | |
-| [FLU0103](#flu0103) | Info | An interface case of an error union that gets no conversion | |
+| [FLU0103](#flu0103) | Info | A case of an error union that gets no conversion, with the reason | |
 
 The errors mark a type or a call that is wrong every time it appears, so they fail the build. The warnings point at bugs. The info rules point at code that works, but is easy to get wrong. They show as suggestions in the IDE and do not appear in the build output.
 
@@ -67,7 +67,7 @@ Save(order).Check();          // fine: Check throws the error
 var result = Save(order);     // fine: you hold the result
 ```
 
-A call is reported when it stands alone as a statement and returns `Result`, `Result<T>`, `Result<T, TError>`, your own result type that implements `IResult` or `IErrorResult`, or a `Task` or `ValueTask` of one of them.
+A call is reported when it stands alone as a statement and returns `Result`, `Result<T>`, your own result type declared with `[FluentResult]`, or a `Task` or `ValueTask` of one of them.
 
 ```csharp
 maybe?.Save(order);                            // conditional access
@@ -82,7 +82,7 @@ Load(order.Id).Finally(() => { });             // a chain that ends in Finally
 Not reported:
 
 - Assignments, returns, arguments and explicit discards with `_ =`.
-- Calls that end in `Check()`, `OnErrorDo(...)` or `Do(onSuccess, onError)`. These are recognized by name and by the library assembly they come from, so a method of your own called `Check` does not count.
+- Calls that end in `Check()`, `OnErrorDo(...)` or `Do(onSuccess, onError)`. These are recognized by name and by the library they come from, so a method of your own called `Check` does not count. The operators that the generator writes for your own result type count as library operators, so `OnErrorDo(...)` and `Do(onSuccess, onError)` on it are handled the same way.
 - Options. A missing value is not an error, so `Option<T>` is never reported.
 
 Prefer an explicit discard when ignoring a result is on purpose, such as a best-effort log write. It documents the decision and needs no suppression.
@@ -102,9 +102,9 @@ var price = order.Select(async o => await PriceAsync(o));
 // warning FLU0002: use 'SelectAwait'
 ```
 
-The code fix switches to the operator that awaits: `Try` to `TryAsync`, `Select` to `SelectAwait`, `Chain` to `ChainAwait`, `SelectMany` to `SelectManyAwait`. The result then becomes a `Task<Result<T>>`, so you may need to `await` it.
+The code fix switches to the operator that awaits: `Try` to `TryAsync`, `Select` to `SelectAwait`, `Chain` to `ChainAwait`, `SelectMany` to `ChainAwait`. The result then becomes a `Task<Result<T>>`, so you may need to `await` it.
 
-Operators that take a `Func<Task>` already, such as `TryAsync`, `SelectAwait` and `DoAwait`, are not reported. Neither are `Select` on `Result<T, TError>` and `Loadable<T>`, which have no awaiting counterpart, nor a lambda stored in a variable first.
+Operators that take a `Func<Task>` already, such as `TryAsync`, `SelectAwait` and `DoAwait`, are not reported. Neither is `Select` on `Loadable<T>`, which has no awaiting counterpart, nor a lambda stored in a variable first.
 
 <a id="flu0003"></a>
 
@@ -132,10 +132,10 @@ Result<Exception> last = new TimeoutException();
 
 Result<object> any = Load();       // error: object overlaps Exception
 Option<object> maybe = Find();     // error: object overlaps None
-Result<object, CheckoutError> r;   // error: object overlaps CheckoutError
+Outcome<object> r;                 // error: object overlaps CheckoutError
 ```
 
-The overlapping cases are: `Exception` for `Result<T>`, the error type for `Result<T, TError>`, `None` for `Option<T>`, and `Exception`, `NotLoaded` and `Loading` for `Loadable<T>`. A type overlaps when it is the same type, a base type, a derived type, or an interface of it.
+The overlapping cases are: `Exception` for `Result<T>`, the error type, or one of its union cases, for a declared result type, `None` for `Option<T>`, and `Exception`, `NotLoaded` and `Loading` for `Loadable<T>`. A type overlaps when it is the same type, a base type, a derived type, or an interface of it.
 
 To carry an exception as a value, wrap it in a record of your own, such as `record FailedAttempt(Exception Exception)`. For errors as data, give the error its own type.
 
@@ -282,6 +282,8 @@ Result<Order> Ship(Order order)
 
 The code fix replaces `throw` with `return`, because an exception converts to a result. This also works in `async` methods that return a `Task<Result<T>>`.
 
+The throw is only reported when the thrown type converts to the result. A result type declared with `[FluentResult<DomainException>]` holds only a `DomainException`, so `throw new InvalidOperationException()` in a method that returns it is not reported: `return new InvalidOperationException();` would not compile.
+
 Not reported:
 
 - Throw expressions, such as `value ?? throw new ArgumentNullException(...)`, and rethrows with `throw;`.
@@ -314,24 +316,32 @@ The generator adds three rules:
 
 ### FLU0101: Unsupported declaration
 
-The type must be a top-level `readonly partial struct` with at most one type parameter and no constraints:
+The message names the reason. The type must be:
+
+- a `struct` declared `readonly` and `partial` (the `readonly` may be on any part), not a record struct, a ref struct or a `file` type;
+- declared directly in a namespace, not inside another type;
+- generic with at most one type parameter, which has no constraints and does not allow ref structs, or a value-less companion next to a generic one;
+- named differently from the members the generator adds, such as `Ok` or `Error`;
+- no less accessible than its error type: a public result needs a public error type.
 
 ```csharp
 [FluentResult<DomainException>]
-public partial struct Result<T>;   // error FLU0101: must be a top-level 'readonly partial struct'
+public partial struct Result<T>;   // error FLU0101: 'Result' is not a supported result declaration: it must be 'readonly'
 ```
+
+A struct without a type parameter is the value-less companion. It needs a generic struct with the same name, namespace and error type next to it, and both must be declared with `[FluentResult]`. Without a declared companion, the generator writes one.
 
 <a id="flu0102"></a>
 
 ### FLU0102: No exception mapping
 
-The error type must implement `IFromException<TError>`, or the struct must declare `public static TError FromException(Exception exception)`. Without it, an exception thrown inside a step would have nowhere to go.
+The error type must implement `IFromException<TError>` for itself, or the struct must declare a `public` or `internal` `static TError FromException(Exception exception)`. A method with another parameter or return type, a private method and an `IFromException<Other>` of another type do not count. Without a mapping, an exception thrown inside a step would have nowhere to go.
 
 <a id="flu0103"></a>
 
-### FLU0103: Interface case without a conversion
+### FLU0103: Case without a conversion
 
-A case of the error union that is an interface cannot convert to the result, because C# does not allow conversions from interfaces. Return it through `Error(...)` instead.
+A case of the error union gets no conversion to the result when C# does not allow one: an interface, `object` or `System.ValueType`, or a type that is less accessible than the result, because conversion operators are public. The message names the reason. Return the case through `Error(...)` instead.
 
 ---
 

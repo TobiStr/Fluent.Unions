@@ -13,7 +13,7 @@ public static class ResultTupleCore
     /// Runs a dependent step and keeps both values as a tuple. An error passes through and the
     /// selector does not run. An empty selector result makes the result empty.
     /// </summary>
-    public static TOutResult BindAppend<TSelf, T, TError, TNextResult, TNext, TOutResult>(TSelf result, Func<T, TNextResult> selector)
+    public static TOutResult ChainAppend<TSelf, T, TError, TNextResult, TNext, TOutResult>(TSelf result, Func<T, TNextResult> selector)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TNextResult : struct, IFluentResult<TNextResult, TNext, TError>
         where TOutResult : struct, IFluentResult<TOutResult, (T, TNext), TError>
@@ -43,7 +43,7 @@ public static class ResultTupleCore
     /// <summary>
     /// Runs a dependent step with the tuple elements and appends its value to the tuple.
     /// </summary>
-    public static TOutResult BindAppend<TSelf, T1, T2, TError, TNextResult, TNext, TOutResult>(
+    public static TOutResult ChainAppend<TSelf, T1, T2, TError, TNextResult, TNext, TOutResult>(
         TSelf result,
         Func<T1, T2, TNextResult> selector)
         where TSelf : struct, IFluentResult<TSelf, (T1, T2), TError>
@@ -75,7 +75,7 @@ public static class ResultTupleCore
     /// <summary>
     /// Runs a dependent step with the tuple elements and appends its value to the tuple.
     /// </summary>
-    public static TOutResult BindAppend<TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult>(
+    public static TOutResult ChainAppend<TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult>(
         TSelf result,
         Func<T1, T2, T3, TNextResult> selector)
         where TSelf : struct, IFluentResult<TSelf, (T1, T2, T3), TError>

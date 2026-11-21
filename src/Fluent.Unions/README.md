@@ -6,6 +6,10 @@
 
 `Result`, `Result<T>` and `Option<T>` for .NET, built on the C# 15 `union` keyword. A method returns either its value or an error, and the compiler checks that callers handle both. Fluent operators are named after LINQ and Rx.NET, so a whole flow reads as one expression.
 
+- **Your own Result in one line.** `[FluentResult<TError>]` on a `partial struct` lets the source generator build a complete `Result<T>` around your error type, with every operator and `Task` overload. Make the error a union and the compiler checks that every case is handled.
+- **Built for hot paths.** Results store their value without boxing, and a chain of operators with static lambdas allocates nothing.
+- **Every outcome in the signature.** `Option<T>` replaces `null`, and failures are typed values instead of hidden exceptions. What a method can return is visible in its type and checked by the compiler, so flows stay flat, readable and free of `null` checks and `try`/`catch`.
+
 ## Installation
 
 ```
@@ -19,6 +23,9 @@ Requires .NET 11. C# 15 is the default language version for `net11.0`.
 Use the default `Result<T>`, whose error is any `Exception`, with `using Fluent.Unions;`. Or declare your own in your root namespace, with the error type you want:
 
 ```csharp
+using Fluent.Unions;
+using Fluent.Unions.Abstractions;
+
 namespace Shop;
 
 public class DomainException(string message, Exception? inner = null)
@@ -27,6 +34,9 @@ public class DomainException(string message, Exception? inner = null)
     public static DomainException FromException(Exception exception) =>
         exception as DomainException ?? new UnexpectedDomainException(exception);
 }
+
+public sealed class UnexpectedDomainException(Exception inner)
+    : DomainException("An unexpected error occurred.", inner);
 
 [FluentResult<DomainException>]
 public readonly partial struct Result<T>;

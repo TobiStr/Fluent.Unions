@@ -288,4 +288,41 @@ public class OptionTests
     }
 
     private static Option<int> Parse(string text) => int.TryParse(text, out var value) ? value : Option.None;
+
+    private record Wrapper(string Name, Option<int> Age);
+
+    [Test]
+    public void DefaultAndNoneAreEqual()
+    {
+        Option<int> none = Option.None;
+        Option<int> empty = default;
+
+        Assert.That(empty, Is.EqualTo(none));
+        Assert.That(empty == none, Is.True);
+        Assert.That(empty != none, Is.False);
+        Assert.That(empty.Equals((object)none), Is.True);
+        Assert.That(empty.GetHashCode(), Is.EqualTo(none.GetHashCode()));
+        Assert.That(empty, Is.Not.EqualTo((Option<int>)0));
+    }
+
+    [Test]
+    public void OptionsWithValuesCompareByValue()
+    {
+        Option<int> five = 5;
+
+        Assert.That(five == 5, Is.True);
+        Assert.That(five != 6, Is.True);
+        Assert.That(five.Equals((Option<int>)Option.None), Is.False);
+        Assert.That(five.GetHashCode(), Is.EqualTo(((Option<int>)5).GetHashCode()));
+    }
+
+    [Test]
+    public void DefaultAndNoneCollapseInHashSetsAndRecords()
+    {
+        HashSet<Option<int>> set = [default, Option.None, 1, 1];
+
+        Assert.That(set, Has.Count.EqualTo(2));
+        Assert.That(new Wrapper("Ada", default), Is.EqualTo(new Wrapper("Ada", Option.None)));
+        Assert.That(new Wrapper("Ada", default).GetHashCode(), Is.EqualTo(new Wrapper("Ada", Option.None).GetHashCode()));
+    }
 }

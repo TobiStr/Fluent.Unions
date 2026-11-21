@@ -7,7 +7,7 @@ Run them with `dotnet test test/Fluent.Unions.Scenarios.Tests -c Release`.
 | Scenario | Flow | Shows |
 | --- | --- | --- |
 | `OrderImportScenario` | CSV order lines with per-line validation and a report | Collecting every validation error, `Partition`, `CombineAll`, `Result.Try`, `Catch`, `Do`, async streams |
-| `BankTransferScenario` | Money transfer between accounts | Errors as data with `Result<T, TError>`, exhaustive `switch`, `Ensure`, typed `Catch`, `MapError`, `Finally`, `RecordResult` |
+| `BankTransferScenario` | Money transfer between accounts | Errors as data with a `[FluentResult]` type, exhaustive `switch`, `Ensure`, `Catch` on one error case, translating errors with `Match`, `Finally`, `RecordResult` |
 | `UserRegistrationScenario` | Sign-up with several outcomes | `ValidateAnnotations`, `Validate` and the rule catalogue, `EnsureAwait`, `TryAsync`, custom errors, one `switch` over every outcome |
 | `SupplierPricesScenario` | Best price from several suppliers | Explicit async failure with `RetryAsync`, `Timeout`, `Catch` fallbacks, `WhenAll`, `Partition`, `FirstOrNone`, `ToResult` |
 | `ConfigurationScenario` | Settings from a file and the environment | `Option` instead of `null`: `GetValueOrNone`, `Or`, `Where`, `Zip`, `Transpose`, `CombineAll` |

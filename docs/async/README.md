@@ -34,7 +34,7 @@ Without the overloads, each step would need its own `await` and its own state ch
 - A lambda that throws inside a result operator becomes the error. Inside an option operator, it propagates.
 - The operators take no `CancellationToken`, because they do no I/O. Capture the token in your lambdas.
 - Use the `...Await` variants when the lambda returns a `Task`. The plain operators take synchronous lambdas.
-- A result type declared with `[FluentResult<TError>]` has every `Task` overload and `...Await` operator, like `Result<T>`. A hand-written `IResult` type and `Result<T, TError>` have none: await first.
+- A result type declared with `[FluentResult<TError>]` has every `Task` overload and `...Await` operator, like `Result<T>`.
 
 ---
 

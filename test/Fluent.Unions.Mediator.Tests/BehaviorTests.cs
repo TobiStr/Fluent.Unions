@@ -36,28 +36,12 @@ public class BehaviorTests
     }
 
     [Test]
-    public async Task Exception_FromACustomResultType_IsReturnedAsAnError()
-    {
-        var result = await Mediator.Send(new GetOutcome(-1));
-
-        Assert.That(result.Value, Is.TypeOf<InvalidOperationException>());
-    }
-
-    [Test]
     public async Task Success_PassesThroughUnchanged()
     {
         var result = await Mediator.Send(new GetNumber(5));
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.GetValue(), Is.EqualTo(5));
-    }
-
-    [Test]
-    public async Task Success_FromACustomResultType_PassesThroughUnchanged()
-    {
-        var result = await Mediator.Send(new GetOutcome(5));
-
-        Assert.That(result.Value, Is.EqualTo(5));
     }
 
     [Test]
@@ -137,14 +121,6 @@ public class BehaviorTests
 
         Assert.That(failed.GetError(), Is.TypeOf<InvalidOperationException>().With.Message.EqualTo("negative"));
         Assert.That(succeeded.IsSuccess, Is.True);
-    }
-
-    [Test]
-    public async Task ResultWithADataError_ExceptionBecomesTheErrorThroughFromException()
-    {
-        var result = await Mediator.Send(new GetFailing(1));
-
-        Assert.That(result.Value, Is.EqualTo(new Failure("negative")));
     }
 
     [Test]

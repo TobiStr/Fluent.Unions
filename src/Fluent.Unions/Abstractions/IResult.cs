@@ -1,16 +1,41 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Fluent.Unions.Abstractions;
 
 /// <summary>
-/// A result type whose errors are restricted to <typeparamref name="TError"/>.
+/// Any result type, read without knowing its type arguments.
 /// </summary>
-public interface IErrorResult<TSelf, TError>
-    where TSelf : struct, IErrorResult<TSelf, TError>
-    where TError : notnull
+public interface IErrorResult
 {
     /// <summary>
     /// The value, the error, or <c>null</c> when the result is empty.
     /// </summary>
     object? Value { get; }
+
+    /// <summary>
+    /// Indicates whether the result holds a value, or is successful for a result without a value.
+    /// </summary>
+    bool IsSuccess { get; }
+
+    /// <summary>
+    /// The error, or <c>null</c> when the result is successful. An empty result holds the error for an uninitialized result.
+    /// </summary>
+    object? Error { get; }
+}
+
+/// <summary>
+/// A result type whose errors are restricted to <typeparamref name="TError"/>.
+/// </summary>
+public interface IErrorResult<TSelf, TError> : IErrorResult
+    where TSelf : struct, IErrorResult<TSelf, TError>
+    where TError : notnull
+{
+    object? IErrorResult.Error => TryGetError(out var error) ? error : null;
+
+    /// <summary>
+    /// Gets the error, if the result holds one. An empty result holds the error for an uninitialized result.
+    /// </summary>
+    bool TryGetError([MaybeNullWhen(false)] out TError error);
 
     /// <summary>
     /// Creates a failed result.
@@ -24,7 +49,7 @@ public interface IErrorResult<TSelf, TError>
 }
 
 /// <summary>
-/// An error type that can represent an unexpected exception, so that <see cref="Result{T, TError}"/> chains do not throw.
+/// An error type that can represent an unexpected exception, so that chains of a <c>[FluentResult]</c> type do not throw.
 /// </summary>
 public interface IFromException<TSelf> where TSelf : notnull
 {
@@ -36,7 +61,7 @@ public interface IFromException<TSelf> where TSelf : notnull
 
 /// <summary>
 /// A result type that holds a <typeparamref name="T"/> or a <typeparamref name="TError"/>.
-/// Implement it on your own union to use the operators in <c>ResultInterfaceExtensions</c>.
+/// Declare it with <c>[FluentResult]</c> instead of implementing it.
 /// </summary>
 public interface IResult<TSelf, T, TError> : IErrorResult<TSelf, TError>
     where TSelf : struct, IResult<TSelf, T, TError>

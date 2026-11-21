@@ -117,11 +117,11 @@ public class TupleCombinatorTests
     }
 
     [Test]
-    public void BindAppendAddsEachArity()
+    public void ChainAppendAddsEachArity()
     {
-        Result<(int, string)> two = Result<int>.Ok(1).BindAppend(v => Result<string>.Ok($"n{v}"));
-        Result<(int, string, bool)> three = two.BindAppend((n, s) => Result<bool>.Ok(s.Length > n));
-        Result<(int, string, bool, char)> four = three.BindAppend((n, s, b) => Result<char>.Ok(b ? s[0] : 'x'));
+        Result<(int, string)> two = Result<int>.Ok(1).ChainAppend(v => Result<string>.Ok($"n{v}"));
+        Result<(int, string, bool)> three = two.ChainAppend((n, s) => Result<bool>.Ok(s.Length > n));
+        Result<(int, string, bool, char)> four = three.ChainAppend((n, s, b) => Result<char>.Ok(b ? s[0] : 'x'));
 
         Assert.That(two.GetValue(), Is.EqualTo((1, "n1")));
         Assert.That(three.GetValue(), Is.EqualTo((1, "n1", true)));
@@ -129,7 +129,7 @@ public class TupleCombinatorTests
     }
 
     [Test]
-    public void BindAppendPassesErrorAndDefaultThroughWithoutCallingTheSelector()
+    public void ChainAppendPassesErrorAndDefaultThroughWithoutCallingTheSelector()
     {
         var calls = 0;
         Result<(int, int)> twoError = new InvalidOperationException("broken");
@@ -137,12 +137,12 @@ public class TupleCombinatorTests
         Result<(int, int, int)> threeError = new InvalidOperationException("broken");
         Result<(int, int, int)> threeEmpty = default;
 
-        Result<(int, int)> a = Fail("broken").BindAppend(v => { calls++; return Result<int>.Ok(v); });
-        Result<(int, int)> b = Empty.BindAppend(v => { calls++; return Result<int>.Ok(v); });
-        Result<(int, int, int)> c = twoError.BindAppend((x, y) => { calls++; return Result<int>.Ok(x); });
-        Result<(int, int, int)> d = twoEmpty.BindAppend((x, y) => { calls++; return Result<int>.Ok(x); });
-        Result<(int, int, int, int)> e = threeError.BindAppend((x, y, z) => { calls++; return Result<int>.Ok(x); });
-        Result<(int, int, int, int)> f = threeEmpty.BindAppend((x, y, z) => { calls++; return Result<int>.Ok(x); });
+        Result<(int, int)> a = Fail("broken").ChainAppend(v => { calls++; return Result<int>.Ok(v); });
+        Result<(int, int)> b = Empty.ChainAppend(v => { calls++; return Result<int>.Ok(v); });
+        Result<(int, int, int)> c = twoError.ChainAppend((x, y) => { calls++; return Result<int>.Ok(x); });
+        Result<(int, int, int)> d = twoEmpty.ChainAppend((x, y) => { calls++; return Result<int>.Ok(x); });
+        Result<(int, int, int, int)> e = threeError.ChainAppend((x, y, z) => { calls++; return Result<int>.Ok(x); });
+        Result<(int, int, int, int)> f = threeEmpty.ChainAppend((x, y, z) => { calls++; return Result<int>.Ok(x); });
 
         Assert.That(a.GetError().Message, Is.EqualTo("broken"));
         Assert.That(c.GetError().Message, Is.EqualTo("broken"));
@@ -152,11 +152,11 @@ public class TupleCombinatorTests
     }
 
     [Test]
-    public void BindAppendWithAnErrorOrDefaultSelectorResult()
+    public void ChainAppendWithAnErrorOrDefaultSelectorResult()
     {
-        Result<(int, int)> error = Result<int>.Ok(1).BindAppend(_ => Fail("broken"));
-        Result<(int, int)> empty = Result<int>.Ok(1).BindAppend(_ => Empty);
-        Result<(int, int)> thrown = Result<int>.Ok(1).BindAppend<int, int>(_ => throw new FormatException());
+        Result<(int, int)> error = Result<int>.Ok(1).ChainAppend(_ => Fail("broken"));
+        Result<(int, int)> empty = Result<int>.Ok(1).ChainAppend(_ => Empty);
+        Result<(int, int)> thrown = Result<int>.Ok(1).ChainAppend<int, int>(_ => throw new FormatException());
 
         Assert.That(error.GetError().Message, Is.EqualTo("broken"));
         Assert.That(empty.GetError().Message, Does.Contain("holds neither a value nor an error"));
@@ -164,44 +164,44 @@ public class TupleCombinatorTests
     }
 
     [Test]
-    public async Task BindAppendOnATaskReceiver()
+    public async Task ChainAppendOnATaskReceiver()
     {
         Result<(int, string, bool, char)> result = await Task.FromResult(Result<int>.Ok(1))
-            .BindAppend(v => Result<string>.Ok($"n{v}"))
-            .BindAppend((n, s) => Result<bool>.Ok(true))
-            .BindAppend((n, s, b) => Result<char>.Ok('x'));
+            .ChainAppend(v => Result<string>.Ok($"n{v}"))
+            .ChainAppend((n, s) => Result<bool>.Ok(true))
+            .ChainAppend((n, s, b) => Result<char>.Ok('x'));
         Result<(int, int)> faulted = await Task.FromException<Result<int>>(new TimeoutException())
-            .BindAppend(v => Result<int>.Ok(v));
+            .ChainAppend(v => Result<int>.Ok(v));
 
         Assert.That(result.GetValue(), Is.EqualTo((1, "n1", true, 'x')));
         Assert.That(faulted.GetError(), Is.TypeOf<TimeoutException>());
     }
 
     [Test]
-    public async Task BindAppendAwaitAddsEachArity()
+    public async Task ChainAppendAwaitAddsEachArity()
     {
         Result<(int, string, bool, char)> result = await Result<int>.Ok(1)
-            .BindAppendAwait(v => Task.FromResult(Result<string>.Ok($"n{v}")))
-            .BindAppendAwait((n, s) => Task.FromResult(Result<bool>.Ok(true)))
-            .BindAppendAwait((n, s, b) => Task.FromResult(Result<char>.Ok('x')));
+            .ChainAppendAwait(v => Task.FromResult(Result<string>.Ok($"n{v}")))
+            .ChainAppendAwait((n, s) => Task.FromResult(Result<bool>.Ok(true)))
+            .ChainAppendAwait((n, s, b) => Task.FromResult(Result<char>.Ok('x')));
 
         Assert.That(result.GetValue(), Is.EqualTo((1, "n1", true, 'x')));
     }
 
     [Test]
-    public async Task BindAppendAwaitPassesThroughAndCapturesFailures()
+    public async Task ChainAppendAwaitPassesThroughAndCapturesFailures()
     {
         var calls = 0;
         Result<(int, int)> twoError = new InvalidOperationException("broken");
         Result<(int, int, int)> threeEmpty = default;
 
-        Result<(int, int)> error = await Fail("broken").BindAppendAwait(v => { calls++; return Task.FromResult(Result<int>.Ok(v)); });
-        Result<(int, int)> empty = await Empty.BindAppendAwait(v => { calls++; return Task.FromResult(Result<int>.Ok(v)); });
-        Result<(int, int, int)> three = await twoError.BindAppendAwait((x, y) => { calls++; return Task.FromResult(Result<int>.Ok(x)); });
-        Result<(int, int, int, int)> four = await threeEmpty.BindAppendAwait((x, y, z) => { calls++; return Task.FromResult(Result<int>.Ok(x)); });
-        Result<(int, int)> thrown = await Result<int>.Ok(1).BindAppendAwait<int, int>(_ => throw new FormatException());
-        Result<(int, int)> faulted = await Result<int>.Ok(1).BindAppendAwait(_ => Task.FromException<Result<int>>(new TimeoutException()));
-        Result<(int, int)> emptySelector = await Result<int>.Ok(1).BindAppendAwait(_ => Task.FromResult(Empty));
+        Result<(int, int)> error = await Fail("broken").ChainAppendAwait(v => { calls++; return Task.FromResult(Result<int>.Ok(v)); });
+        Result<(int, int)> empty = await Empty.ChainAppendAwait(v => { calls++; return Task.FromResult(Result<int>.Ok(v)); });
+        Result<(int, int, int)> three = await twoError.ChainAppendAwait((x, y) => { calls++; return Task.FromResult(Result<int>.Ok(x)); });
+        Result<(int, int, int, int)> four = await threeEmpty.ChainAppendAwait((x, y, z) => { calls++; return Task.FromResult(Result<int>.Ok(x)); });
+        Result<(int, int)> thrown = await Result<int>.Ok(1).ChainAppendAwait<int, int>(_ => throw new FormatException());
+        Result<(int, int)> faulted = await Result<int>.Ok(1).ChainAppendAwait(_ => Task.FromException<Result<int>>(new TimeoutException()));
+        Result<(int, int)> emptySelector = await Result<int>.Ok(1).ChainAppendAwait(_ => Task.FromResult(Empty));
 
         Assert.That(error.GetError().Message, Is.EqualTo("broken"));
         Assert.That(three.GetError().Message, Is.EqualTo("broken"));
@@ -212,14 +212,14 @@ public class TupleCombinatorTests
     }
 
     [Test]
-    public async Task BindAppendAwaitOnATaskReceiver()
+    public async Task ChainAppendAwaitOnATaskReceiver()
     {
         Result<(int, string, bool, char)> result = await Task.FromResult(Result<int>.Ok(1))
-            .BindAppendAwait(v => Task.FromResult(Result<string>.Ok($"n{v}")))
-            .BindAppendAwait((n, s) => Task.FromResult(Result<bool>.Ok(true)))
-            .BindAppendAwait((n, s, b) => Task.FromResult(Result<char>.Ok('x')));
+            .ChainAppendAwait(v => Task.FromResult(Result<string>.Ok($"n{v}")))
+            .ChainAppendAwait((n, s) => Task.FromResult(Result<bool>.Ok(true)))
+            .ChainAppendAwait((n, s, b) => Task.FromResult(Result<char>.Ok('x')));
         Result<(int, int)> faulted = await Task.FromException<Result<int>>(new TimeoutException())
-            .BindAppendAwait(v => Task.FromResult(Result<int>.Ok(v)));
+            .ChainAppendAwait(v => Task.FromResult(Result<int>.Ok(v)));
 
         Assert.That(result.GetValue(), Is.EqualTo((1, "n1", true, 'x')));
         Assert.That(faulted.GetError(), Is.TypeOf<TimeoutException>());

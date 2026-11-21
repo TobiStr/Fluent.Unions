@@ -38,7 +38,10 @@ Assert a result type you declare with `[FluentResult<TError>]` through `AsResult
 ```csharp
 await Assert.That(result.AsResult()).IsOk();
 await Assert.That(result.AsResult()).IsError();
+NotFound notFound = await Assert.That(result.AsResult().ErrorCase<NotFound>()).IsSome(); // a case of an error union
 ```
+
+The assertion methods behind `Assert.That(...)` are not public extensions, so `result.IsOk();` does not compile instead of asserting nothing.
 
 ## Documentation
 

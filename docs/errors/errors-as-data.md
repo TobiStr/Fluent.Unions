@@ -109,9 +109,36 @@ catch (ResultErrorException ex)
 
 `Outcome<CartEmpty>` would make a `CartEmpty` value indistinguishable from the error case, and the case conversion would turn values into errors. The analyzer reports it as `FLU0004`.
 
-## `Result<T, TError>`
+## Translating errors between layers
 
-The library also ships `Result<T, TError>`, which takes the error union as a type argument instead of a declaration: `Result<Order, CheckoutError>`. It has fewer operators, needs `(CheckoutError)` casts, and boxes on every operator call. Prefer a declared `[FluentResult<CheckoutError>]` type; `Result<T, TError>` stays for code that already uses it.
+A declared type has no `MapError`. Use `Match` to move to the result type of another layer and switch over the error:
+
+```csharp
+public sealed record BadRequest(string Message);
+public sealed record ServerError;
+
+public union ClientError(BadRequest, ServerError) : IFromException<ClientError>
+{
+    public static ClientError FromException(Exception exception) => new ServerError();
+}
+
+[FluentResult<ClientError>]
+public readonly partial struct ClientResult<T>;
+
+ClientResult<Order> ForClient(Outcome<Order> outcome) => outcome.Match(
+    order => (ClientResult<Order>)order,
+    error => (ClientError)(error switch
+    {
+        CustomerNotFound missing => new BadRequest($"No customer {missing.Id}."),
+        CartEmpty => new BadRequest("The cart is empty."),
+        PaymentDeclined declined => new BadRequest(declined.Reason),
+        Unexpected => new ServerError()
+    }));
+```
+
+The `switch` has to cover every case, so a new case in `CheckoutError` fails the build here.
+
+To recover from one case and keep the others, use the general `Catch`: `.Catch(error => error is PaymentDeclined declined ? Retry(declined.Reason) : error)`. The typed `Catch<TCase>` is for exception cases only.
 
 ## When to choose this over exceptions
 

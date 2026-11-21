@@ -170,4 +170,15 @@ public class ResultAssertionsTests
 
         await Assert.That(message).Contains("to be an option without a value").And.Contains("it was some with value ada");
     }
+
+    [Test]
+    public async Task OnlyAsResultIsAPublicExtension()
+    {
+        var publicMethods = typeof(ResultAssertions)
+            .GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly)
+            .Select(method => method.Name)
+            .Distinct();
+
+        await Assert.That(publicMethods).IsEquivalentTo(["AsResult"]);
+    }
 }

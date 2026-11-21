@@ -231,6 +231,27 @@ public sealed class MapsterOptionTests
     }
 
     [Test]
+    public void AddFluentUnions_twice_adds_the_rule_once()
+    {
+        var config = NewConfig();
+        var rules = config.Rules.Count;
+
+        config.AddFluentUnions();
+
+        Assert.That(config.Rules, Has.Count.EqualTo(rules));
+    }
+
+    [Test]
+    public void AddFluentUnions_concurrently_adds_the_rule_once()
+    {
+        var config = new TypeAdapterConfig();
+
+        Parallel.For(0, 32, _ => config.AddFluentUnions());
+
+        Assert.That(config.Rules, Has.Count.EqualTo(NewConfig().Rules.Count));
+    }
+
+    [Test]
     public void AddFluentUnions_works_on_global_settings()
     {
         var config = TypeAdapterConfig.GlobalSettings;

@@ -8,7 +8,6 @@ public class DefaultResultAnalyzerTests
 {
     [TestCase("Result M() => default(Result);", "Result")]
     [TestCase("Result<int> M() => default(Result<int>);", "Result<int>")]
-    [TestCase("Result<int, MyError> M() => default(Result<int, MyError>);", "Result<int, MyError>")]
     [TestCase("void M() { Result<int> r = default; }", "Result<int>")]
     [TestCase("void M() { Result r = default; }", "Result")]
     [TestCase("Result<int> M() { return default; }", "Result<int>")]
@@ -21,7 +20,6 @@ public class DefaultResultAnalyzerTests
     [TestCase("void M() { var r = new Result<int>(); }", "Result<int>")]
     [TestCase("void M() { var r = new Result(); }", "Result")]
     [TestCase("void M() { Result<int> r = new(); }", "Result<int>")]
-    [TestCase("void M() { var r = new Result<int, MyError>(); }", "Result<int, MyError>")]
     [TestCase("void M(Result r = default) { }", "Result")]
     [TestCase("void M(Result<int> r = default) { }", "Result<int>")]
     public async Task ReportsDefaultResults(string member, string type)
@@ -87,6 +85,8 @@ public class DefaultResultAnalyzerTests
             public struct CustomResult : IErrorResult<CustomResult, Exception>
             {
                 public object? Value => null;
+                public bool IsSuccess => false;
+                public bool TryGetError(out Exception error) { error = default!; return true; }
                 public static CustomResult FromError(Exception error) => default;
                 public static Exception FromException(Exception exception) => exception;
             }

@@ -81,6 +81,7 @@ public static partial class ResultTaskCore
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(resultSelector);
         ArgumentNullException.ThrowIfNull(first);
 
         return Run(first, second, resultSelector);

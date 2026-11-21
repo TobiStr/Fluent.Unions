@@ -32,9 +32,9 @@ public class DefaultResultTests
     }
 
     [Test]
-    public void DefaultResultOfTErrorIsAnErrorThroughFromException()
+    public void DefaultDataErrorResultIsAnErrorThroughFromException()
     {
-        var result = default(Result<int, CheckoutError>);
+        var result = default(CheckoutResult<int>);
 
         Assert.True(result.IsError);
         Assert.False(result.IsSuccess);
@@ -57,10 +57,10 @@ public class DefaultResultTests
     }
 
     [Test]
-    public void SelectAndChainPropagateTheErrorOfADefaultResultOfTError()
+    public void SelectAndChainPropagateTheErrorOfADefaultDataErrorResult()
     {
-        var selected = default(Result<int, CheckoutError>).Select(value => value + 1);
-        var chained = default(Result<int, CheckoutError>).Chain(value => (Result<int, CheckoutError>)(value + 1));
+        var selected = default(CheckoutResult<int>).Select(value => value + 1);
+        var chained = default(CheckoutResult<int>).Chain(value => (CheckoutResult<int>)(value + 1));
 
         Assert.That(((Unexpected)selected.GetError().Value!).Exception.Message, Does.Contain(Uninitialized));
         Assert.That(((Unexpected)chained.GetError().Value!).Exception.Message, Does.Contain(Uninitialized));
@@ -71,7 +71,7 @@ public class DefaultResultTests
     {
         Assert.That(default(Result).Match(() => "ok", _ => "error"), Is.EqualTo("error"));
         Assert.That(default(Result<int>).Match(_ => "ok", _ => "error"), Is.EqualTo("error"));
-        Assert.That(default(Result<int, CheckoutError>).Match(_ => "ok", _ => "error"), Is.EqualTo("error"));
+        Assert.That(default(CheckoutResult<int>).Match(_ => "ok", _ => "error"), Is.EqualTo("error"));
     }
 
     [Test]
@@ -79,7 +79,7 @@ public class DefaultResultTests
     {
         Assert.Throws<InvalidOperationException>(() => default(Result).Check());
         Assert.Throws<InvalidOperationException>(() => default(Result<int>).Check());
-        Assert.Throws<ResultErrorException>(() => default(Result<int, CheckoutError>).Check());
+        Assert.Throws<ResultErrorException>(() => default(CheckoutResult<int>).Check());
     }
 
     [Test]
@@ -127,7 +127,7 @@ public class DefaultResultTests
     {
         var failure = new InvalidOperationException("Boom");
         Result<int> failed = failure;
-        Result<int, CheckoutError> data = (CheckoutError)new CartEmpty();
+        CheckoutResult<int> data = (CheckoutError)new CartEmpty();
 
         var ex = Assert.Throws<InvalidOperationException>(() => failed.GetValue());
         var dataEx = Assert.Throws<InvalidOperationException>(() => data.GetValue());

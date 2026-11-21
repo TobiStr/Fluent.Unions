@@ -41,12 +41,15 @@ group.MapGet("/customers/{id}", (Guid id) => GetCustomer(id)); // Shop.Result<Cu
 
 `ToHttpResult()` also accepts `IResult<TSelf, T, TError>` when `TError : Exception`, and maps like the default type. `ToHttpResult(onError)` works for any error type. There are no `Task` overloads for your own type, so await first. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
-By default `ValidationError` and `ValidationErrors` give 400, `KeyNotFoundException` 404, `UnauthorizedAccessException` 403 and `TimeoutException` 504. Everything else gives 500. Only validation errors show their messages to the client. Map your own exception types, including their subclasses, and choose whether the message is safe to expose:
+By default `ValidationError` and `ValidationErrors` give 400, `KeyNotFoundException` 404, `UnauthorizedAccessException` 403 and `TimeoutException` 504. Everything else gives 500 and is logged at `Error` level. Only validation errors show their messages to the client, also when a `ValidationError` is the inner exception of your own error. Map the exception your `FromException` creates for unexpected failures to 500, because it otherwise inherits the mapping of your base exception. Map your own exception types, including their subclasses, and choose whether the message is safe to expose:
 
 ```csharp
 builder.Services.Configure<ResultHttpOptions>(o => o
-    .Map<OrderShippedException>(StatusCodes.Status409Conflict, exposeMessage: true));
+    .Map<OrderShippedException>(StatusCodes.Status409Conflict, exposeMessage: true)
+    .Map<UnexpectedDomainException>(StatusCodes.Status500InternalServerError));
 ```
+
+The OpenAPI metadata of `WithResultMapping` lists 400 and 500 for errors only. Add `.Produces(...)` for the other statuses you map. A faulted `Task` is not converted: its exception goes through ASP.NET Core's exception handling.
 
 Map errors that are data with `onError`. The `switch` makes the compiler check every case.
 

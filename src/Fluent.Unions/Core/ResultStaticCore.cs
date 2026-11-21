@@ -24,6 +24,7 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Runs <paramref name="body"/> and returns its value, or the thrown exception as an error.
+    /// An <see cref="OperationCanceledException"/> is not captured and propagates.
     /// </summary>
     public static TSelf Try<TSelf, T, TError>(Func<T> body)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
@@ -43,6 +44,7 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Runs <paramref name="body"/> and returns its result, or the thrown exception as an error.
+    /// An <see cref="OperationCanceledException"/> is not captured and propagates.
     /// </summary>
     public static TSelf Try<TSelf, T, TError>(Func<TSelf> body)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
@@ -62,6 +64,7 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Runs <paramref name="body"/> and returns success, or the thrown exception as an error.
+    /// An <see cref="OperationCanceledException"/> is not captured and propagates.
     /// </summary>
     public static TSelf Try<TSelf, TError>(Action body)
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
@@ -82,6 +85,7 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Runs <paramref name="body"/> and returns its result, or the thrown exception as an error.
+    /// An <see cref="OperationCanceledException"/> is not captured and propagates.
     /// </summary>
     public static TSelf Try<TSelf, TError>(Func<TSelf> body)
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
@@ -101,6 +105,7 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Awaits <paramref name="body"/> and returns its value, or the thrown exception as an error.
+    /// An <see cref="OperationCanceledException"/> is not captured and propagates.
     /// </summary>
     public static Task<TSelf> TryAsync<TSelf, T, TError>(Func<Task<T>> body)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
@@ -125,6 +130,7 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Awaits <paramref name="body"/> and returns its result, or the thrown exception as an error.
+    /// An <see cref="OperationCanceledException"/> is not captured and propagates.
     /// </summary>
     public static Task<TSelf> TryAsync<TSelf, T, TError>(Func<Task<TSelf>> body)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
@@ -137,6 +143,7 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Awaits <paramref name="body"/> and returns success, or the thrown exception as an error.
+    /// An <see cref="OperationCanceledException"/> is not captured and propagates.
     /// </summary>
     public static Task<TSelf> TryAsync<TSelf, TError>(Func<Task> body)
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
@@ -162,6 +169,7 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Awaits <paramref name="body"/> and returns its result, or the thrown exception as an error.
+    /// An <see cref="OperationCanceledException"/> is not captured and propagates.
     /// </summary>
     public static Task<TSelf> TryAsync<TSelf, TError>(Func<Task<TSelf>> body)
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
@@ -249,8 +257,9 @@ public static class ResultStaticCore
 
     /// <summary>
     /// Runs <paramref name="operation"/> until it does not fail, at most <paramref name="maxAttempts"/> times, waiting
-    /// <paramref name="delay"/> between attempts, and returns the last result. Thrown exceptions count as failures.
-    /// Cancellation throws <see cref="OperationCanceledException"/>.
+    /// <paramref name="delay"/> between attempts, and returns the last result. Thrown exceptions count as failures,
+    /// including an <see cref="OperationCanceledException"/> such as an HTTP timeout while <paramref name="cancellationToken"/> is not cancelled.
+    /// Cancelling <paramref name="cancellationToken"/> throws <see cref="OperationCanceledException"/>.
     /// </summary>
     public static Task<TSelf> RetryAsync<TSelf, T, TError>(
         Func<CancellationToken, Task<TSelf>> operation,
@@ -282,7 +291,7 @@ public static class ResultStaticCore
                     {
                         result = await operation(cancellationToken).ConfigureAwait(false);
                     }
-                    catch (Exception exception) when (exception is not OperationCanceledException)
+                    catch (Exception exception) when (!IsCancellation(exception, cancellationToken))
                     {
                         result = Flow.Thrown<TSelf, TError>(exception);
                     }
@@ -296,11 +305,14 @@ public static class ResultStaticCore
                         await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                 }
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (!IsCancellation(exception, cancellationToken))
             {
                 return Flow.Thrown<TSelf, TError>(exception);
             }
         }
+
+        static bool IsCancellation(Exception exception, CancellationToken cancellationToken) =>
+            exception is OperationCanceledException && cancellationToken.IsCancellationRequested;
     }
 
     /// <summary>Combines two results into a tuple, or collects every error like <c>CombineAll()</c> on a sequence.</summary>

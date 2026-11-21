@@ -22,7 +22,7 @@ Add `Fluent.Unions.AspNetCore` only to web projects. It references `Fluent.Union
 
 | Namespace | Contents |
 | --- | --- |
-| `Fluent.Unions` | `Result`, `Result<T>`, `Option<T>`, `Loadable<T>`, `Result<T, TError>`, `Ok`, `None`, `Captured<T>`, `ValidationError(s)`, and every operator |
+| `Fluent.Unions` | `Result`, `Result<T>`, `Option<T>`, `Loadable<T>`, `Ok`, `None`, `Captured<T>`, `ValidationError(s)`, and every operator |
 | `Fluent.Unions.Validation` | `Is` and the ready-made `Ensure*` rules |
 | `Fluent.Unions.Abstractions` | `IFromException<T>` for the error type of your own result type, `ResultTypes`, and the result interfaces |
 | `Fluent.Unions.Serialization` | JSON converters, such as `UnionJsonConverter` |

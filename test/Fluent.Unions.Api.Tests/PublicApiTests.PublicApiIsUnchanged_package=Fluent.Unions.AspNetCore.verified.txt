@@ -1,12 +1,10 @@
 ﻿class Fluent.Unions.AspNetCore.HttpResultExtensions
   public static Microsoft.AspNetCore.Http.IResult ToHttpResult(this Fluent.Unions.Result result)
-  public static Microsoft.AspNetCore.Http.IResult ToHttpResult<T, TError>(this Fluent.Unions.Result<T, TError> result, System.Func<TError, Microsoft.AspNetCore.Http.IResult> onError) where TError : notnull, Fluent.Unions.Abstractions.IFromException<TError>
   public static Microsoft.AspNetCore.Http.IResult ToHttpResult<T>(this Fluent.Unions.Option<T> option)
   public static Microsoft.AspNetCore.Http.IResult ToHttpResult<T>(this Fluent.Unions.Result<T> result)
   public static Microsoft.AspNetCore.Http.IResult ToHttpResult<TSelf, T, TError>(this Fluent.Unions.Abstractions.IResult<TSelf, T, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : System.Exception
   public static Microsoft.AspNetCore.Http.IResult ToHttpResult<TSelf, T, TError>(this Fluent.Unions.Abstractions.IResult<TSelf, T, TError> result, System.Func<TError, Microsoft.AspNetCore.Http.IResult> onError) where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
   public static System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult> ToHttpResult(this System.Threading.Tasks.Task<Fluent.Unions.Result> task)
-  public static System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult> ToHttpResult<T, TError>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T, TError>> task, System.Func<TError, Microsoft.AspNetCore.Http.IResult> onError) where TError : notnull, Fluent.Unions.Abstractions.IFromException<TError>
   public static System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult> ToHttpResult<T>(this System.Threading.Tasks.Task<Fluent.Unions.Option<T>> task)
   public static System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult> ToHttpResult<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task)
 
@@ -20,5 +18,4 @@ class Fluent.Unions.AspNetCore.ResultEndpointFilterExtensions
 class Fluent.Unions.AspNetCore.ResultHttpOptions
   public Fluent.Unions.AspNetCore.ResultHttpOptions Map<TException>(int statusCode, [bool exposeMessage = false]) where TException : System.Exception
   public ResultHttpOptions()
-  public int GetStatusCode(System.Exception error)
 

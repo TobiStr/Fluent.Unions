@@ -6,7 +6,7 @@ namespace Fluent.Unions.MongoDB;
 /// <summary>
 /// Refuses to serialize a result, because an error would expose exception details such as the stack trace. Convert a result before serializing it.
 /// </summary>
-/// <typeparam name="TResult">The result type: <see cref="Result"/>, <see cref="Result{T}"/> or <see cref="Result{T, TError}"/>.</typeparam>
+/// <typeparam name="TResult">The result type: <see cref="Result"/>, <see cref="Result{T}"/> or your own result type.</typeparam>
 public sealed class ResultSerializer<TResult> : SerializerBase<TResult>
 {
     /// <inheritdoc />

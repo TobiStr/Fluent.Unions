@@ -1,5 +1,5 @@
 ﻿class Fluent.Unions.MessagePack.MessagePackSerializerOptionsExtensions
-  public static MessagePack.MessagePackSerializerOptions WithUnions(this MessagePack.MessagePackSerializerOptions options)
+  public static MessagePack.MessagePackSerializerOptions WithFluentUnions(this MessagePack.MessagePackSerializerOptions options)
 
 class Fluent.Unions.MessagePack.OptionFormatter<T> : MessagePack.Formatters.IMessagePackFormatter, MessagePack.Formatters.IMessagePackFormatter<Fluent.Unions.Option<T>>
   public Fluent.Unions.Option<T> Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options)

@@ -11,3 +11,11 @@ public class DomainException(string message, Exception? inner = null) : Exceptio
 
 [FluentResult<DomainException>]
 public readonly partial struct Result<T>;
+
+public sealed record OutOfStock(string Sku) : IFromException<OutOfStock>
+{
+    public static OutOfStock FromException(Exception exception) => new("unknown");
+}
+
+[FluentResult<OutOfStock>]
+public readonly partial struct StockResult<T>;

@@ -74,7 +74,7 @@ public sealed class UnusedResultAnalyzer : DiagnosticAnalyzer
     {
         var method = invocation.TargetMethod;
 
-        if (!SymbolEqualityComparer.Default.Equals(method.ContainingAssembly, types.Library))
+        if (!types.IsLibraryMethod(method))
             return false;
 
         return HandlingOperators.Contains(method.Name)

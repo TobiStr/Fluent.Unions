@@ -33,7 +33,7 @@ JsonSerializer.Serialize(new CustomerDto("Ada", "Countess"));  // {"Name":"Ada",
 
 - `Option<T>` needs no registration. The converter is applied by attribute.
 - A missing property reads as a `default` option, which holds no value.
-- `WhenWritingNull` does not omit `None`. `WhenWritingDefault` omits only `default` options.
+- `WhenWritingNull` does not omit `None`. `WhenWritingDefault` omits every option without a value, because `None` equals `default`.
 - `Option<Option<T>>` loses the difference between its levels.
 - `Result` and `Result<T>` throw `NotSupportedException` in both directions.
 - Both converters use reflection. See [AOT and trimming](#aot-and-trimming).
@@ -71,12 +71,12 @@ An option is a struct, so `null` checks do not apply to it.
 | --- | --- | --- |
 | none | `"Nickname":null` | `"Nickname":null` |
 | `WhenWritingNull` | `"Nickname":null` | `"Nickname":null` |
-| `WhenWritingDefault` | `"Nickname":null` | property omitted |
+| `WhenWritingDefault` | property omitted | property omitted |
 
 ```csharp
 var options = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault };
 
-JsonSerializer.Serialize(new CustomerDto("Ada", Option.None), options); // {"Name":"Ada","Nickname":null}
+JsonSerializer.Serialize(new CustomerDto("Ada", Option.None), options); // {"Name":"Ada"}
 JsonSerializer.Serialize(new CustomerDto("Ada", default), options);     // {"Name":"Ada"}
 ```
 
@@ -98,7 +98,7 @@ public partial class AppJsonContext : JsonSerializerContext;
 
 ## Results refuse to serialize
 
-`JsonSerializer` throws `NotSupportedException` for `Result`, `Result<T>` and `Result<T, TError>`, when writing and when reading. `ResultJsonConverter` refuses every result type, so the same holds for your own [result type](../errors/custom-error-types.md) declared with `[FluentResult<TError>]`, like the default type. Integration authors can recognize result types with `Fluent.Unions.Abstractions.ResultTypes` (`IsResult(Type)`, `ErrorType(Type)`, `ValueType(Type)`). Without that, an error would be written with its message, stack trace and target site, which leaks internals to clients.
+`JsonSerializer` throws `NotSupportedException` for `Result` and `Result<T>`, when writing and when reading. `ResultJsonConverter` refuses every result type, so the same holds for your own [result type](../errors/custom-error-types.md) declared with `[FluentResult<TError>]`, like the default type. Integration authors can recognize result types with `Fluent.Unions.Abstractions.ResultTypes` (`IsResult(Type)`, `ErrorType(Type)`, `ValueType(Type)`). Without that, an error would be written with its message, stack trace and target site, which leaks internals to clients.
 
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");

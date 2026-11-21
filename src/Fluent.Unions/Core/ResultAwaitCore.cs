@@ -68,7 +68,7 @@ public static partial class ResultAwaitCore
     /// <summary>
     /// Chains an asynchronous operation that returns a result itself.
     /// </summary>
-    public static Task<TOutResult> SelectManyAwait<TSelf, T, TError, TOutResult, TOut>(TSelf result, Func<T, Task<TOutResult>> selector)
+    public static Task<TOutResult> ChainAwait<TSelf, T, TError, TOutResult, TOut>(TSelf result, Func<T, Task<TOutResult>> selector)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
@@ -84,7 +84,7 @@ public static partial class ResultAwaitCore
     /// <summary>
     /// Chains an asynchronous operation that returns a result without a value.
     /// </summary>
-    public static Task<TUnit> SelectManyAwait<TSelf, T, TError, TUnit>(TSelf result, Func<T, Task<TUnit>> selector)
+    public static Task<TUnit> ChainAwait<TSelf, T, TError, TUnit>(TSelf result, Func<T, Task<TUnit>> selector)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TUnit : struct, IFluentUnitResult<TUnit, TError>
         where TError : notnull
@@ -100,7 +100,7 @@ public static partial class ResultAwaitCore
     /// <summary>
     /// Chains an asynchronous operation after a successful result without a value.
     /// </summary>
-    public static Task<TSelf> SelectManyAwait<TSelf, TError>(TSelf result, Func<Task<TSelf>> selector)
+    public static Task<TSelf> ChainAwait<TSelf, TError>(TSelf result, Func<Task<TSelf>> selector)
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
@@ -112,7 +112,7 @@ public static partial class ResultAwaitCore
     /// <summary>
     /// Chains an asynchronous operation that produces a value after a successful result without a value.
     /// </summary>
-    public static Task<TOutResult> SelectManyAwait<TSelf, TError, TOutResult, TOut>(TSelf result, Func<Task<TOutResult>> selector)
+    public static Task<TOutResult> ChainAwait<TSelf, TError, TOutResult, TOut>(TSelf result, Func<Task<TOutResult>> selector)
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
@@ -123,33 +123,6 @@ public static partial class ResultAwaitCore
             ? Task.FromResult(TOutResult.FromError(error))
             : Invoke<TOutResult, TError>(selector);
     }
-
-    /// <inheritdoc cref="SelectManyAwait{TSelf, T, TError, TOutResult, TOut}(TSelf, Func{T, Task{TOutResult}})"/>
-    public static Task<TOutResult> ChainAwait<TSelf, T, TError, TOutResult, TOut>(TSelf result, Func<T, Task<TOutResult>> selector)
-        where TSelf : struct, IFluentResult<TSelf, T, TError>
-        where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
-        where TError : notnull =>
-        SelectManyAwait<TSelf, T, TError, TOutResult, TOut>(result, selector);
-
-    /// <inheritdoc cref="SelectManyAwait{TSelf, T, TError, TUnit}(TSelf, Func{T, Task{TUnit}})"/>
-    public static Task<TUnit> ChainAwait<TSelf, T, TError, TUnit>(TSelf result, Func<T, Task<TUnit>> selector)
-        where TSelf : struct, IFluentResult<TSelf, T, TError>
-        where TUnit : struct, IFluentUnitResult<TUnit, TError>
-        where TError : notnull =>
-        SelectManyAwait<TSelf, T, TError, TUnit>(result, selector);
-
-    /// <inheritdoc cref="SelectManyAwait{TSelf, TError}(TSelf, Func{Task{TSelf}})"/>
-    public static Task<TSelf> ChainAwait<TSelf, TError>(TSelf result, Func<Task<TSelf>> selector)
-        where TSelf : struct, IFluentUnitResult<TSelf, TError>
-        where TError : notnull =>
-        SelectManyAwait<TSelf, TError>(result, selector);
-
-    /// <inheritdoc cref="SelectManyAwait{TSelf, TError, TOutResult, TOut}(TSelf, Func{Task{TOutResult}})"/>
-    public static Task<TOutResult> ChainAwait<TSelf, TError, TOutResult, TOut>(TSelf result, Func<Task<TOutResult>> selector)
-        where TSelf : struct, IFluentUnitResult<TSelf, TError>
-        where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
-        where TError : notnull =>
-        SelectManyAwait<TSelf, TError, TOutResult, TOut>(result, selector);
 
     /// <summary>
     /// Keeps the value if the asynchronous predicate is satisfied, otherwise the result becomes the error from <paramref name="error"/>.
@@ -213,7 +186,7 @@ public static partial class ResultAwaitCore
     /// <summary>
     /// Runs an asynchronous dependent step and keeps both values as a tuple.
     /// </summary>
-    public static Task<TOutResult> BindAppendAwait<TSelf, T, TError, TNextResult, TNext, TOutResult>(
+    public static Task<TOutResult> ChainAppendAwait<TSelf, T, TError, TNextResult, TNext, TOutResult>(
         TSelf result,
         Func<T, Task<TNextResult>> selector)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
@@ -241,7 +214,7 @@ public static partial class ResultAwaitCore
     /// <summary>
     /// Runs an asynchronous dependent step with the tuple elements and appends its value to the tuple.
     /// </summary>
-    public static Task<TOutResult> BindAppendAwait<TSelf, T1, T2, TError, TNextResult, TNext, TOutResult>(
+    public static Task<TOutResult> ChainAppendAwait<TSelf, T1, T2, TError, TNextResult, TNext, TOutResult>(
         TSelf result,
         Func<T1, T2, Task<TNextResult>> selector)
         where TSelf : struct, IFluentResult<TSelf, (T1, T2), TError>
@@ -277,7 +250,7 @@ public static partial class ResultAwaitCore
     /// <summary>
     /// Runs an asynchronous dependent step with the tuple elements and appends its value to the tuple.
     /// </summary>
-    public static Task<TOutResult> BindAppendAwait<TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult>(
+    public static Task<TOutResult> ChainAppendAwait<TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult>(
         TSelf result,
         Func<T1, T2, T3, Task<TNextResult>> selector)
         where TSelf : struct, IFluentResult<TSelf, (T1, T2, T3), TError>

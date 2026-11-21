@@ -36,7 +36,7 @@ internal static class Emitter
         {
             code.AppendLine();
             code.AppendLine($"/// <inheritdoc cref=\"T:Fluent.Unions.Core.Result{group.Key}Core\"/>");
-            code.AppendLine($"{model.Accessibility} static partial class {model.Name}{group.Key}Extensions");
+            code.AppendLine($"{model.Accessibility} static class {model.Name}{group.Key}Operators");
             code.AppendLine("{");
             foreach (var op in group)
                 Forwarder(code, model, op);
@@ -49,7 +49,7 @@ internal static class Emitter
     private static void Generic(StringBuilder code, ResultTypeModel model)
     {
         var t = model.TypeParameter!;
-        var self = $"{model.Name}<{t}>";
+        var self = $"{model.Identifier}<{t}>";
         var e = model.ErrorType;
 
         code.AppendLine("[global::System.Runtime.CompilerServices.Union]");
@@ -59,23 +59,10 @@ internal static class Emitter
         code.AppendLine($"    private readonly {t} _value;");
         code.AppendLine($"    private readonly {e} _error;");
         code.AppendLine("    private readonly byte _state;");
-        code.AppendLine();
-        code.AppendLine("    /// <summary>Creates a successful result. A <c>null</c> value gives an empty result, which counts as an error.</summary>");
-        code.AppendLine($"    public {model.Name}({t} value)");
-        code.AppendLine("    {");
-        code.AppendLine("        _value = value;");
-        code.AppendLine("        _error = default!;");
-        code.AppendLine("        _state = value is null ? (byte)0 : (byte)1;");
-        code.AppendLine("    }");
-        code.AppendLine();
-        code.AppendLine("    /// <summary>Creates a failed result. A <c>null</c> error gives an empty result, which counts as an error.</summary>");
-        code.AppendLine($"    public {model.Name}({e} value)");
-        code.AppendLine("    {");
-        code.AppendLine("        _value = default!;");
-        code.AppendLine("        _error = value;");
-        code.AppendLine(model.ErrorIsValueType ? "        _state = 2;" : "        _state = value is null ? (byte)0 : (byte)2;");
-        code.AppendLine("    }");
-
+        Member(code, model, "ctor:" + t, "/// <summary>Creates a successful result. A <c>null</c> value gives an empty result, which counts as an error.</summary>",
+            $"public {model.Identifier}({t} value)\n    {{\n        _value = value;\n        _error = default!;\n        _state = value is null ? (byte)0 : (byte)1;\n    }}");
+        Member(code, model, "ctor:" + e, "/// <summary>Creates a failed result. A <c>null</c> error gives an empty result, which counts as an error.</summary>",
+            $"public {model.Identifier}({e} value)\n    {{\n        _value = default!;\n        _error = value;\n        _state = {(model.ErrorIsValueType ? "2" : "value is null ? (byte)0 : (byte)2")};\n    }}");
         Member(code, model, "Value", "/// <summary>The value, the error, or <c>null</c> when the result is empty.</summary>",
             "public object? Value => _state switch { 1 => _value, 2 => _error, _ => null };");
         Member(code, model, "IsSuccess", "/// <summary>Indicates whether the result holds a value.</summary>",
@@ -84,7 +71,7 @@ internal static class Emitter
             "public bool IsError => _state != 1;");
         Member(code, model, "TryGetValue", "/// <summary>Gets the value, if the result holds one.</summary>",
             $"public bool TryGetValue([{CodeAnalysis}.MaybeNullWhen(false)] out {t} value)\n    {{\n        value = _value;\n        return _state == 1;\n    }}");
-        TryGetError(code, model, $"{Abstractions}.IFluentResult<{self}, {t}, {e}>", self);
+        TryGetError(code, model, self);
         Member(code, model, "GetValue",
             "/// <summary>Gets the value.</summary>\n    /// <exception cref=\"global::System.InvalidOperationException\">The result holds an error.</exception>",
             $"[global::Fluent.Unions.Core.ResultOperator]\n    public {t} GetValue() => {MemberCore}.GetValue<{self}, {t}, {e}>(this);");
@@ -101,7 +88,7 @@ internal static class Emitter
             "/// <summary>Splits the result Go style: <c>var (value, error) = result;</c>. Exactly one of them is set.</summary>",
             $"public void Deconstruct(out {t}? value, {(model.ErrorIsValueType ? $"[{CodeAnalysis}.MaybeNull] out {e}" : $"out {e}?")} error) =>\n        {MemberCore}.Deconstruct<{self}, {t}, {e}>(this, out value, out error);");
         Member(code, model, "ToString", "/// <inheritdoc />",
-            $"public override string ToString() => _state switch {{ 1 => _value?.ToString() ?? \"\", 2 => _error{(model.ErrorIsValueType ? "" : "?")}.ToString() ?? \"\", _ => \"\" }};");
+            $"public override string ToString() => _state switch\n    {{\n        1 => _value?.ToString() ?? \"\",\n        2 => {MemberCore}.Describe(_error),\n        _ => {MemberCore}.Describe(MapException({MemberCore}.Uninitialized(typeof({self}))))\n    }};");
 
         code.AppendLine();
         code.AppendLine($"    static {self} {Abstractions}.IResult<{self}, {t}, {e}>.FromValue({t} value) => new(value);");
@@ -109,12 +96,10 @@ internal static class Emitter
         code.AppendLine($"    static {self} {Abstractions}.IErrorResult<{self}, {e}>.FromError({e} error) => new(error);");
         ExceptionMappingMembers(code, model, self, null);
 
-        {
-            code.AppendLine();
-            code.AppendLine("    /// <summary>Drops the value and keeps success or the error.</summary>");
-            code.AppendLine($"    public static implicit operator {model.Name}({self} result) =>");
-            code.AppendLine($"        global::Fluent.Unions.Core.ResultTupleCore.DiscardValue<{self}, {t}, {e}, {model.Name}>(result);");
-        }
+        code.AppendLine();
+        code.AppendLine("    /// <summary>Drops the value and keeps success or the error.</summary>");
+        code.AppendLine($"    public static implicit operator {model.Identifier}({self} result) =>");
+        code.AppendLine($"        global::Fluent.Unions.Core.ResultTupleCore.DiscardValue<{self}, {t}, {e}, {model.Identifier}>(result);");
 
         foreach (var errorCase in model.ErrorCases)
         {
@@ -128,7 +113,7 @@ internal static class Emitter
 
     private static void Unit(StringBuilder code, ResultTypeModel model, EquatableArray<OperatorTemplate> operators, bool declared)
     {
-        var self = model.Name;
+        var self = model.Identifier;
         var e = model.ErrorType;
 
         if (!declared)
@@ -143,22 +128,12 @@ internal static class Emitter
         code.AppendLine("{");
         code.AppendLine($"    private readonly {e} _error;");
         code.AppendLine("    private readonly byte _state;");
-        code.AppendLine();
-        code.AppendLine("    /// <summary>Creates a successful result.</summary>");
-        code.AppendLine($"    public {self}({OkType} value)");
-        code.AppendLine("    {");
-        code.AppendLine("        _error = default!;");
-        code.AppendLine("        _state = 1;");
-        code.AppendLine("    }");
-        code.AppendLine();
-        code.AppendLine("    /// <summary>Creates a failed result. A <c>null</c> error gives an empty result, which counts as an error.</summary>");
-        code.AppendLine($"    public {self}({e} value)");
-        code.AppendLine("    {");
-        code.AppendLine("        _error = value;");
-        code.AppendLine(model.ErrorIsValueType ? "        _state = 2;" : "        _state = value is null ? (byte)0 : (byte)2;");
-        code.AppendLine("    }");
 
         var members = declared ? model : model with { DeclaredMembers = EquatableArray<string>.Empty };
+        Member(code, members, "ctor:" + OkType, "/// <summary>Creates a successful result.</summary>",
+            $"public {self}({OkType} value)\n    {{\n        _error = default!;\n        _state = 1;\n    }}");
+        Member(code, members, "ctor:" + e, "/// <summary>Creates a failed result. A <c>null</c> error gives an empty result, which counts as an error.</summary>",
+            $"public {self}({e} value)\n    {{\n        _error = value;\n        _state = {(model.ErrorIsValueType ? "2" : "value is null ? (byte)0 : (byte)2")};\n    }}");
         Member(code, members, "Value", "/// <summary>The case: <see cref=\"global::Fluent.Unions.Ok\"/>, the error, or <c>null</c> when the result is empty.</summary>",
             $"public object? Value => _state switch {{ 1 => new {OkType}(), 2 => _error, _ => null }};");
         Member(code, members, "IsSuccess", "/// <summary>Indicates whether the result is successful.</summary>",
@@ -167,7 +142,7 @@ internal static class Emitter
             "public bool IsError => _state != 1;");
         Member(code, members, "TryGetValue", "/// <summary>Gets the success case without boxing, if the result is successful.</summary>",
             $"public bool TryGetValue(out {OkType} value)\n    {{\n        value = default;\n        return _state == 1;\n    }}");
-        TryGetError(code, members, $"{Abstractions}.IFluentUnitResult<{self}, {e}>", self);
+        TryGetError(code, members, self);
         Member(code, members, "GetError",
             "/// <summary>Gets the error.</summary>\n    /// <exception cref=\"global::System.InvalidOperationException\">The result is successful.</exception>",
             $"[global::Fluent.Unions.Core.ResultOperator]\n    public {e} GetError() => {MemberCore}.GetError<{self}, {e}>(this);");
@@ -176,6 +151,8 @@ internal static class Emitter
         Member(code, members, "Error",
             "/// <summary>A failed result.</summary>\n    /// <exception cref=\"global::System.ArgumentNullException\"><paramref name=\"error\"/> is <c>null</c>.</exception>",
             $"public static {self} Error({e} error) => {MemberCore}.Error<{self}, {e}>(error);");
+        Member(code, members, "ToString", "/// <inheritdoc />",
+            $"public override string ToString() => _state switch\n    {{\n        1 => \"Ok\",\n        2 => {MemberCore}.Describe(_error),\n        _ => {MemberCore}.Describe(MapException({MemberCore}.Uninitialized(typeof({self}))))\n    }};");
 
         code.AppendLine();
         code.AppendLine($"    static {self} {Abstractions}.IFluentUnitResult<{self}, {e}>.Success => new(new {OkType}());");
@@ -189,7 +166,7 @@ internal static class Emitter
         code.AppendLine("}");
     }
 
-    private static void TryGetError(StringBuilder code, ResultTypeModel model, string contract, string self)
+    private static void TryGetError(StringBuilder code, ResultTypeModel model, string self)
     {
         var e = model.ErrorType;
         if (model.ErrorIsValueType)
@@ -204,7 +181,7 @@ internal static class Emitter
             "/// <summary>Gets the error, if the result holds one. An empty result holds the error for an uninitialized result.</summary>",
             $"public bool TryGetError([{CodeAnalysis}.NotNullWhen(true)] out {e}? error)\n    {{\n{TryGetErrorBody(self)}\n    }}");
         code.AppendLine();
-        code.AppendLine($"    bool {contract}.TryGetError([{CodeAnalysis}.MaybeNullWhen(false)] out {e} error) => TryGetError(out error);");
+        code.AppendLine($"    bool {Abstractions}.IErrorResult<{self}, {e}>.TryGetError([{CodeAnalysis}.MaybeNullWhen(false)] out {e} error) => TryGetError(out error);");
     }
 
     private static string TryGetErrorBody(string self) =>
@@ -227,16 +204,13 @@ internal static class Emitter
         var expression = model.Mapping switch
         {
             ExceptionMapping.Identity => "exception",
-            ExceptionMapping.ErrorType => $"{e}.FromException(exception)",
+            ExceptionMapping.ErrorType => $"{MemberCore}.FromException<{e}>(exception)",
             _ when declaringType is not null => $"{declaringType}.FromException(exception)",
             _ => "FromException(exception)"
         };
 
         code.AppendLine();
         code.AppendLine($"    private static {e} MapException({Exception} exception) => {expression};");
-        if (model.Mapping == ExceptionMapping.Declared && declaringType is null)
-            return;
-
         code.AppendLine();
         code.AppendLine($"    static {e} {Abstractions}.IErrorResult<{self}, {e}>.FromException({Exception} exception) => MapException(exception);");
     }

@@ -65,7 +65,9 @@ internal static class AnalyzerTest
         var document = project.AddDocument("Snippet.cs", SourceText.From(Usings + source));
 
         var compilation = (await document.Project.GetCompilationAsync())!;
-        var diagnostic = (await compilation.WithAnalyzers([analyzer]).GetAnalyzerDiagnosticsAsync())
+        CSharpGeneratorDriver.Create([new Generators.FluentResultGenerator().AsSourceGenerator()], parseOptions: ParseOptions)
+            .RunGeneratorsAndUpdateCompilation(compilation, out compilation, out _);
+        var diagnostic =(await compilation.WithAnalyzers([analyzer]).GetAnalyzerDiagnosticsAsync())
             .Where(d => provider.FixableDiagnosticIds.Contains(d.Id))
             .OrderBy(d => d.Location.SourceSpan.Start)
             .First();

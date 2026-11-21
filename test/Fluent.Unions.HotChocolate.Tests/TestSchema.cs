@@ -58,6 +58,8 @@ public class Query
         new ValidationError("The book is not available.")
     ]);
 
+    public Result<Book> InvalidSingle() => new ValidationError("Title is required.", "Title");
+
     public async Task<Result<Book>> WaitAsync(CancellationToken cancellationToken)
     {
         await Task.Delay(Timeout.Infinite, cancellationToken);

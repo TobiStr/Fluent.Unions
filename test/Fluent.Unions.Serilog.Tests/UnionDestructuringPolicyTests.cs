@@ -12,6 +12,15 @@ public record NotFound(string Id) : IFromException<NotFound>
     public static NotFound FromException(Exception exception) => new(exception.Message);
 }
 
+[FluentResult<NotFound>]
+public readonly partial struct LookupResult<T>;
+
+[FluentResult<string>]
+public readonly partial struct SResult<T>
+{
+    public static string FromException(Exception exception) => exception.Message;
+}
+
 public record Customer(string Name, Option<string> Nickname);
 
 public class UnionDestructuringPolicyTests
@@ -201,29 +210,48 @@ public class UnionDestructuringPolicyTests
     }
 
     [Test]
-    public void ResultOfTAndTError_Success_LogsTheValue()
+    public void DataErrorResult_Success_LogsTheValue()
     {
-        var (value, _, _) = Log((Result<int, NotFound>)7);
+        var (value, _, _) = Log((LookupResult<int>)7);
 
         Assert.That(Scalar(value), Is.EqualTo(7));
     }
 
     [Test]
-    public void ResultOfTAndTError_Error_LogsTheDestructuredErrorData()
+    public void DataErrorResult_Error_LogsTheDestructuredErrorData()
     {
-        var (value, _, _) = Log((Result<int, NotFound>)new NotFound("42"));
+        var (value, _, _) = Log((LookupResult<int>)new NotFound("42"));
 
         var error = Properties(Properties(value)["Error"]);
         Assert.That(Scalar(error["Id"]), Is.EqualTo("42"));
     }
 
     [Test]
-    public void ResultOfTAndTError_Default_LogsTheErrorFromFromException()
+    public void DataErrorResult_Default_LogsTheErrorFromFromException()
     {
-        var (value, _, _) = Log(default(Result<int, NotFound>));
+        var (value, _, _) = Log(default(LookupResult<int>));
 
         Assert.That(Properties(Properties(value)["Error"]).Keys, Is.EqualTo(new[] { "Id" }));
     }
+
+#pragma warning disable FLU0004
+    [Test]
+    public void ResultWhoseValueHasTheErrorType_Ok_LogsTheValue()
+    {
+        var (value, _, _) = Log(SResult<string>.Ok("fine"));
+
+        Assert.That(Scalar(value), Is.EqualTo("fine"));
+    }
+
+    [Test]
+    public void ResultWhoseValueHasTheErrorType_Error_LogsTheError()
+    {
+        var (value, _, _) = Log(SResult<string>.Error("broken"));
+
+        Assert.That(Properties(value).Keys, Is.EqualTo(new[] { "Error" }));
+        Assert.That(Scalar(Properties(value)["Error"]), Is.EqualTo("broken"));
+    }
+#pragma warning restore FLU0004
 
     [Test]
     public void Loadable_NotLoadedAndDefault_LogNotLoaded()

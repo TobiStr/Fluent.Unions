@@ -45,6 +45,8 @@ public class ErrorFactoryAnalyzerTests
             public struct Custom : IErrorResult<Custom, MyError>
             {
                 public object? Value => null;
+                public bool IsSuccess => false;
+                public bool TryGetError(out MyError error) { error = default!; return true; }
                 {{fromError}}
                 {{fromException}}
             }
@@ -123,6 +125,8 @@ public class ErrorFactoryAnalyzerTests
             public struct Custom : IErrorResult<Custom, MyError>
             {
                 public object? Value => null;
+                public bool IsSuccess => false;
+                public bool TryGetError(out MyError error) { error = default!; return true; }
                 {{CleanFromError}}
                 {{CleanFromException}}
             }

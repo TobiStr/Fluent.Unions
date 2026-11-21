@@ -5,17 +5,17 @@ namespace Fluent.Unions.Dapper;
 /// <summary>
 /// Registers the Dapper type handlers for <see cref="Option{T}"/>.
 /// </summary>
-public static class OptionHandlers
+public static class FluentUnionsDapper
 {
     /// <summary>
-    /// Registers a handler for <c>Option&lt;T&gt;</c>. Call it once at startup for every <typeparamref name="T"/> you use.
+    /// Registers a handler for <c>Option&lt;T&gt;</c>, for a <typeparamref name="T"/> beyond the common types. Calling it again replaces the handler with an equal one.
     /// </summary>
     public static void Register<T>() => SqlMapper.AddTypeHandler(new OptionTypeHandler<T>());
 
     /// <summary>
-    /// Registers handlers for <c>Option&lt;T&gt;</c> of the common database types: bool, byte, short, int, long, float, double, decimal, string, Guid, DateTime, DateTimeOffset, TimeSpan and byte[].
+    /// Registers handlers for <c>Option&lt;T&gt;</c> of the common database types: bool, byte, short, int, long, float, double, decimal, string, Guid, DateTime, DateTimeOffset, TimeSpan and byte[]. Safe to call more than once.
     /// </summary>
-    public static void RegisterCommon()
+    public static void Register()
     {
         Register<bool>();
         Register<byte>();

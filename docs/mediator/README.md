@@ -67,14 +67,14 @@ MediatR names the first type parameter `TRequest`. Both classes are sealed and h
 
 ## With your own result type
 
-Both behaviors apply to every result type: `Result`, `Result<T>`, `Result<T, TError>` and a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). The constraint on `TResponse` is just `struct`. A request with a response that is not a result passes through untouched.
+Both behaviors apply to every result type: `Result`, `Result<T>` and a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). The constraint on `TResponse` is just `struct`. A request with a response that is not a result passes through untouched.
 
 The error is built with the response type's `FromException`. For a `DomainException` result, the exception (or the `ValidationErrors`) is mapped by `DomainException.FromException`.
 
-Mediator's source generator cannot see types that another generator emits. When a request returns the value-less result, declare it explicitly and turn the companion off on `Result<T>`:
+Mediator's source generator cannot see types that another generator emits. When a request returns the value-less result, declare it explicitly next to `Result<T>`. The generator then uses your declaration instead of writing the companion itself:
 
 ```csharp
-[FluentResult<DomainException>(Companion = false)]
+[FluentResult<DomainException>]
 public readonly partial struct Result<T>;
 
 [FluentResult<DomainException>]

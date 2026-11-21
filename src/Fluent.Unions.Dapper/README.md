@@ -19,9 +19,9 @@ Register a handler once at startup for every `T` you use in an `Option<T>`, or r
 ```csharp
 using Fluent.Unions.Dapper;
 
-OptionHandlers.Register<int>();
-OptionHandlers.Register<OrderStatus>();
-OptionHandlers.RegisterCommon(); // bool, byte, short, int, long, float, double, decimal, string, Guid, DateTime, DateTimeOffset, TimeSpan, byte[]
+FluentUnionsDapper.Register<int>();
+FluentUnionsDapper.Register<OrderStatus>();
+FluentUnionsDapper.Register(); // bool, byte, short, int, long, float, double, decimal, string, Guid, DateTime, DateTimeOffset, TimeSpan, byte[]
 ```
 
 Use an option as a parameter and as a column.

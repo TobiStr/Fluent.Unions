@@ -12,11 +12,6 @@ public class ResultSerializerTests
         public Result<int> Outcome { get; set; }
     }
 
-    private sealed record OrderError(Exception Exception) : Fluent.Unions.Abstractions.IFromException<OrderError>
-    {
-        public static OrderError FromException(Exception exception) => new(exception);
-    }
-
     [OneTimeSetUp]
     public void Register() => FluentUnionsBson.Register();
 
@@ -46,6 +41,5 @@ public class ResultSerializerTests
     {
         Assert.That(BsonSerializer.LookupSerializer<Result>(), Is.InstanceOf<ResultSerializer<Result>>());
         Assert.That(BsonSerializer.LookupSerializer<Result<string>>(), Is.InstanceOf<ResultSerializer<Result<string>>>());
-        Assert.That(BsonSerializer.LookupSerializer<Result<int, OrderError>>(), Is.InstanceOf<ResultSerializer<Result<int, OrderError>>>());
     }
 }

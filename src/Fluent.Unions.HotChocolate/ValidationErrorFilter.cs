@@ -7,12 +7,12 @@ internal sealed class ValidationErrorFilter : IErrorFilter
 {
     public IError OnError(IError error)
     {
-        if (error.Exception is not ValidationErrors validation)
+        return error.Exception switch
         {
-            return error;
-        }
-
-        return new AggregateError(validation.Errors.Select(failure => Describe(error, failure)));
+            ValidationErrors validation => new AggregateError(validation.Errors.Select(failure => Describe(error, failure))),
+            ValidationError failure => Describe(error, failure),
+            _ => error
+        };
     }
 
     private static IError Describe(IError error, ValidationError failure)

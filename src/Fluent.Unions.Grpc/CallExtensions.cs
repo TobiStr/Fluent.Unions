@@ -3,13 +3,14 @@ using Grpc.Core;
 namespace Fluent.Unions.Grpc;
 
 /// <summary>
-/// Converts gRPC client calls to <see cref="Result{T}"/>. An error is the <see cref="RpcException"/> the call failed with.
-/// A cancelled call throws <see cref="OperationCanceledException"/>, never an error.
+/// Converts gRPC client calls to <see cref="Result{T}"/>. An error is an <see cref="RpcException"/> with the status code the call
+/// failed with, an empty detail and no trailers, so it can be returned to your own caller without leaking the downstream message.
+/// The original is its <c>Status.DebugException</c>. A cancelled call throws <see cref="OperationCanceledException"/>, never an error.
 /// </summary>
 public static class CallExtensions
 {
     /// <summary>
-    /// Awaits the unary call and returns its response, or the <see cref="RpcException"/> as an error.
+    /// Awaits the unary call and returns its response, or the sanitized <see cref="RpcException"/> as an error.
     /// </summary>
     public static async Task<Result<TResponse>> ToResult<TResponse>(this AsyncUnaryCall<TResponse> call)
     {
@@ -20,7 +21,7 @@ public static class CallExtensions
     }
 
     /// <summary>
-    /// Awaits the client-streaming call and returns its response, or the <see cref="RpcException"/> as an error.
+    /// Awaits the client-streaming call and returns its response, or the sanitized <see cref="RpcException"/> as an error.
     /// </summary>
     public static async Task<Result<TResponse>> ToResult<TRequest, TResponse>(this AsyncClientStreamingCall<TRequest, TResponse> call)
     {
@@ -42,7 +43,7 @@ public static class CallExtensions
         }
         catch (RpcException exception)
         {
-            return Result<TResponse>.Error(exception);
+            return Result<TResponse>.Error(new RpcException(new Status(exception.StatusCode, string.Empty, exception)));
         }
     }
 }

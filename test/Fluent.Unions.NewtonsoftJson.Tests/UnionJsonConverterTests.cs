@@ -142,6 +142,43 @@ public class UnionJsonConverterTests
     }
 
     [Test]
+    public void CanNotConvertResultsOrOptions()
+    {
+        var converter = new UnionJsonConverter();
+
+        Assert.That(converter.CanConvert(typeof(Result)), Is.False);
+        Assert.That(converter.CanConvert(typeof(Result<int>)), Is.False);
+        Assert.That(converter.CanConvert(typeof(Result<int>?)), Is.False);
+        Assert.That(converter.CanConvert(typeof(Option<int>)), Is.False);
+        Assert.That(converter.CanConvert(typeof(Option<int>?)), Is.False);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ResultsStayRefusedWhateverTheRegistrationOrder(bool unionConverterFirst)
+    {
+        var settings = new JsonSerializerSettings();
+
+        if (unionConverterFirst)
+        {
+            settings.Converters.Add(new UnionJsonConverter());
+            settings.AddFluentUnions();
+        }
+        else
+        {
+            settings.AddFluentUnions();
+            settings.Converters.Add(new UnionJsonConverter());
+        }
+
+        Result<int> error = new InvalidOperationException("Secret");
+        List<Result<int>> results = [5, error];
+
+        Assert.Throws<NotSupportedException>(() => JsonConvert.SerializeObject(error, settings));
+        Assert.Throws<NotSupportedException>(() => JsonConvert.SerializeObject(results, settings));
+        Assert.That(JsonConvert.SerializeObject(new List<Option<int>> { Option.Some(5), Option.None }, settings), Is.EqualTo("[5,null]"));
+    }
+
+    [Test]
     public void PropertyNamesAreExposed()
     {
         Assert.That(UnionJsonConverter.TypeProperty, Is.EqualTo("$type"));

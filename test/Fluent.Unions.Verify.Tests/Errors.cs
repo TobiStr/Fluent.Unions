@@ -13,4 +13,7 @@ public union AppError(NotFound, Declined, Unexpected) : IFromException<AppError>
     public static AppError FromException(Exception exception) => new Unexpected(exception);
 }
 
+[FluentResult<AppError>]
+public readonly partial struct AppResult<T>;
+
 public record Order(int Id, Option<string> Note, Result<decimal> Price);

@@ -11,7 +11,7 @@ public class CallExtensionsTests
 
     [OneTimeSetUp]
     public async Task SetUp() =>
-        server = await LookupServer.StartAsync(new ResultGrpcOptions().Map<LookupConflictException>(StatusCode.AlreadyExists, exposeMessage: true));
+        server = await LookupServer.StartAsync(options => options.Map<LookupConflictException>(StatusCode.AlreadyExists, exposeMessage: true));
 
     [OneTimeTearDown]
     public async Task TearDown() => await server.DisposeAsync();
@@ -19,6 +19,13 @@ public class CallExtensionsTests
     private static LookupRequest Request(string name) => new() { Name = name };
 
     private static RpcException ErrorOf<T>(Result<T> result) => (RpcException)result.GetError();
+
+    private RpcException ServerErrorOf(string name)
+    {
+        using var call = server.Client.GetAsync(Request(name));
+
+        return Assert.ThrowsAsync<RpcException>(async () => await call.ResponseAsync)!;
+    }
 
     [Test]
     public async Task UnaryCall_ReturnsTheResponse()
@@ -35,7 +42,27 @@ public class CallExtensionsTests
 
         var error = ErrorOf(result);
         Assert.That(error.StatusCode, Is.EqualTo(StatusCode.Aborted));
-        Assert.That(error.Status.Detail, Is.EqualTo("Retry later"));
+    }
+
+    [Test]
+    public async Task ToResult_RelaysADownstreamErrorWithItsStatusCodeOnly()
+    {
+        var error = ErrorOf(await server.Client.GetAsync(Request("rpc")).ToResult());
+
+        Assert.That(error.StatusCode, Is.EqualTo(StatusCode.Aborted));
+        Assert.That(error.Status.Detail, Is.Empty);
+        Assert.That(error.Trailers, Is.Empty);
+        Assert.That(error.Status.DebugException, Is.TypeOf<RpcException>().With.Property("Status").Property("Detail").EqualTo("Retry later"));
+    }
+
+    [Test]
+    public async Task Interceptor_KeepsTheDetailAndTrailersOfADeliberateRpcException()
+    {
+        var error = ServerErrorOf("deliberate");
+
+        Assert.That(error.StatusCode, Is.EqualTo(StatusCode.NotFound));
+        Assert.That(error.Status.Detail, Is.EqualTo("Order 5 not found"));
+        Assert.That(error.Trailers.Select(trailer => trailer.Key), Does.Contain("hint"));
     }
 
     [Test]
@@ -94,10 +121,10 @@ public class CallExtensionsTests
     [Test]
     public async Task Interceptor_MapsValidationErrorsToInvalidArgumentWithMessages()
     {
-        var error = ErrorOf(await server.Client.GetAsync(Request("invalid")).ToResult());
+        var error = ServerErrorOf("invalid");
 
         Assert.That(error.StatusCode, Is.EqualTo(StatusCode.InvalidArgument));
-        Assert.That(error.Status.Detail, Is.EqualTo("Name is too short. Name is reserved."));
+        Assert.That(error.Status.Detail, Is.EqualTo("name: Name is too short.; name: Name is reserved."));
     }
 
     [Test]
@@ -112,7 +139,7 @@ public class CallExtensionsTests
     [Test]
     public async Task Interceptor_UsesACustomMapping()
     {
-        var error = ErrorOf(await server.Client.GetAsync(Request("custom")).ToResult());
+        var error = ServerErrorOf("custom");
 
         Assert.That(error.StatusCode, Is.EqualTo(StatusCode.AlreadyExists));
         Assert.That(error.Status.Detail, Is.EqualTo("Name is taken"));
@@ -131,6 +158,22 @@ public class CallExtensionsTests
             (_, _) => throw new OperationCanceledException()))!;
 
         Assert.That(error.StatusCode, Is.EqualTo(StatusCode.Cancelled));
+    }
+
+    [Test]
+    public void Interceptor_DoesNotReportAnotherExceptionAfterClientCancellationAsCancelled()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var interceptor = new ResultServerInterceptor();
+        var context = new CancelledCallContext(cancellation.Token);
+
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await interceptor.UnaryServerHandler<LookupRequest, LookupReply>(
+            Request("slow"), context, (_, _) => throw new InvalidOperationException("Secret internals")));
+        var mapped = Assert.ThrowsAsync<RpcException>(async () => await interceptor.UnaryServerHandler<LookupRequest, LookupReply>(
+            Request("slow"), context, (_, _) => throw new KeyNotFoundException("Gone")))!;
+
+        Assert.That(mapped.StatusCode, Is.EqualTo(StatusCode.NotFound));
     }
 
     [Test]

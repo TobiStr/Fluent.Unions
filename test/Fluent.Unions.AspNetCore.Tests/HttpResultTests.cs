@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Fluent.Unions.Abstractions;
 
@@ -23,6 +24,9 @@ public union OrderError(OutOfStock, Unexpected) : IFromException<OrderError>
 {
     public static OrderError FromException(Exception exception) => new Unexpected(exception);
 }
+
+[FluentResult<OrderError>]
+public readonly partial struct OrderResult<T>;
 
 public class HttpResultTests
 {
@@ -144,7 +148,7 @@ public class HttpResultTests
     [Test]
     public async Task ErrorsAsDataUseTheGivenMapping()
     {
-        Result<int, OrderError> outOfStock = (OrderError)new OutOfStock("Tea");
+        OrderResult<int> outOfStock = (OrderError)new OutOfStock("Tea");
 
         var (status, _) = await Execute(outOfStock.ToHttpResult(error => error switch
         {
@@ -156,12 +160,68 @@ public class HttpResultTests
     }
 
     [Test]
-    public async Task TaskOverloadsTurnFaultsIntoServerErrors()
+    public async Task TaskOverloadsConvertResultsAndLetFaultsPropagate()
     {
         Assert.That((await Execute(await Task.FromResult<Result<int>>(5).ToHttpResult())).Status, Is.EqualTo(200));
-        Assert.That((await Execute(await Task.FromException<Result<int>>(new Exception("Boom")).ToHttpResult())).Status, Is.EqualTo(500));
         Assert.That((await Execute(await Task.FromResult<Option<int>>(Option.None).ToHttpResult())).Status, Is.EqualTo(404));
         Assert.That((await Execute(await Task.FromResult(Result.Ok).ToHttpResult())).Status, Is.EqualTo(204));
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => Task.FromException<Result<int>>(new InvalidOperationException("Boom")).ToHttpResult());
+        Assert.ThrowsAsync<InvalidOperationException>(() => Task.FromException<Result>(new InvalidOperationException("Boom")).ToHttpResult());
+        Assert.ThrowsAsync<InvalidOperationException>(() => Task.FromException<Option<int>>(new InvalidOperationException("Boom")).ToHttpResult());
+    }
+
+    [Test]
+    public async Task ServerErrorResponsesAreLoggedWithTheException()
+    {
+        var logs = new CapturingLoggerProvider();
+        var error = new InvalidOperationException("Connection string secret");
+
+        var (_, body) = await Execute(((Result<int>)error).ToHttpResult(), services => services.AddLogging(b => b.AddProvider(logs)));
+
+        var entry = logs.Entries.Single(e => e.Category == "Fluent.Unions.AspNetCore");
+        Assert.That(entry.Level, Is.EqualTo(LogLevel.Error));
+        Assert.That(entry.Exception, Is.SameAs(error));
+        Assert.That(entry.Category, Is.EqualTo("Fluent.Unions.AspNetCore"));
+        Assert.That(body, Does.Not.Contain("secret"));
+    }
+
+    [Test]
+    public async Task ClientErrorResponsesAreNotLogged()
+    {
+        var logs = new CapturingLoggerProvider();
+
+        await Execute(((Result<int>)new KeyNotFoundException("No order 7")).ToHttpResult(), services => services.AddLogging(b => b.AddProvider(logs)));
+        await Execute(((Result<int>)new ValidationError("Too short", "Name")).ToHttpResult(), services => services.AddLogging(b => b.AddProvider(logs)));
+
+        Assert.That(logs.Entries.Where(e => e.Category == "Fluent.Unions.AspNetCore"), Is.Empty);
+    }
+
+    [Test]
+    public async Task ValidationErrorsInsideAnotherErrorStayAValidationProblem()
+    {
+        var wrapped = new InvalidOperationException("Wrapper message", new ValidationError("Too short", "Name"));
+        var wrappedMany = new InvalidOperationException("Wrapper message", new ValidationErrors([new ValidationError("Too short", "Name"), new ValidationError("Required", "Age")]));
+
+        var single = await Execute(((Result<int>)wrapped).ToHttpResult());
+        var many = await Execute(((Result<int>)wrappedMany).ToHttpResult());
+
+        Assert.That(single.Status, Is.EqualTo(400));
+        Assert.That(Problem(single.Body).GetProperty("errors").GetProperty("Name").EnumerateArray().Single().GetString(), Is.EqualTo("Too short"));
+        Assert.That(single.Body, Does.Not.Contain("Wrapper message"));
+        Assert.That(many.Status, Is.EqualTo(400));
+        Assert.That(Problem(many.Body).GetProperty("errors").EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "Name", "Age" }));
+    }
+
+    [Test]
+    public async Task AnAggregateExceptionAroundValidationErrorsIsNotAValidationProblem()
+    {
+        var aggregate = new AggregateException(new ValidationError("Too short", "Name"), new InvalidOperationException("Inner secret"));
+
+        var (status, body) = await Execute(((Result<int>)aggregate).ToHttpResult());
+
+        Assert.That(status, Is.EqualTo(500));
+        Assert.That(body, Does.Not.Contain("Inner secret"));
     }
 
     [Test]
@@ -267,4 +327,25 @@ public class HttpResultTests
     }
 
     private static JsonElement Problem(string body) => JsonDocument.Parse(body).RootElement;
+}
+
+internal sealed class CapturingLoggerProvider : ILoggerProvider
+{
+    public List<(string Category, LogLevel Level, Exception? Exception)> Entries { get; } = [];
+
+    public ILogger CreateLogger(string categoryName) => new CapturingLogger(categoryName, Entries);
+
+    public void Dispose()
+    {
+    }
+
+    private sealed class CapturingLogger(string category, List<(string, LogLevel, Exception?)> entries) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            entries.Add((category, logLevel, exception));
+    }
 }

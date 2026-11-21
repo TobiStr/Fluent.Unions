@@ -64,6 +64,8 @@ public class UnusedResultAnalyzerTests
             public struct CustomResult : IErrorResult<CustomResult, Exception>
             {
                 public object? Value => null;
+                public bool IsSuccess => false;
+                public bool TryGetError(out Exception error) { error = default!; return true; }
                 public static CustomResult FromError(Exception error) => default;
                 public static Exception FromException(Exception exception) => exception;
             }

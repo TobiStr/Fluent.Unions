@@ -5,6 +5,7 @@
   public static T ShouldBeOk<T>(this Fluent.Unions.Result<T> result, [string? customMessage = null])
   public static T ShouldBeOk<TSelf, T, TError>(this Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> result, [string? customMessage = null]) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static T ShouldBeSome<T>(this Fluent.Unions.Option<T> option, [string? customMessage = null])
+  public static TCase ShouldBeError<TCase>(this System.Runtime.CompilerServices.IUnion result, [string? customMessage = null])
   public static TError ShouldBeError<TSelf, T, TError>(this Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> result, [string? customMessage = null]) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static TError ShouldBeError<TSelf, TError>(this Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> result, [string? customMessage = null]) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
   public static TException ShouldBeError<TException>(this Fluent.Unions.Result result, [string? customMessage = null]) where TException : System.Exception

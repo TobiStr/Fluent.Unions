@@ -28,6 +28,12 @@ public union ClientError(string, Unexpected) : IFromException<ClientError>
     public static ClientError FromException(Exception exception) => new Unexpected(exception);
 }
 
+[FluentResult<TransferError>]
+public readonly partial struct TransferResult<T>;
+
+[FluentResult<ClientError>]
+public readonly partial struct ClientResult<T>;
+
 /// <summary>
 /// Moves money between accounts. Shows errors as data: every business failure is a record in a closed union, and
 /// the compiler rejects a <c>switch</c> that forgets one when a new failure is added.
@@ -40,7 +46,7 @@ public sealed class Bank(IEnumerable<Account> accounts, Action<Receipt> notify)
 
     public decimal BalanceOf(string id) => accounts[id].Balance;
 
-    public Result<Receipt, TransferError> Transfer(string fromId, string toId, decimal amount) =>
+    public TransferResult<Receipt> Transfer(string fromId, string toId, decimal amount) =>
         Find(fromId)
             .Chain(source => Find(toId).Select(target => (Source: source, Target: target)))
             .Ensure(pair => pair.Source.Id != pair.Target.Id, _ => new SameAccount())
@@ -51,20 +57,20 @@ public sealed class Bank(IEnumerable<Account> accounts, Action<Receipt> notify)
             .Do(Book)
             .Finally(() => Processed++);
 
-    public Result<Receipt, TransferError> TransferUpToLimit(string fromId, string toId, decimal amount) =>
+    public TransferResult<Receipt> TransferUpToLimit(string fromId, string toId, decimal amount) =>
         Transfer(fromId, toId, amount)
-            .Catch((DailyLimitExceeded exceeded) => Transfer(fromId, toId, exceeded.Limit));
+            .Catch(error => error is DailyLimitExceeded exceeded ? Transfer(fromId, toId, exceeded.Limit) : error);
 
-    public Result<Receipt, TransferError> Execute(string fromId, string toId, decimal amount)
+    public TransferResult<Receipt> Execute(string fromId, string toId, decimal amount)
     {
         var result = Transfer(fromId, toId, amount);
         Activity.Current.RecordResult(result);
         return result;
     }
 
-    private Result<Account, TransferError> Find(string id) =>
+    private TransferResult<Account> Find(string id) =>
         accounts.GetValueOrNone(id).Match(
-            account => (Result<Account, TransferError>)account,
+            account => (TransferResult<Account>)account,
             () => (TransferError)new AccountNotFound(id));
 
     private void Book(Receipt receipt)
@@ -73,7 +79,7 @@ public sealed class Bank(IEnumerable<Account> accounts, Action<Receipt> notify)
         accounts[receipt.To] = accounts[receipt.To] with { Balance = accounts[receipt.To].Balance + receipt.Amount };
     }
 
-    public static int ToStatusCode(Result<Receipt, TransferError> result) => result.Match(
+    public static int ToStatusCode(TransferResult<Receipt> result) => result.Match(
         _ => 200,
         error => error switch
         {
@@ -84,8 +90,8 @@ public sealed class Bank(IEnumerable<Account> accounts, Action<Receipt> notify)
             Unexpected => 500
         });
 
-    public static Result<Receipt, ClientError> ForClient(Result<Receipt, TransferError> result) =>
-        result.MapError(error => (ClientError)(error switch
+    public static ClientResult<Receipt> ForClient(TransferResult<Receipt> result) =>
+        result.Match(receipt => (ClientResult<Receipt>)receipt, error => (ClientError)(error switch
         {
             AccountNotFound missing => $"Account {missing.Id} does not exist.",
             InsufficientFunds funds => FormattableString.Invariant($"{funds.Missing:0.00} is missing on the account."),
@@ -145,7 +151,7 @@ public class BankTransferScenarioTests
     }
 
     [Test]
-    public void ATypedCatchRetriesWithinTheLimit()
+    public void ACatchOnOneCaseRetriesWithinTheLimit()
     {
         var result = bank.TransferUpToLimit("A", "B", 250m);
 
@@ -169,7 +175,7 @@ public class BankTransferScenarioTests
     }
 
     [Test]
-    public void MapErrorTranslatesAtTheLayerBoundary()
+    public void ErrorsAreTranslatedAtTheLayerBoundary()
     {
         var message = Bank.ForClient(bank.Transfer("A", "B", 250m)).GetError();
         var passed = Bank.ForClient(bank.Transfer("A", "B", 5m));

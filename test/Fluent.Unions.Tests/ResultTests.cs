@@ -166,8 +166,35 @@ public class ResultTests
 
         Assert.That(okResult.ToString(), Is.EqualTo("Test"));
         Assert.That(intResult.ToString(), Is.EqualTo("5"));
-        Assert.That(errorResult.ToString(), Is.EqualTo("System.Exception: Failed"));
-        Assert.That(default(Result<string>).ToString(), Is.EqualTo(""));
+        Assert.That(errorResult.ToString(), Is.EqualTo("Exception: Failed"));
+        Assert.That(default(Result<string>).ToString(), Does.StartWith("InvalidOperationException: Result<String> holds neither a value nor an error"));
+    }
+
+    [Test]
+    public void ToStringOfAnErrorLeavesOutStackTraceAndInnerException()
+    {
+        Exception thrown;
+        try
+        {
+            throw new InvalidOperationException("outer", new FormatException("inner"));
+        }
+        catch (Exception exception)
+        {
+            thrown = exception;
+        }
+
+        var text = Result<int>.Error(thrown).ToString();
+
+        Assert.That(text, Is.EqualTo("InvalidOperationException: outer"));
+        Assert.That(Result.Error(thrown).ToString(), Is.EqualTo("InvalidOperationException: outer"));
+    }
+
+    [Test]
+    public void ToStringOfAResultWithoutAValue()
+    {
+        Assert.That(Result.Ok.ToString(), Is.EqualTo("Ok"));
+        Assert.That(Result.Error(new TimeoutException("too slow")).ToString(), Is.EqualTo("TimeoutException: too slow"));
+        Assert.That(default(Result).ToString(), Does.StartWith("InvalidOperationException: Result holds neither a value nor an error"));
     }
 
     [Test]
@@ -300,6 +327,27 @@ public class ResultTests
 
         Assert.True(okResult.Check().IsSuccess);
         Assert.That(okGeneric.Check().GetValue(), Is.EqualTo("Test"));
+    }
+
+    [Test]
+    public void ErrorOfAGenericTypeWithoutABacktickInItsNameIsReported()
+    {
+        var result = default(Result<List<int>.Enumerator>).Select(x => 1);
+
+        Assert.That(result.GetError().Message, Does.Contain("Result<Enumerator<Int32>>"));
+    }
+
+    [Test]
+    public void ResultTypesReportErrorAndValueTypesRepeatedly()
+    {
+        for (var i = 0; i < 2; i++)
+        {
+            Assert.That(Fluent.Unions.Abstractions.ResultTypes.ErrorType(typeof(Result<int>)), Is.EqualTo(typeof(Exception)));
+            Assert.That(Fluent.Unions.Abstractions.ResultTypes.ValueType(typeof(Result<int>)), Is.EqualTo(typeof(int)));
+            Assert.That(Fluent.Unions.Abstractions.ResultTypes.ValueType(typeof(Result)), Is.Null);
+            Assert.That(Fluent.Unions.Abstractions.ResultTypes.ErrorType(typeof(Option<int>)), Is.Null);
+            Assert.That(Fluent.Unions.Abstractions.ResultTypes.IsResult(typeof(string)), Is.False);
+        }
     }
 
     private static string Describe(Result<int> result) => result switch

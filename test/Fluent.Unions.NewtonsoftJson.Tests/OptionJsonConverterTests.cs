@@ -130,13 +130,13 @@ public class OptionJsonConverterTests
     }
 
     [Test]
-    public void IgnoreHandlingOnlyOmitsUninitializedOptions()
+    public void DefaultIgnoreHandlingOmitsOptionsWithoutValue()
     {
         var nullIgnore = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }.AddFluentUnions();
         var defaultIgnore = new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Ignore }.AddFluentUnions();
 
         Assert.That(JsonConvert.SerializeObject(new Holder(Option.None), nullIgnore), Is.EqualTo("""{"Value":null}"""));
-        Assert.That(JsonConvert.SerializeObject(new Holder(Option.None), defaultIgnore), Is.EqualTo("""{"Value":null}"""));
+        Assert.That(JsonConvert.SerializeObject(new Holder(Option.None), defaultIgnore), Is.EqualTo("{}"));
         Assert.That(JsonConvert.SerializeObject(new Holder(default), defaultIgnore), Is.EqualTo("{}"));
     }
 

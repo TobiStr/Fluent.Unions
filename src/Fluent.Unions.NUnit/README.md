@@ -31,7 +31,7 @@ Assert.That(customer.Nickname, IsOption.None);
 
 ## With your own result type
 
-The `IsResult` constraints recognize a result type you declare with `[FluentResult<TError>]`. An error that is not an exception prints as `failed with Type: ...`. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+The `IsResult` constraints recognize a result type you declare with `[FluentResult<TError>]`. An error that is not an exception prints as `failed with Type: ...`. `IsResult.ErrorOfType<TError>()` and `IsResult.ErrorWith(...)` also look inside an error union, so `ErrorOfType<NotFound>()` passes for an `AppError` that holds a `NotFound`. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ## Documentation
 

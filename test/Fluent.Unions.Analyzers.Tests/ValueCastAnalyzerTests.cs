@@ -9,7 +9,6 @@ public class ValueCastAnalyzerTests
     [TestCase("int M(Result<int> r) => (int)r.Value;", "r.Value")]
     [TestCase("Exception M(Result<int> r) => (Exception)r.Value;", "r.Value")]
     [TestCase("Exception M(Result r) => (Exception)r.Value;", "r.Value")]
-    [TestCase("string M(Result<string, MyError> r) => (string)r.Value;", "r.Value")]
     [TestCase("string M(Option<string> o) => (string)o.Value;", "o.Value")]
     [TestCase("int M(Loadable<int> l) => (int)l.Value;", "l.Value")]
     [TestCase("int M(Result<int> r) => (int)r.Value + 1;", "r.Value")]

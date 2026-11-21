@@ -15,13 +15,19 @@ namespace Shop;
 public class DomainException(string message, Exception? inner = null)
     : Exception(message, inner), IFromException<DomainException>
 {
-    public static DomainException FromException(Exception exception) =>
-        exception as DomainException ?? new UnexpectedDomainException(exception);
+    public static DomainException FromException(Exception exception) => exception switch
+    {
+        DomainException domain => domain,
+        ValidationError or ValidationErrors => new InvalidInputException(exception),
+        _ => new UnexpectedDomainException(exception)
+    };
 }
 
 public sealed class NotFoundException(string message) : DomainException(message);
 
-public sealed class UnexpectedDomainException(Exception inner) : DomainException(inner.Message, inner);
+public sealed class InvalidInputException(Exception validation) : DomainException("The input is invalid.", validation);
+
+public sealed class UnexpectedDomainException(Exception inner) : DomainException("An unexpected error occurred.", inner);
 
 [FluentResult<DomainException>]
 public readonly partial struct Result<T>;
@@ -34,7 +40,7 @@ static Result<Customer> GetCustomer(Guid id) =>
     customers.TryGetValue(id, out var customer) ? customer : new NotFoundException($"No customer {id}.");
 ```
 
-If the error type cannot implement `IFromException<TError>`, declare the mapping on the struct instead:
+If the error type cannot implement `IFromException<TError>`, declare the mapping on the struct instead. It must be a `public` or `internal` static method with a single `Exception` parameter that returns the error type:
 
 ```csharp
 [FluentResult<PaymentException>]
@@ -50,7 +56,7 @@ public readonly partial struct PaymentResult<T>
 | --- | --- |
 | The union | Constructors for the value and the error, implicit conversions, `Value`, `IsSuccess`, `IsError`, `TryGetValue`, `TryGetError`, `GetValue`, `GetError`, `Deconstruct`, `Ok(value)`, `Error(error)` |
 | `Result` without a value | The same members with `Ok` as the success case, plus `Result.From`, `Try`, `TryAsync`, `WhenAll`, `Retry`, `RetryAsync`, `CombineAll` and `CombineAllAsync` |
-| Operators | Every operator of the default type: `Select`, `Chain`, `Ensure`, `Validate`, `Zip`, `BindAppend`, `Do`, `OnErrorDo`, `Finally`, `Out`, `Catch`, `Match`, `GetValueOrDefault`, `Check`, `Combine`, `CombineAll`, `Partition`, `ToOption`, `ToLoadable`, `Transpose`, `Unwrap`, `WithValue`, `DiscardValue`, query syntax, every `Task` overload and every `...Await` operator |
+| Operators | Every operator of the default type: `Select`, `Chain`, `Ensure`, `Validate`, `Zip`, `ChainAppend`, `Do`, `OnErrorDo`, `Finally`, `Out`, `Catch`, `Match`, `GetValueOrDefault`, `Check`, `Combine`, `CombineAll`, `Partition`, `ToOption`, `ToLoadable`, `Transpose`, `Unwrap`, `WithValue`, `DiscardValue`, query syntax, every `Task` overload and every `...Await` operator |
 
 Type inference works as with the default type, so no operator needs explicit type arguments:
 
@@ -67,8 +73,40 @@ The operators are one-line forwarders to the library. Behaviour lives in one pla
 
 | Property | Default | Effect |
 | --- | --- | --- |
-| `Companion` | `true` | Generates `Result` without a value next to `Result<T>`. Add members to it with `public readonly partial struct Result { ... }`. Set it to `false` only when you declare it yourself with `[FluentResult<DomainException>] public readonly partial struct Result;`. |
 | `CaseConversions` | `true` | When the error type is a union, each case converts straight to the result. See [Errors as data](errors-as-data.md). |
+
+### The value-less companion
+
+The generator writes `Result` without a value next to `Result<T>`. To add members to it, declare it yourself with the same attribute and the same error type:
+
+```csharp
+[FluentResult<DomainException>]
+public readonly partial struct Result<T>;
+
+[FluentResult<DomainException>]
+public readonly partial struct Result
+{
+    public static Result NotImplemented => Error(new DomainException("Not implemented."));
+}
+```
+
+A `[FluentResult]` struct without a type parameter needs the generic one next to it, with the same name, namespace and error type. Without it, `FLU0101` is reported.
+
+### Names of the generated classes
+
+The operators of `Result<T>` are extension methods in static classes named `{TypeName}{Group}Operators`, such as `ResultOperators`, `ResultQueryOperators` and `ResultTaskOperators`. They sit in the namespace of your type. A class of your own with another name never collides with them.
+
+### What ToString returns
+
+| Case | Text |
+| --- | --- |
+| A value | `value.ToString()`, or an empty string for a value that prints `null` |
+| An error that is an exception | `TypeName: Message`, without stack trace and without inner exceptions |
+| An error that is not an exception | `error.ToString()` |
+| `Ok` of the result without a value | `Ok` |
+| A `default` result | The text of the error that `FromException` makes of the "holds neither a value nor an error" exception |
+
+The text is safe to log or to return in a response. An error union with an exception case prints that exception.
 
 ## Unexpected exceptions
 
@@ -78,6 +116,8 @@ The operators are one-line forwarders to the library. Behaviour lives in one pla
 - A `default` result counts as an error: `FromException` receives an `InvalidOperationException` that says the result is empty.
 
 `FromException` must not throw and must not return `null`. Test it with an exception that is not yours.
+
+Give `UnexpectedDomainException` a fixed message and keep the original as `InnerException`. Responses and logs often show the message of the error, and the message of an unexpected exception can hold connection strings or other internals. The ASP.NET Core integration also recognizes a `ValidationError` or `ValidationErrors` as the inner exception, as in `InvalidInputException`, and still writes a validation problem.
 
 ## Namespaces
 
@@ -103,9 +143,9 @@ The default `Result<T>` uses the same layout and operators. See [`bench/results`
 
 | Rule | Meaning |
 | --- | --- |
-| `FLU0101` | The declaration is not a top-level `readonly partial struct` with at most one type parameter and no constraints. |
-| `FLU0102` | The error type cannot represent an unexpected exception: implement `IFromException<TError>` or declare `FromException` on the struct. |
-| `FLU0103` | A case of the error union is an interface and gets no conversion to the result. |
+| `FLU0101` | The declaration is not supported. The message names the reason: not a `readonly partial struct`, a record struct, a ref struct, a `file` type, a nested type, more than one type parameter, a constrained type parameter, an error type that is less accessible than the result, a name that the generator uses for a member, or a mismatch between `Result<T>` and its value-less companion. |
+| `FLU0102` | The error type cannot represent an unexpected exception: implement `IFromException<TError>` for the error type itself, or declare an accessible `public static TError FromException(Exception exception)` on the struct. |
+| `FLU0103` | A case of the error union gets no conversion to the result. The message names the reason: an interface, `object` or `ValueType`, or a case that is less accessible than the result. |
 | `FLU0004` | `Result<X>` where `X` is the error type or one of its cases: a value of `X` would become an error. |
 
 The other analyzers, such as `FLU0001` for an ignored result and `FLU0010` for an unchecked `GetValue`, treat your type like the default one.
@@ -114,15 +154,24 @@ The other analyzers, such as `FLU0001` for an ignored result and `FLU0010` for a
 
 The integration packages accept your type wherever they accept the default one: ASP.NET Core maps it to HTTP responses, the assertion packages assert on it, Polly and FluentValidation work with it, Serilog and Verify write it, and every serializer refuses it like the default type. See each package's page for details.
 
-## Migrating from a hand-written type
+## Migrating from 0.3.0
 
-In 0.3.0 a custom type was a `union` that implemented `IResult<TSelf, T, TError>` by hand, with wrapper methods for `Select` and the `Task` overloads. To move to the generated type:
+0.3.0 had two ways to get your own error type. Both are gone, and `[FluentResult<TError>]` replaces them. Do not implement `IResult<TSelf, T, TError>` by hand: declared types implement it, and the integration packages accept any type that does.
+
+From a hand-written `union` that implemented `IResult<TSelf, T, TError>`, with wrapper methods for `Select` and the `Task` overloads:
 
 1. Implement `IFromException<TError>` on the error type, or keep `FromException` on the struct.
 2. Replace `public union Result<T>(T, DomainException) : IResult<...> { ... }` with `[FluentResult<DomainException>] public readonly partial struct Result<T>;`.
 3. Delete the wrapper class. Every operator is generated now.
 
-A hand-written type keeps working: the operators in `ResultInterfaceExtensions` still accept any `IResult<TSelf, T, TError>`, with boxing and without the `Task` overloads.
+From `Result<T, TError>`:
+
+1. Declare a type for the error: `[FluentResult<CheckoutError>] public readonly partial struct Outcome<T>;`.
+2. Replace `Result<Order, CheckoutError>` with `Outcome<Order>`. The `(CheckoutError)` casts on errors are no longer needed.
+3. Replace `MapError` with `Match`, see [Errors as data](errors-as-data.md#translating-errors-between-layers).
+4. Replace `Catch<TCase>` on a record case with the general `Catch`. The typed `Catch<TCase>` takes exception cases only.
+
+The generated type does not box and has the `Task` overloads.
 
 ## Pitfalls
 

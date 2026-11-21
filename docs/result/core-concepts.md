@@ -79,9 +79,9 @@ See [Error handling](error-handling.md#try-and-tryasync) for the body types they
 | `TryGetError(out error)` | Gets the exception, if there is one. |
 | `GetValue()` | The value of a `Result<T>`. Throws `InvalidOperationException` for an error, with the error as `InnerException`. |
 | `GetError()` | The exception. Throws `InvalidOperationException` when the result is ok. |
-| `ToString()` | The value's `ToString()`, or the exception's `ToString()`. |
+| `ToString()` | The value's `ToString()`, `Ok` for a result without a value, or `TypeName: Message` of the exception. |
 
-`ToString()` on an error gives the full exception text with type name and stack trace. Use `GetError().Message` for display.
+`ToString()` on an error gives the short type name and the message, such as `InvalidOperationException: No order 7.`. It leaves out the stack trace and the inner exceptions, so it is safe to log. A `default` result prints the message of the exception that says it is empty.
 
 ```csharp
 Result<Order> placed = PlaceOrder(cart);

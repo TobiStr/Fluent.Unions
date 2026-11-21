@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
@@ -61,12 +62,13 @@ public sealed class ThrowInResultMethodAnalyzer : DiagnosticAnalyzer
         if (statement.Syntax is not ThrowStatementSyntax || statement.Exception is not { } exception)
             return;
 
-        if (!IsReportableException(StripImplicitConversions(exception).Type, types, guards))
+        var thrownType = StripImplicitConversions(exception).Type;
+        if (!IsReportableException(thrownType, types, guards))
             return;
 
         var (function, name) = EnclosingFunction(statement, context.ContainingSymbol);
 
-        if (function is not null && ReturnsResult(function, types))
+        if (function is not null && ResultType(function, types) is { } resultType && ConvertsImplicitly(context.Compilation, thrownType!, resultType))
             context.ReportDiagnostic(Diagnostic.Create(Rule, statement.Syntax.GetLocation(), name));
     }
 
@@ -110,10 +112,15 @@ public sealed class ThrowInResultMethodAnalyzer : DiagnosticAnalyzer
         return containingSymbol is IMethodSymbol method ? (method, method.Name) : (null, string.Empty);
     }
 
-    private static bool ReturnsResult(IMethodSymbol function, KnownTypes types)
+    private static ITypeSymbol? ResultType(IMethodSymbol function, KnownTypes types)
     {
         var returnType = function.IsAsync ? types.UnwrapTask(function.ReturnType) : function.ReturnType;
 
-        return returnType is not null && (KnownTypes.Is(returnType, types.Result) || KnownTypes.Is(returnType, types.ResultOfT) || types.GeneratedErrorType(returnType) is not null);
+        return returnType is not null && (KnownTypes.Is(returnType, types.Result) || KnownTypes.Is(returnType, types.ResultOfT) || types.GeneratedErrorType(returnType) is not null)
+            ? returnType
+            : null;
     }
+
+    private static bool ConvertsImplicitly(Compilation compilation, ITypeSymbol source, ITypeSymbol destination) =>
+        ((CSharpCompilation)compilation).ClassifyConversion(source, destination).IsImplicit;
 }

@@ -20,6 +20,9 @@ public union UpdateError(InvalidInput, StorageFailure) : IFromException<UpdateEr
     public static UpdateError FromException(Exception exception) => new StorageFailure(exception);
 }
 
+[FluentResult<UpdateError>]
+public readonly partial struct UpdateResult<T>;
+
 public class UpdateUserProfileValidator : AbstractValidator<UpdateUserProfile>
 {
     public int Lookups { get; private set; }
@@ -57,7 +60,7 @@ public class ProfileService(UpdateUserProfileValidator validator)
 
     public async Task<string> DescribeAsync(UpdateUserProfile command)
     {
-        Result<UpdateUserProfile, UpdateError> typed = command;
+        UpdateResult<UpdateUserProfile> typed = command;
 
         var validated = await typed.ValidateAsync(validator, failures => new InvalidInput(failures.Select(f => f.ErrorMessage).ToList()));
 

@@ -20,7 +20,7 @@ Client: convert the call.
 using Fluent.Unions.Grpc;
 
 Result<UserReply> user = await client.GetUserAsync(new UserRequest { Id = 7 }).ToResult();
-// the reply, or the RpcException as the error
+// the reply, or an RpcException with the status code only as the error
 
 if (user.TryGetError(out var error) && error is RpcException { StatusCode: StatusCode.NotFound })
     // handle it
@@ -35,10 +35,10 @@ public override async Task<UserReply> GetUser(UserRequest request, ServerCallCon
     (await users.Find(request.Id)).Check().GetValue();
 ```
 
-`KeyNotFoundException` becomes `NotFound`, a `ValidationError` or `ValidationErrors` becomes `InvalidArgument` with its messages. Map your own errors with `ResultGrpcOptions`:
+`KeyNotFoundException` becomes `NotFound`, a `ValidationError` or `ValidationErrors` becomes `InvalidArgument` with its messages and member names. An `RpcException` is passed on as it is. Map your own errors with `ResultGrpcOptions`, configured with the options pattern:
 
 ```csharp
-builder.Services.AddSingleton(new ResultGrpcOptions().Map<OutOfStockException>(StatusCode.FailedPrecondition, exposeMessage: true));
+builder.Services.Configure<ResultGrpcOptions>(options => options.Map<OutOfStockException>(StatusCode.FailedPrecondition, exposeMessage: true));
 ```
 
 `error.ToRpcException()` does the same mapping by hand.
@@ -59,6 +59,6 @@ Shop.Result<UserReply> mine = user.Match(value => (Shop.Result<UserReply>)value,
 ## Rules
 
 - **Unary and client-streaming calls.** `ToResult()` covers calls with a single response. For a streaming response, the `RpcException` comes out of `ResponseStream.MoveNext`.
-- **Only `RpcException` is an error.** Other exceptions are thrown.
+- **Only `RpcException` is an error.** Other exceptions are thrown. The error keeps the status code but not the detail or trailers of the downstream call, so it can be returned without leaking them. The original is `Status.DebugException`.
 - **Cancellation is not an error.** A call with the status `Cancelled` throws `OperationCanceledException`, with the `RpcException` as its `InnerException`.
 - **Messages stay hidden.** A mapped exception's message reaches the client only with `exposeMessage`; validation errors always list theirs. An unmapped exception is rethrown by the interceptor, so gRPC reports it as usual.

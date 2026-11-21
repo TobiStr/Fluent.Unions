@@ -6,11 +6,7 @@ namespace Fluent.Unions.Verify;
 
 internal sealed class UnionConverter : WriteOnlyJsonConverter
 {
-    public override bool CanConvert(Type type) =>
-        ResultTypes.IsResult(type)
-        || type.IsGenericType
-        && type.GetGenericTypeDefinition() is var definition
-        && (definition == typeof(Option<>) || definition == typeof(Loadable<>));
+    public override bool CanConvert(Type type) => IsConverted(type);
 
     public override void Write(VerifyJsonWriter writer, object value)
     {
@@ -25,11 +21,17 @@ internal sealed class UnionConverter : WriteOnlyJsonConverter
             WriteLoadable(writer, union);
     }
 
+    private static bool IsConverted(Type type) =>
+        ResultTypes.IsResult(type)
+        || type.IsGenericType
+        && type.GetGenericTypeDefinition() is var definition
+        && (definition == typeof(Option<>) || definition == typeof(Loadable<>));
+
     private static void WriteResult(VerifyJsonWriter writer, object result, IUnion union)
     {
         var type = result.GetType();
 
-        if ((bool)type.GetProperty("IsSuccess")!.GetValue(result)!)
+        if (((IErrorResult)result).IsSuccess)
         {
             if (ResultTypes.ValueType(type) is null)
             {
@@ -41,7 +43,7 @@ internal sealed class UnionConverter : WriteOnlyJsonConverter
             return;
         }
 
-        WriteCase(writer, "Error", type.GetMethod("GetError")!.Invoke(result, null));
+        WriteCase(writer, "Error", ((IErrorResult)result).Error);
     }
 
     private static void WriteOption(VerifyJsonWriter writer, IUnion option)
@@ -85,6 +87,9 @@ internal sealed class UnionConverter : WriteOnlyJsonConverter
         {
             case null:
                 writer.WriteNull();
+                break;
+            case IUnion when IsConverted(value.GetType()):
+                writer.Serialize(value);
                 break;
             case IUnion { Value: { } inner }:
                 WriteData(writer, inner);

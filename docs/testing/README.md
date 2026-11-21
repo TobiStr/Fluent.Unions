@@ -36,7 +36,7 @@ Order ordered = ResultAssert.Ok(placed);                                        
 | Ok | `ShouldBeOk()` | `IsOk()` | `IsResult.Ok` | `ResultAssert.Ok(result)` |
 | Ok with a value check | `ShouldBeOk()` returns the value | `IsOk()` returns the value | `IsResult.OkWith(constraint)` | `ResultAssert.Ok(result)` returns the value |
 | Error | `ShouldBeError()` | `IsError()` | `IsResult.Error` | `ResultAssert.Error(result)` |
-| Error of a type | `ShouldBeError<TException>()` | `IsError<TException>()` | `IsResult.ErrorOfType<TException>()` | `ResultAssert.Error<TException>(result)` |
+| Error of a type | `ShouldBeError<TException>()` | `IsError<TException>()` | `IsResult.ErrorOfType<TError>()` | `ResultAssert.Error<TException>(result)` |
 | Error with a check | `ShouldBeError()` returns the exception | `IsError()` returns the exception | `IsResult.ErrorWith(constraint)` | `ResultAssert.Error(result)` returns the exception |
 | Some | `ShouldBeSome()` | `IsSome()` | `IsOption.Some` | `OptionAssert.Some(option)` |
 | Some with a value check | `ShouldBeSome()` returns the value | `IsSome()` returns the value | `IsOption.SomeWith(constraint)` | `OptionAssert.Some(option)` returns the value |
@@ -128,9 +128,9 @@ string nickname = OptionAssert.Some(customer.Nickname);
 
 A result type you declare with `[FluentResult<TError>]` (see [Your own Result type](../errors/custom-error-types.md)) works in all four packages, with these differences.
 
-- **Shouldly and xUnit.** `ShouldBeOk`, `ShouldBeError`, `ResultAssert.Ok` and `ResultAssert.Error` accept any result type, with a value and without (the value-less `Result`), with the same messages. There is no typed `ShouldBeError<TException>` or `Error<TException>` for your own types, because the untyped form already returns your declared error type.
-- **TUnit.** Assert through `AsResult()`, because C# does not allow the result interface as a type argument: `await Assert.That(result.AsResult()).IsOk()` and `.IsError()`. The default types keep `Assert.That(result).IsOk()`.
-- **NUnit.** The `IsResult` constraints recognize any result type. An error that is not an exception prints as `failed with Type: ...`.
+- **Shouldly and xUnit.** `ShouldBeOk`, `ShouldBeError`, `ResultAssert.Ok` and `ResultAssert.Error` accept any result type, with a value and without (the value-less `Result`), with the same messages. The untyped form returns your declared error type. When that is an error union, `result.ShouldBeError<NotFound>()` and `ResultAssert.Error<NotFound>(result)` return the case, or the declared error type itself, and fail for another case.
+- **TUnit.** Assert through `AsResult()`, because C# does not allow the result interface as a type argument: `await Assert.That(result.AsResult()).IsOk()` and `.IsError()`. The default types keep `Assert.That(result).IsOk()`. For an error union, `result.AsResult().ErrorCase<NotFound>()` returns an `Option<NotFound>`: `var notFound = await Assert.That(result.AsResult().ErrorCase<NotFound>()).IsSome()`. The assertion methods behind `Assert.That(...)` are not public extensions, so `result.IsOk();` does not compile and cannot silently assert nothing.
+- **NUnit.** The `IsResult` constraints recognize any result type. An error that is not an exception prints as `failed with Type: ...`. `IsResult.ErrorOfType<TError>()` and `IsResult.ErrorWith(...)` look inside an error union: `ErrorOfType<NotFound>()` passes for `AppError(NotFound)`, and the constraint of `ErrorWith` applies to the case.
 
 ## Failure messages
 
@@ -157,7 +157,7 @@ NUnit prints `Expected: an ok result` and `But was: failed with TimeoutException
 - **`default` is an error.** A `default` result passes the error checks and fails the Ok checks, like everywhere else in the library.
 - **None includes `default`.** A `default` option passes the none checks and fails the some checks.
 - **Cancellation is not special.** An error is checked like any other exception, including `OperationCanceledException` inside an error.
-- **Not covered yet.** `Loadable<T>` and `Result<T, TError>` have no assertions in these packages.
+- **Not covered yet.** `Loadable<T>` has no assertions in these packages.
 
 ---
 

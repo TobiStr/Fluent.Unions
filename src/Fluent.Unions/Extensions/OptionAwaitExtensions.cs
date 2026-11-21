@@ -21,7 +21,7 @@ public static class OptionAwaitExtensions
     /// <summary>
     /// Chains an asynchronous operation that returns an option itself.
     /// </summary>
-    public static Task<Option<TOut>> SelectManyAwait<T, TOut>(this Option<T> option, Func<T, Task<Option<TOut>>> selector)
+    public static Task<Option<TOut>> ChainAwait<T, TOut>(this Option<T> option, Func<T, Task<Option<TOut>>> selector)
     {
         ArgumentNullException.ThrowIfNull(selector);
 
@@ -30,10 +30,6 @@ public static class OptionAwaitExtensions
         static async Task<Option<TOut>> Run(T value, Func<T, Task<Option<TOut>>> selector) =>
             (await selector(value).ConfigureAwait(false)).Normalize();
     }
-
-    /// <inheritdoc cref="SelectManyAwait{T, TOut}(Option{T}, Func{T, Task{Option{TOut}}})"/>
-    public static Task<Option<TOut>> ChainAwait<T, TOut>(this Option<T> option, Func<T, Task<Option<TOut>>> selector) =>
-        option.SelectManyAwait(selector);
 
     /// <summary>
     /// Keeps the value if the asynchronous predicate is satisfied, otherwise the option holds no value.
@@ -65,24 +61,36 @@ public static class OptionAwaitExtensions
     }
 
     /// <inheritdoc cref="SelectAwait{T, TOut}(Option{T}, Func{T, Task{TOut}})"/>
-    public static Task<Option<TOut>> SelectAwait<T, TOut>(this Task<Option<T>> task, Func<T, Task<TOut>> selector) =>
-        ThenAwait(task, option => option.SelectAwait(selector));
+    public static Task<Option<TOut>> SelectAwait<T, TOut>(this Task<Option<T>> task, Func<T, Task<TOut>> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
 
-    /// <inheritdoc cref="SelectManyAwait{T, TOut}(Option{T}, Func{T, Task{Option{TOut}}})"/>
-    public static Task<Option<TOut>> SelectManyAwait<T, TOut>(this Task<Option<T>> task, Func<T, Task<Option<TOut>>> selector) =>
-        ThenAwait(task, option => option.SelectManyAwait(selector));
+        return ThenAwait(task, option => option.SelectAwait(selector));
+    }
 
-    /// <inheritdoc cref="SelectManyAwait{T, TOut}(Option{T}, Func{T, Task{Option{TOut}}})"/>
-    public static Task<Option<TOut>> ChainAwait<T, TOut>(this Task<Option<T>> task, Func<T, Task<Option<TOut>>> selector) =>
-        ThenAwait(task, option => option.SelectManyAwait(selector));
+    /// <inheritdoc cref="ChainAwait{T, TOut}(Option{T}, Func{T, Task{Option{TOut}}})"/>
+    public static Task<Option<TOut>> ChainAwait<T, TOut>(this Task<Option<T>> task, Func<T, Task<Option<TOut>>> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        return ThenAwait(task, option => option.ChainAwait(selector));
+    }
 
     /// <inheritdoc cref="WhereAwait{T}(Option{T}, Func{T, Task{bool}})"/>
-    public static Task<Option<T>> WhereAwait<T>(this Task<Option<T>> task, Func<T, Task<bool>> predicate) =>
-        ThenAwait(task, option => option.WhereAwait(predicate));
+    public static Task<Option<T>> WhereAwait<T>(this Task<Option<T>> task, Func<T, Task<bool>> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+
+        return ThenAwait(task, option => option.WhereAwait(predicate));
+    }
 
     /// <inheritdoc cref="DoAwait{T}(Option{T}, Func{T, Task})"/>
-    public static Task<Option<T>> DoAwait<T>(this Task<Option<T>> task, Func<T, Task> onSome) =>
-        ThenAwait(task, option => option.DoAwait(onSome));
+    public static Task<Option<T>> DoAwait<T>(this Task<Option<T>> task, Func<T, Task> onSome)
+    {
+        ArgumentNullException.ThrowIfNull(onSome);
+
+        return ThenAwait(task, option => option.DoAwait(onSome));
+    }
 
     private static Task<TOut> ThenAwait<TIn, TOut>(Task<TIn> task, Func<TIn, Task<TOut>> next)
     {

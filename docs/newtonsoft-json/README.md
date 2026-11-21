@@ -2,6 +2,8 @@
 
 The package `Fluent.Unions.NewtonsoftJson` (namespace `Fluent.Unions.NewtonsoftJson`) gives [Newtonsoft.Json](https://www.newtonsoft.com/json) the same behavior the core gives `System.Text.Json`: options are written as the value or `null`, your own unions round-trip, and results are not serialized. It depends on `Newtonsoft.Json` (MIT license). For `System.Text.Json`, see [Serialization](../serialization/README.md).
 
+> **Warning: register `AddFluentUnions()` or a result leaks its exception.** Without it, Newtonsoft.Json writes a `Result` as a plain object, including the exception's class name, message and `StackTraceString`, for example `{"Value":{"ClassName":"System.InvalidOperationException","StackTraceString":"..."}}`. This happens wherever Newtonsoft.Json is the serializer and the converters are not registered, such as ASP.NET Core with `AddNewtonsoftJson()`. Register `AddFluentUnions()` on every `JsonSerializerSettings`, and never return a result from an endpoint, convert it first.
+
 ## In this section
 
 This folder has one page. The topics are below.
@@ -37,11 +39,11 @@ JsonConvert.SerializeObject(new CustomerDto("Ada", "Countess"), settings);  // {
 
 ## Rules
 
-- **Registration is required.** Newtonsoft.Json ignores the `System.Text.Json` attribute on `Option<T>`. Without `AddFluentUnions()`, an option is written as an object with `Value` and `HasValue`, not as its value.
+- **Registration is required.** Newtonsoft.Json ignores the `System.Text.Json` attribute on `Option<T>`. Without `AddFluentUnions()`, an option is written as an object with `Value` and `HasValue`, not as its value, and a result is written with its full exception (see the warning at the top).
 - A missing property reads as a `default` option, which holds no value.
-- `DefaultValueHandling.Ignore` omits only `default` options. `NullValueHandling.Ignore` does not omit `None`.
+- `DefaultValueHandling.Ignore` omits every option without a value, because `None` equals `default`. `NullValueHandling.Ignore` does not omit `None`.
 - `Option<Option<T>>` loses the difference between its levels.
-- `Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException` in both directions, with the same message as the core. Your own [result types](../errors/custom-error-types.md) are refused like the default type.
+- `Result` and `Result<T>` throw `NotSupportedException` in both directions, with the same message as the core. Your own [result types](../errors/custom-error-types.md) are refused like the default type.
 - A nullable `Option<T>?` reads `null` as `null`, not as `None`.
 
 ## Options
@@ -73,7 +75,7 @@ An option is a struct, so `null` checks do not apply to it.
 | --- | --- | --- |
 | none | `"Nickname":null` | `"Nickname":null` |
 | `NullValueHandling.Ignore` | `"Nickname":null` | `"Nickname":null` |
-| `DefaultValueHandling.Ignore` | `"Nickname":null` | property omitted |
+| `DefaultValueHandling.Ignore` | property omitted | property omitted |
 
 ### Nested options
 
@@ -81,7 +83,7 @@ An option is a struct, so `null` checks do not apply to it.
 
 ## Results refuse to serialize
 
-`ResultJsonConverter` throws `NotSupportedException` for `Result`, `Result<T>` and `Result<T, TError>`, when writing and when reading. With your own [result type](../errors/custom-error-types.md), it is refused like the default type. Without it, an error would be written with its message, stack trace and target site, which leaks internals to clients.
+`ResultJsonConverter` throws `NotSupportedException` for `Result` and `Result<T>`, when writing and when reading. With your own [result type](../errors/custom-error-types.md), it is refused like the default type. Without it, an error would be written with its message, stack trace and target site, which leaks internals to clients.
 
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");
@@ -120,7 +122,7 @@ Behavior:
 - **Value types only.** The converter handles union structs.
 - **`$value` before `$type`.** The value is buffered. Dates stay as written, but a `decimal` beyond double precision can lose precision. The converter writes `$type` first.
 
-Apply `UnionJsonConverter` with the attribute. Do not add it to `settings.Converters`: it would also match `Option<T>`. The constants `UnionJsonConverter.TypeProperty` and `UnionJsonConverter.ValueProperty` hold the two property names. See [your own unions](../unions/README.md).
+Apply `UnionJsonConverter` with the attribute. You can also add it to `settings.Converters`: it never handles `Option<T>` or result types, so they keep their own converters in either registration order. The constants `UnionJsonConverter.TypeProperty` and `UnionJsonConverter.ValueProperty` hold the two property names. See [your own unions](../unions/README.md).
 
 ## AOT and trimming
 
@@ -128,7 +130,7 @@ Not supported. The converters use reflection (`MakeGenericType`, constructor loo
 
 ## Pitfalls
 
-- Forgetting `AddFluentUnions()` writes options as objects.
+- Forgetting `AddFluentUnions()` writes options as objects and results with their exception, including the stack trace.
 - `NullValueHandling.Ignore` does not omit `None`.
 - Serializing a `Result<T>`, or your own result type, throws. Convert it first.
 - Two union cases with the same type name cannot be told apart.

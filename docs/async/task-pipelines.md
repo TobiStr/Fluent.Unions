@@ -26,7 +26,7 @@ Option<string> nickname = await FindCustomerAsync(id)   // Task<Option<Customer>
     .DefaultIfEmpty("none");
 ```
 
-**A faulted task becomes an error result.** Every result operator, and `Result.TryAsync`, turns the task's exception into the error. A cancelled task is the exception: its `OperationCanceledException` propagates, as everywhere else in .NET.
+**A faulted task becomes an error result.** Every result operator, and `Result.TryAsync`, turns the task's exception into the error. A cancelled task is the exception: its `OperationCanceledException` propagates, as everywhere else in .NET. `Result.Try` and `Result.TryAsync` take no token, so they cannot tell a timeout from a cancellation and let every `OperationCanceledException` propagate. Catch a timeout inside the lambda when you want an error.
 
 ```csharp
 Result<int> result = await Task.FromException<Result<int>>(new IOException("disk"))
@@ -56,7 +56,7 @@ A lambda that itself returns a `Task` needs the `...Await` variant, named after 
 | Operator | Lambda | On results | On options |
 | --- | --- | --- | --- |
 | `SelectAwait` | `T -> Task<TOut>` | yes | yes |
-| `ChainAwait` / `SelectManyAwait` | `T -> Task<Result<TOut>>` | yes | yes (`Task<Option<TOut>>`) |
+| `ChainAwait` | `T -> Task<Result<TOut>>` | yes | yes (`Task<Option<TOut>>`) |
 | `WhereAwait` | `T -> Task<bool>` | yes | yes |
 | `DoAwait` | `T -> Task` | yes | yes |
 | `CatchAwait` | `Exception -> Task<Result<T>>` | yes | no, options have no errors |

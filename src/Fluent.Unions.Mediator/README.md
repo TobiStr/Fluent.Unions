@@ -42,12 +42,12 @@ Result<UserId> result = await mediator.Send(new CreateUser("", 0));
 
 ### With your own result type
 
-`TResponse` can be any result type: `Result`, `Result<T>`, `Result<T, TError>` or your own declared result. The error is what the response type's `FromException` makes of the exception or of the `ValidationErrors`. A request with another response type is left alone.
+`TResponse` can be any result type: `Result`, `Result<T>` or your own declared result. The error is what the response type's `FromException` makes of the exception or of the `ValidationErrors`. A request with another response type is left alone.
 
-A request that returns the value-less result needs it declared explicitly, because the Mediator source generator cannot see types that another generator emits. Also set `Companion = false` on your `Result<T>`.
+A request that returns the value-less result needs it declared explicitly next to `Result<T>`, because the Mediator source generator cannot see types that another generator emits.
 
 ```csharp
-[FluentResult<DomainException>(Companion = false)]
+[FluentResult<DomainException>]
 public readonly partial struct Result<T>;
 
 [FluentResult<DomainException>]

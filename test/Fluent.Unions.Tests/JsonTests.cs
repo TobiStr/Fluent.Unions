@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Fluent.Unions.Serialization;
 
 namespace Fluent.Unions.Tests;
 
@@ -49,13 +50,13 @@ public class JsonTests
     }
 
     [Test]
-    public void IgnoreConditionsOnlyOmitUninitializedOptions()
+    public void IgnoreConditionsOmitOptionsWithoutValueOnlyWhenWritingDefault()
     {
         var whenWritingNull = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
         var whenWritingDefault = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault };
 
         Assert.That(JsonSerializer.Serialize(new Holder(Option.None), whenWritingNull), Is.EqualTo("""{"Value":null}"""));
-        Assert.That(JsonSerializer.Serialize(new Holder(Option.None), whenWritingDefault), Is.EqualTo("""{"Value":null}"""));
+        Assert.That(JsonSerializer.Serialize(new Holder(Option.None), whenWritingDefault), Is.EqualTo("{}"));
         Assert.That(JsonSerializer.Serialize(new Holder(default), whenWritingDefault), Is.EqualTo("{}"));
     }
 
@@ -70,5 +71,28 @@ public class JsonTests
         Assert.Throws<NotSupportedException>(() => JsonSerializer.Deserialize<Result<int>>("5"));
 
         Assert.That(write!.Message, Does.Not.Contain("Secret"));
+    }
+
+    [Test]
+    public void GloballyRegisteredUnionConverterDoesNotTakeOverResults()
+    {
+        var options = new JsonSerializerOptions { Converters = { new UnionJsonConverter() } };
+        Result<int> error = new InvalidOperationException("Secret");
+
+        var write = Assert.Throws<NotSupportedException>(() => JsonSerializer.Serialize(error, options));
+        Assert.Throws<NotSupportedException>(() => JsonSerializer.Serialize(Result.Ok, options));
+        Assert.Throws<NotSupportedException>(() => JsonSerializer.Deserialize<Result<int>>("5", options));
+        Assert.That(write!.Message, Does.Not.Contain("Secret"));
+    }
+
+    [Test]
+    public void GloballyRegisteredUnionConverterKeepsTheShapeOfOptions()
+    {
+        var options = new JsonSerializerOptions { Converters = { new UnionJsonConverter() } };
+
+        Assert.That(JsonSerializer.Serialize(new Person("Ada", "Countess", Option.None), options),
+            Is.EqualTo("""{"Name":"Ada","Nickname":"Countess","Age":null}"""));
+        Assert.That(JsonSerializer.Deserialize<Option<int>>("5", options).GetValue(), Is.EqualTo(5));
+        Assert.That(new UnionJsonConverter().CanConvert(typeof(Option<int>)), Is.False);
     }
 }

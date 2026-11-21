@@ -13,7 +13,7 @@ public class UserDeclaredResultTests
 
     [OneTimeSetUp]
     public void SetUp() =>
-        _provider = new ServiceCollection().AddSerializer(builder => builder.AddUnions()).BuildServiceProvider();
+        _provider = new ServiceCollection().AddSerializer(builder => builder.AddFluentUnions()).BuildServiceProvider();
 
     [OneTimeTearDown]
     public void TearDown() => _provider.Dispose();
@@ -27,6 +27,15 @@ public class UserDeclaredResultTests
 
         Assert.That(exception.Message, Does.Not.Contain("Secret"));
         Assert.Throws<NotSupportedException>(() => _provider.GetRequiredService<Serializer<Result>>().SerializeToArray(Result.Ok));
+    }
+
+    [Test]
+    public void UserDeclaredResultDeepCopy_KeepsTheResultLocally()
+    {
+        var copier = _provider.GetRequiredService<DeepCopier<Result<int>>>();
+
+        Assert.That(copier.Copy((Result<int>)5).GetValue(), Is.EqualTo(5));
+        Assert.That(copier.Copy(new DomainException("no order")).GetError().Message, Is.EqualTo("no order"));
     }
 
     [Test]

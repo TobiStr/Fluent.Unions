@@ -91,4 +91,18 @@ public static class ResultMemberCore
         result.TryGetValue(out value);
         result.TryGetError(out error);
     }
+
+    /// <summary>
+    /// Describes an error for <c>ToString</c>: the type and message of an exception, without stack trace or inner exceptions, or the error's own text.
+    /// </summary>
+    public static string Describe<TError>(TError error) where TError : notnull =>
+        Flow.AsException(error) is { } exception
+            ? $"{exception.GetType().Name}: {exception.Message}"
+            : error.ToString() ?? "";
+
+    /// <summary>
+    /// Turns an unexpected exception into the error type through <see cref="IFromException{TSelf}"/>.
+    /// </summary>
+    public static TError FromException<TError>(Exception exception) where TError : notnull, IFromException<TError> =>
+        TError.FromException(exception);
 }

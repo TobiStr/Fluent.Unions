@@ -63,14 +63,14 @@ The element is mapped with the configuration you already have, so `Option<Addres
 
 ## Mapster
 
-`AddFluentUnions()` extends a `TypeAdapterConfig` with one rule for every pair that involves `Option<T>`. It works on `TypeAdapterConfig.GlobalSettings` and on a config you own. `config.Compile()` validates the setup.
+`AddFluentUnions()` extends a `TypeAdapterConfig` with one rule for every pair that involves `Option<T>`. It works on `TypeAdapterConfig.GlobalSettings` and on a config you own, and calling it again on the same config adds nothing. `config.Compile()` validates the setup.
 
 - **Element rules apply.** A `NewConfig<Address, AddressDto>()` rule with custom members is used inside the option.
 - **Code generation is not supported.** Mapster.Tool (`dotnet mapster`) renders expression trees to source. The rules call back into the runtime `TypeAdapterConfig`, which the generator cannot render, so do not generate mappers for types with `Option<T>` members. Runtime mapping is unaffected. ASSUMPTION: this is based on how the generator works, it was not run against these rules.
 
 ## AutoMapper
 
-`AddFluentUnions()` registers one mapper at the front of AutoMapper's mapper list, so it takes part in every map without an explicit `ConvertUsing`.
+`AddFluentUnions()` registers one mapper at the front of AutoMapper's mapper list, so it takes part in every map without an explicit `ConvertUsing`. Calling it again adds nothing.
 
 - **Validation sees the element.** `AssertConfigurationIsValid()` checks the element pair. A missing `Address` to `AddressDto` map is reported for the member, as for a plain property.
 - **License key and logging.** Pass a logger factory to the `MapperConfiguration` constructor, or configure AutoMapper through your container, to control the license log output.

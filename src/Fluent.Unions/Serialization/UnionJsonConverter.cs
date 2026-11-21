@@ -8,7 +8,7 @@ namespace Fluent.Unions.Serialization;
 /// <summary>
 /// Serializes your own unions with the case name, so they can be read back:
 /// <c>{"$type":"Circle","$value":{"Radius":2}}</c>. Apply it with <c>[JsonConverter(typeof(UnionJsonConverter))]</c>.
-/// An empty union is written as <c>null</c>.
+/// An empty union is written as <c>null</c>. Result types and <see cref="Option{T}"/> keep their own converters.
 /// </summary>
 public sealed class UnionJsonConverter : JsonConverterFactory
 {
@@ -24,7 +24,10 @@ public sealed class UnionJsonConverter : JsonConverterFactory
 
     /// <inheritdoc />
     public override bool CanConvert(Type typeToConvert) =>
-        typeToConvert.IsValueType && typeof(IUnion).IsAssignableFrom(typeToConvert);
+        typeToConvert.IsValueType
+        && typeof(IUnion).IsAssignableFrom(typeToConvert)
+        && !Abstractions.ResultTypes.IsResult(typeToConvert)
+        && !(typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(Option<>));
 
     /// <inheritdoc />
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>

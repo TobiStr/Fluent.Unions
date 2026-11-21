@@ -56,7 +56,7 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 
 ## With your own result type
 
-A result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) and `Result<T, TError>` work with the same members. `HandleError<TResult, TError>()` and `ExecuteResultAsync<TResult, TError>(...)` take two type arguments: the result type and its error type. Polly's builders carry only the result type, so the compiler cannot infer `TError`. Write both at the call, for example `HandleError<Result<int>, DomainException>()`.
+A result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) works with the same members. `HandleError<TResult, TError>()` and `ExecuteResultAsync<TResult, TError>(...)` take two type arguments: the result type and its error type. Polly's builders carry only the result type, so the compiler cannot infer `TError`. Write both at the call, for example `HandleError<CallResult<Payment>, CallError>()` with `[FluentResult<CallError>] public readonly partial struct CallResult<T>;`.
 
 ```csharp
 var pipeline = new ResiliencePipelineBuilder<CallResult<Payment>>()

@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.Internal;
 using Fluent.Unions.AutoMapper;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
@@ -232,6 +233,35 @@ public sealed class AutoMapperOptionTests
         Assert.That(mapper.Map<int>(Option.Some(5)), Is.EqualTo(5));
         Assert.That(mapper.Map<int>(default(Option<int>)), Is.EqualTo(0));
         Assert.That(mapper.Map<Option<long>>(Option.Some(3)).GetValue(), Is.EqualTo(3L));
+    }
+
+    [Test]
+    public void AddFluentUnions_twice_still_maps_options()
+    {
+        var configuration = new MapperConfiguration(
+            cfg =>
+            {
+                cfg.AddFluentUnions();
+                cfg.AddFluentUnions();
+            },
+            NullLoggerFactory.Instance);
+
+        Assert.That(configuration.CreateMapper().Map<Option<string>>("x").GetValue(), Is.EqualTo("x"));
+    }
+
+    [Test]
+    public void AddFluentUnions_adds_one_mapper_when_called_again()
+    {
+        var configuration = new MapperConfiguration(
+            cfg =>
+            {
+                cfg.AddFluentUnions();
+                cfg.AddFluentUnions();
+                Assert.That(cfg.Internal().Mappers.Count(mapper => mapper.GetType().Name == "OptionMapper"), Is.EqualTo(1));
+            },
+            NullLoggerFactory.Instance);
+
+        Assert.That(configuration, Is.Not.Null);
     }
 
     [Test]

@@ -134,6 +134,19 @@ public class QueryFieldTests
     }
 
     [Test]
+    public async Task SingleValidationError_KeepsItsMessageAndMember()
+    {
+        var executor = await Executor.CreateAsync();
+
+        var json = await executor.RunAsync("{ invalidSingle { id } }");
+
+        var error = json["errors"]!.AsArray().Single()!;
+        Assert.That(error["message"]!.GetValue<string>(), Is.EqualTo("Title is required."));
+        Assert.That(error["extensions"]!["member"]!.GetValue<string>(), Is.EqualTo("Title"));
+        Assert.That(error["path"]![0]!.GetValue<string>(), Is.EqualTo("invalidSingle"));
+    }
+
+    [Test]
     public async Task Option_WithAValue_ReturnsTheValue()
     {
         var executor = await Executor.CreateAsync();

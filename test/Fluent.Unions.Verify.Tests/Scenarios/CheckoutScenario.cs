@@ -7,7 +7,7 @@ namespace Fluent.Unions.Verify.Tests.Scenarios;
 
 public sealed record CheckoutRequest(string? Email, string? Sku, int Quantity, Option<string> GiftNote);
 
-public sealed record Receipt(int OrderId, decimal Total, Option<string> GiftNote, Result<string, AppError> Payment);
+public sealed record Receipt(int OrderId, decimal Total, Option<string> GiftNote, AppResult<string> Payment);
 
 public sealed class CheckoutService
 {
@@ -31,7 +31,7 @@ public sealed class CheckoutService
 
         var orderId = _nextOrderId++;
         var total = price * request.Quantity;
-        Result<string, AppError> payment = total > 100
+        AppResult<string> payment = total > 100
             ? new AppError(new Declined("insufficient funds"))
             : $"PAY-{orderId}";
 

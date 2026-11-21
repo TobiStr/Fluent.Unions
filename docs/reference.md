@@ -3,7 +3,7 @@
 Every public type and operator, grouped by what you do with it. Each row links to the page that explains it with examples.
 
 ```csharp
-using Fluent.Unions;               // Result, Result<T>, Option<T>, Loadable<T>, Result<T, TError>, ValidationError(s), and all operators
+using Fluent.Unions;               // Result, Result<T>, Option<T>, Loadable<T>, ValidationError(s), and all operators
 using Fluent.Unions.Validation;    // Is and the EnsureXxx rules
 using Fluent.Unions.Abstractions;  // IFromException for your own error type, ResultTypes, result interfaces
 using Fluent.Unions.Serialization; // OptionJsonConverter, ResultJsonConverter, UnionJsonConverter
@@ -16,7 +16,6 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | --- | --- | --- |
 | `Result` | `Ok` or `Exception`; `default` counts as an error | [Result core concepts](result/core-concepts.md) |
 | `Result<T>` | `T` or `Exception`; `default` and `null` count as an error | [Result core concepts](result/core-concepts.md) |
-| `Result<T, TError>` | `T` or `TError`, where `TError` implements `IFromException<TError>` | [Errors as data](errors/errors-as-data.md) |
 | `Option<T>` | `T` or `None`; `default` holds no value either | [Option core concepts](option/core-concepts.md) |
 | `Loadable<T>` | `NotLoaded`, `Loading`, `T` or `Exception` | [Loadable](unions/loadable.md) |
 | `Captured<T>` | Holder filled by `Out(out var value)` | [Result operations](result/operations.md) |
@@ -40,8 +39,8 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `IsSuccess`, `IsError`, `TryGetError(out error)`, `GetError()` | `Result`, `Result<T>`, `Result<T, TError>`, and `TryGetError` on custom result types | [Result core concepts](result/core-concepts.md) |
-| `TryGetValue(out value)`, `GetValue()` | `Result<T>`, `Result<T, TError>` | [Result core concepts](result/core-concepts.md) |
+| `IsSuccess`, `IsError`, `TryGetError(out error)`, `GetError()` | `Result`, `Result<T>`, and your own result types | [Result core concepts](result/core-concepts.md) |
+| `TryGetValue(out value)`, `GetValue()` | `Result<T>`, your own result types | [Result core concepts](result/core-concepts.md) |
 | `HasValue`, `TryGetValue(out value)`, `GetValue()` | `Option<T>` | [Option core concepts](option/core-concepts.md) |
 | `IsNotLoaded`, `IsLoading`, `IsLoaded`, `IsFaulted`, `TryGetValue` | `Loadable<T>` | [Loadable](unions/loadable.md) |
 | `var (value, error) = result` | `Result<T>` | [Result core concepts](result/core-concepts.md) |
@@ -57,7 +56,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `Zip` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Ensure(predicate, message)`, `Ensure(predicate, v => exception)`, `EnsureAwait(...)` | `Result<T>` | | yes | [Result](result/operations.md) |
 | `Result.CombineAll(a, b[, c[, d]])`, `Result.CombineAllAsync(...)` | `Result<T>` | | tasks | [Result](result/operations.md) |
-| `BindAppend(v => ...)`, `BindAppend((a, b) => ...)`, `BindAppendAwait(...)` | `Result<T>`, tuples up to three elements | | yes | [Result](result/operations.md) |
+| `ChainAppend(v => ...)`, `ChainAppend((a, b) => ...)`, `ChainAppendAwait(...)` | `Result<T>`, tuples up to three elements | | yes | [Result](result/operations.md) |
 | `WithValue(value)`, `DiscardValue()` | `Result`, `Result<T>` | | yes | [Result](result/operations.md) |
 | `Out(out var value)` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Unwrap` | nested results | nested options | | [Result](result/operations.md), [Option](option/operations.md) |
@@ -69,7 +68,6 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | --- | --- | --- |
 | `Catch(e => ...)`, `Catch((IOException e) => ...)`, `Catch(fallback)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `OnErrorDo(e => ...)`, `Do(v => ..., e => ...)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
-| `MapError(e => ...)` | `Result<T, TError>`, custom types (explicit type arguments) | [Errors as data](errors/errors-as-data.md) |
 | `Validate(rules...)` | `Result<T>`, `Task<Result<T>>`, your own result types | [Validation](validation/README.md), [Your own Result type](errors/custom-error-types.md) |
 | `ValidateAnnotations()` | `Result<T>`, `Task<Result<T>>` | [Validation](validation/README.md#dataannotations) |
 
@@ -155,7 +153,7 @@ Namespace `Fluent.Unions.Validation`.
 
 | Member | Docs |
 | --- | --- |
-| `Task` overloads of the operators, `SelectAwait`, `ChainAwait`, `SelectManyAwait`, `WhereAwait`, `DoAwait`, `CatchAwait`, `FinallyAwait` | [Task pipelines](async/task-pipelines.md) |
+| `Task` overloads of the operators, `SelectAwait`, `ChainAwait`, `WhereAwait`, `DoAwait`, `CatchAwait`, `FinallyAwait` | [Task pipelines](async/task-pipelines.md) |
 | `Result.WhenAll(tasks)`, `Result.Retry(...)`, `Result.RetryAsync(...)`, `task.Timeout(duration)` | [Concurrency and resilience](async/concurrency-and-resilience.md) |
 | `Values()`, `Errors()`, `CombineAsync()` on `IAsyncEnumerable` | [Streams](async/streams.md) |
 
@@ -163,13 +161,14 @@ Namespace `Fluent.Unions.Validation`.
 
 | Member | Docs |
 | --- | --- |
-| `[FluentResult<TError>]` on a `readonly partial struct`, with `Companion` and `CaseConversions` | [Your own Result type](errors/custom-error-types.md) |
+| `[FluentResult<TError>]` on a `readonly partial struct`, with `CaseConversions` | [Your own Result type](errors/custom-error-types.md) |
 | Every operator of `Result<T>` and `Result`, generated for your type | [Your own Result type](errors/custom-error-types.md#what-the-generator-writes) |
 | `IFromException<TSelf>` on the error type, or `FromException` on the struct | [Your own Result type](errors/custom-error-types.md#unexpected-exceptions) |
 | A union as the error type, case conversions, exhaustive `switch` | [Errors as data](errors/errors-as-data.md) |
 | `ResultTypes.IsResult(type)`, `ResultTypes.ErrorType(type)`, `ResultTypes.ValueType(type)` | Runtime checks for any result type |
 | `union.Is<TCase>()`, `union.As<TCase>()` | [Your own unions](unions/your-own-unions.md) |
-| `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>` and the operators on them, `Result<T, TError>` | Hand-written result types from 0.3.0, see [Migrating](errors/custom-error-types.md#migrating-from-a-hand-written-type) |
+| `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>`, `IFluentResult`, `IFluentUnitResult` | Implemented by declared types, not by hand. The integration packages accept any type that implements them |
+| Hand-written result types and `Result<T, TError>` from 0.3.0 | Removed, see [Migrating](errors/custom-error-types.md#migrating-from-030) |
 
 ## FluentValidation
 
@@ -224,8 +223,8 @@ Package `Fluent.Unions.Dapper`, namespace `Fluent.Unions.Dapper`.
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `Register<T>()` | `OptionHandlers`, registers `Option<T>` | [Dapper](dapper/README.md#registering-handlers) |
-| `RegisterCommon()` | `OptionHandlers`, registers `Option<T>` for the common database types | [Dapper](dapper/README.md#registering-handlers) |
+| `Register<T>()` | `FluentUnionsDapper`, registers `Option<T>` | [Dapper](dapper/README.md#registering-handlers) |
+| `Register()` | `FluentUnionsDapper`, registers `Option<T>` for the common database types | [Dapper](dapper/README.md#registering-handlers) |
 | `OptionTypeHandler<T>` | `SqlMapper.TypeHandler<Option<T>>` | [Dapper](dapper/README.md#what-is-mapped) |
 
 ## Refit
@@ -259,7 +258,7 @@ Package `Fluent.Unions.Serilog`, namespace `Fluent.Unions.Serilog`.
 | Member | On | Docs |
 | --- | --- | --- |
 | `WithFluentUnions()` | `LoggerDestructuringConfiguration` (`.Destructure.WithFluentUnions()`) | [Serilog](serilog/README.md) |
-| `UnionDestructuringPolicy` | `IDestructuringPolicy` for `Result`, `Result<T>`, `Result<T, TError>`, `Option<T>`, `Loadable<T>` | [Serilog](serilog/README.md#log-shape) |
+| `UnionDestructuringPolicy` | `IDestructuringPolicy` for `Result`, `Result<T>`, your own result types, `Option<T>`, `Loadable<T>` | [Serilog](serilog/README.md#log-shape) |
 
 ## Newtonsoft.Json
 
@@ -269,7 +268,7 @@ Package `Fluent.Unions.NewtonsoftJson`, namespace `Fluent.Unions.NewtonsoftJson`
 | --- | --- | --- |
 | `AddFluentUnions()` | `JsonSerializerSettings` | [Newtonsoft.Json](newtonsoft-json/README.md) |
 | `OptionJsonConverter` | `Option<T>` | [Newtonsoft.Json](newtonsoft-json/README.md#options) |
-| `ResultJsonConverter` | `Result`, `Result<T>`, `Result<T, TError>` | [Newtonsoft.Json](newtonsoft-json/README.md#results-refuse-to-serialize) |
+| `ResultJsonConverter` | `Result`, `Result<T>`, your own result types | [Newtonsoft.Json](newtonsoft-json/README.md#results-refuse-to-serialize) |
 | `UnionJsonConverter` | your own unions | [Newtonsoft.Json](newtonsoft-json/README.md#your-own-unions) |
 
 ## Mediator
@@ -299,7 +298,7 @@ Package `Fluent.Unions.MongoDB`, namespace `Fluent.Unions.MongoDB`.
 | `Register()` | `FluentUnionsBson` | [MongoDB](mongodb/README.md) |
 | `OptionSerializer<T>` | `Option<T>` | [MongoDB](mongodb/README.md#options) |
 | `OmitNoneConvention` | `ConventionPack`, `Option<T>` members | [MongoDB](mongodb/README.md#none-and-missing-elements) |
-| `ResultSerializer<TResult>` | `Result`, `Result<T>`, `Result<T, TError>` (refuses) | [MongoDB](mongodb/README.md#results-refuse-to-serialize) |
+| `ResultSerializer<TResult>` | `Result`, `Result<T>`, your own result types (refuses) | [MongoDB](mongodb/README.md#results-refuse-to-serialize) |
 
 ## Swashbuckle
 
@@ -323,10 +322,10 @@ Packages `Fluent.Unions.Shouldly`, `.TUnit`, `.NUnit` and `.Xunit`, namespaces o
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `ShouldBeOk()`, `ShouldBeError()`, `ShouldBeError<TException>()`, `ShouldBeSome()`, `ShouldBeNone()` | `Result`, `Result<T>`, `Option<T>` (Shouldly) | [Testing](testing/README.md#shouldly) |
-| `IsOk()`, `IsError()`, `IsError<TException>()`, `IsSome()`, `IsNone()` | `Assert.That` of `Result`, `Result<T>`, `Option<T>` (TUnit) | [Testing](testing/README.md#tunit) |
-| `IsResult.Ok`, `Error`, `OkWith`, `ErrorWith`, `ErrorOfType<TException>()`; `IsOption.Some`, `None`, `SomeWith` | `UnionConstraint` (NUnit) | [Testing](testing/README.md#nunit) |
-| `ResultAssert.Ok`, `Error`, `Error<TException>`; `OptionAssert.Some`, `None` | `Result`, `Result<T>`, `Option<T>` (xUnit v3) | [Testing](testing/README.md#xunit) |
+| `ShouldBeOk()`, `ShouldBeError()`, `ShouldBeError<TException>()`, `ShouldBeError<TCase>()` on your own result types, `ShouldBeSome()`, `ShouldBeNone()` | `Result`, `Result<T>`, your own result types, `Option<T>` (Shouldly) | [Testing](testing/README.md#shouldly) |
+| `IsOk()`, `IsError()`, `IsError<TException>()`, `IsSome()`, `IsNone()`; `AsResult().ErrorCase<TCase>()` for your own result types | `Assert.That` of `Result`, `Result<T>`, your own result types, `Option<T>` (TUnit) | [Testing](testing/README.md#tunit) |
+| `IsResult.Ok`, `Error`, `OkWith`, `ErrorWith`, `ErrorOfType<TError>()` (also a case of an error union); `IsOption.Some`, `None`, `SomeWith` | `UnionConstraint` (NUnit) | [Testing](testing/README.md#nunit) |
+| `ResultAssert.Ok`, `Error`, `Error<TException>`, `Error<TCase>` on your own result types; `OptionAssert.Some`, `None` | `Result`, `Result<T>`, your own result types, `Option<T>` (xUnit v3) | [Testing](testing/README.md#xunit) |
 
 ## Mapping
 
@@ -351,7 +350,7 @@ Package `Fluent.Unions.MessagePack`, namespace `Fluent.Unions.MessagePack`.
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `WithUnions()` | `MessagePackSerializerOptions` | [MessagePack](messagepack/README.md) |
+| `WithFluentUnions()` | `MessagePackSerializerOptions` | [MessagePack](messagepack/README.md) |
 | `UnionsResolver.Instance` | `IFormatterResolver` | [MessagePack](messagepack/README.md) |
 | `OptionFormatter<T>` | `Option<T>` members | [MessagePack](messagepack/README.md) |
 
@@ -361,7 +360,7 @@ Package `Fluent.Unions.Orleans`, namespace `Fluent.Unions.Orleans`.
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `AddUnions()` | `ISerializerBuilder` | [Orleans](orleans/README.md) |
+| `AddFluentUnions()` | `ISerializerBuilder` | [Orleans](orleans/README.md) |
 | `OptionConverter<T>`, `OptionSurrogate<T>` | `Option<T>` | [Orleans](orleans/README.md) |
 
 ## gRPC
@@ -387,7 +386,7 @@ Package `Fluent.Unions.Verify`, namespace `Fluent.Unions.Verify`.
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `RecordResult(result)` | `Activity?`, with `Result`, `Result<T>` or `Result<T, TError>` | [Tracing](tracing/README.md) |
+| `RecordResult(result)` | `Activity?`, with `Result`, `Result<T>` or your own result type (generated overload) | [Tracing](tracing/README.md) |
 
 ## Serialization
 
@@ -399,8 +398,8 @@ Package `Fluent.Unions.Verify`, namespace `Fluent.Unions.Verify`.
 
 | Member | Docs |
 | --- | --- |
-| `ToHttpResult()` on results, options, `Result<T, TError>` and their `Task` versions | [HTTP results](aspnetcore/http-results.md) |
-| `ToHttpResult(onError)` on custom result types | [HTTP results](aspnetcore/http-results.md#with-your-own-result-type) |
+| `ToHttpResult()` on results, options and their `Task` versions | [HTTP results](aspnetcore/http-results.md) |
+| `ToHttpResult(onError)` and, with `TError : Exception`, `ToHttpResult()` on your own result types (no `Task` overload) | [HTTP results](aspnetcore/http-results.md#with-your-own-result-type) |
 | `WithResultMapping()`, `ResultEndpointFilter` | [Endpoint filter](aspnetcore/endpoint-filter.md) |
 | `WithResultMapping()` on handlers that return custom result types | [Endpoint filter](aspnetcore/endpoint-filter.md#with-your-own-result-type) |
 | `ResultHttpOptions.Map<TException>(statusCode)` | [Error mapping](aspnetcore/error-mapping.md) |

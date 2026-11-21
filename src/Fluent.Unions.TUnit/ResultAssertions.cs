@@ -13,7 +13,7 @@ public static class ResultAssertions
     /// Asserts that the result is Ok.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an ok result")]
-    public static AssertionResult IsOk(this Result result)
+    internal static AssertionResult IsOk(this Result result)
     {
         return result.TryGetError(out var error)
             ? AssertionResult.Failed($"it failed with {Describe(error)}")
@@ -24,7 +24,7 @@ public static class ResultAssertions
     /// Asserts that the result is Ok and returns its value.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an ok result")]
-    public static AssertionResult<T> IsOk<T>(this Result<T> result)
+    internal static AssertionResult<T> IsOk<T>(this Result<T> result)
     {
         return result.TryGetError(out var error)
             ? AssertionResult.Failed($"it failed with {Describe(error)}")
@@ -35,7 +35,7 @@ public static class ResultAssertions
     /// Asserts that the result is an error and returns it.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an error result")]
-    public static AssertionResult<Exception> IsError(this Result result)
+    internal static AssertionResult<Exception> IsError(this Result result)
     {
         return result.TryGetError(out var error)
             ? AssertionResult<Exception>.Passed(error)
@@ -46,7 +46,7 @@ public static class ResultAssertions
     /// Asserts that the result is an error and returns it.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an error result")]
-    public static AssertionResult<Exception> IsError<T>(this Result<T> result)
+    internal static AssertionResult<Exception> IsError<T>(this Result<T> result)
     {
         return result.TryGetError(out var error)
             ? AssertionResult<Exception>.Passed(error)
@@ -57,7 +57,7 @@ public static class ResultAssertions
     /// Asserts that the result is an error of type <typeparamref name="TException"/> or a derived type and returns it.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an error of type {TException}")]
-    public static AssertionResult<TException> IsError<TException>(this Result result)
+    internal static AssertionResult<TException> IsError<TException>(this Result result)
         where TException : Exception
     {
         if (!result.TryGetError(out var error))
@@ -94,7 +94,7 @@ public static class ResultAssertions
     /// Asserts that a custom result type with a value is Ok and returns its value.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an ok result")]
-    public static AssertionResult<T> IsOk<TSelf, T, TError>(this ResultSubject<TSelf, T, TError> subject)
+    internal static AssertionResult<T> IsOk<TSelf, T, TError>(this ResultSubject<TSelf, T, TError> subject)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
@@ -112,7 +112,7 @@ public static class ResultAssertions
     /// Asserts that a custom result type without a value is Ok.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an ok result")]
-    public static AssertionResult IsOk<TSelf, TError>(this UnitResultSubject<TSelf, TError> subject)
+    internal static AssertionResult IsOk<TSelf, TError>(this UnitResultSubject<TSelf, TError> subject)
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
@@ -125,7 +125,7 @@ public static class ResultAssertions
     /// Asserts that a custom result type with a value is an error and returns it.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an error result")]
-    public static AssertionResult<TError> IsError<TSelf, T, TError>(this ResultSubject<TSelf, T, TError> subject)
+    internal static AssertionResult<TError> IsError<TSelf, T, TError>(this ResultSubject<TSelf, T, TError> subject)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
@@ -140,7 +140,7 @@ public static class ResultAssertions
     /// Asserts that a custom result type without a value is an error and returns it.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an error result")]
-    public static AssertionResult<TError> IsError<TSelf, TError>(this UnitResultSubject<TSelf, TError> subject)
+    internal static AssertionResult<TError> IsError<TSelf, TError>(this UnitResultSubject<TSelf, TError> subject)
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
@@ -153,7 +153,7 @@ public static class ResultAssertions
     /// Asserts that the option has a value and returns it.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an option with a value")]
-    public static AssertionResult<T> IsSome<T>(this Option<T> option)
+    internal static AssertionResult<T> IsSome<T>(this Option<T> option)
     {
         return option.TryGetValue(out var value)
             ? AssertionResult<T>.Passed(value)
@@ -164,7 +164,7 @@ public static class ResultAssertions
     /// Asserts that the option has no value. A default option counts as none.
     /// </summary>
     [GenerateAssertion(ExpectationMessage = "to be an option without a value")]
-    public static AssertionResult IsNone<T>(this Option<T> option)
+    internal static AssertionResult IsNone<T>(this Option<T> option)
     {
         return option.TryGetValue(out var value)
             ? AssertionResult.Failed($"it was some with value {value}")

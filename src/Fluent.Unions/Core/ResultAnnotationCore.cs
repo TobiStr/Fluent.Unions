@@ -11,13 +11,16 @@ namespace Fluent.Unions.Core;
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ResultAnnotationCore
 {
+    internal const string TrimmingMessage =
+        "DataAnnotations validation reads the attributes of the value's type through reflection.";
+
     /// <summary>
     /// Checks the value with its DataAnnotations attributes and <see cref="IValidatableObject"/>, like
     /// <see cref="Validator.TryValidateObject(object, ValidationContext, ICollection{ValidationResult}?, bool)"/> with every property.
     /// If any fail, the error is a <see cref="ValidationErrors"/> with one <see cref="ValidationError"/> per failure and member.
     /// An attribute that throws gives the exception as the error. Errors pass through.
     /// </summary>
-    [RequiresUnreferencedCode(ResultAnnotationExtensions.TrimmingMessage)]
+    [RequiresUnreferencedCode(ResultAnnotationCore.TrimmingMessage)]
     public static TSelf ValidateAnnotations<TSelf, T, TError>(TSelf result)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull

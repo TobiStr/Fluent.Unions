@@ -58,7 +58,7 @@ public class ContactGrainScenario
 
     [OneTimeSetUp]
     public void SetUpProvider() =>
-        _provider = new ServiceCollection().AddSerializer(builder => builder.AddUnions()).BuildServiceProvider();
+        _provider = new ServiceCollection().AddSerializer(builder => builder.AddFluentUnions()).BuildServiceProvider();
 
     [OneTimeTearDown]
     public void TearDownProvider() => _provider.Dispose();

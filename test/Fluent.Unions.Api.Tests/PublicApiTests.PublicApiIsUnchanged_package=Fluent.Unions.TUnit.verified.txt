@@ -1,17 +1,6 @@
 ﻿class Fluent.Unions.TUnit.ResultAssertions
   public static Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> AsResult<TSelf, T, TError>(this Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> AsResult<TSelf, TError>(this Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
-  public static TUnit.Assertions.Core.AssertionResult IsOk(this Fluent.Unions.Result result)
-  public static TUnit.Assertions.Core.AssertionResult IsOk<TSelf, TError>(this Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
-  public static TUnit.Assertions.Core.AssertionResult<System.Exception> IsError(this Fluent.Unions.Result result)
-  public static TUnit.Assertions.Core.AssertionResult<System.Exception> IsError<T>(this Fluent.Unions.Result<T> result)
-  public static TUnit.Assertions.Core.AssertionResult<T> IsOk<T>(this Fluent.Unions.Result<T> result)
-  public static TUnit.Assertions.Core.AssertionResult<T> IsOk<TSelf, T, TError>(this Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
-  public static TUnit.Assertions.Core.AssertionResult<T> IsSome<T>(this Fluent.Unions.Option<T> option)
-  public static TUnit.Assertions.Core.AssertionResult<TError> IsError<TSelf, T, TError>(this Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
-  public static TUnit.Assertions.Core.AssertionResult<TError> IsError<TSelf, TError>(this Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
-  public static TUnit.Assertions.Core.AssertionResult<TException> IsError<TException>(this Fluent.Unions.Result result) where TException : System.Exception
-  public static TUnit.Assertions.Core.AssertionResult? IsNone<T>(this Fluent.Unions.Option<T> option)
 
 class TUnit.Assertions.Extensions.OptionT_IsNone_Assertion<T> : TUnit.Assertions.Core.Assertion<Fluent.Unions.Option<T>>
   protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.Option<T>> metadata)
@@ -98,6 +87,7 @@ class TUnit.Assertions.Extensions.UnitResultSubjectTSelfTError_IsOk_Assertion<TS
   public UnitResultSubjectTSelfTError_IsOk_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>> context)
 
 readonly struct Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull : interface System.IEquatable<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>>
+  public Fluent.Unions.Option<TCase> ErrorCase<TCase>()
   public ResultSubject()
   public ResultSubject(TSelf Result)
   public TSelf Result { get; init; }
@@ -110,6 +100,7 @@ readonly struct Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> where TSelf 
   public void Deconstruct(out TSelf Result)
 
 readonly struct Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull : interface System.IEquatable<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>>
+  public Fluent.Unions.Option<TCase> ErrorCase<TCase>()
   public TSelf Result { get; init; }
   public UnitResultSubject()
   public UnitResultSubject(TSelf Result)

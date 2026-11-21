@@ -38,6 +38,38 @@ public class GeneratedResultHttpTests
     }
 
     [Test]
+    public async Task ToHttpResult_GivesServerErrorForADefaultResultEvenWhenFromExceptionIsMapped()
+    {
+        var (status, body) = await Execute(
+            default(Result<int>).ToHttpResult(),
+            services => services.Configure<ResultHttpOptions>(o => o.Map<DomainException>(StatusCodes.Status400BadRequest, exposeMessage: true)));
+
+        Assert.That(status, Is.EqualTo(500));
+        Assert.That(body, Does.Not.Contain("default"));
+    }
+
+    [Test]
+    public async Task ToHttpResultWithOnError_GivesServerErrorForADefaultResult()
+    {
+        var (status, _) = await Execute(default(Result<int>).ToHttpResult(error => TypedResults.BadRequest(error.Message)));
+
+        Assert.That(status, Is.EqualTo(500));
+    }
+
+    [Test]
+    public async Task ToHttpResult_KeepsAValidationErrorWrappedByFromExceptionAValidationProblem()
+    {
+        Result<int> result = DomainException.FromException(new ValidationError("Too short", "Name"));
+
+        var (status, body) = await Execute(
+            result.ToHttpResult(),
+            services => services.Configure<ResultHttpOptions>(o => o.Map<DomainException>(StatusCodes.Status400BadRequest, exposeMessage: true)));
+
+        Assert.That(status, Is.EqualTo(400));
+        Assert.That(body, Does.Contain("\"Name\":[\"Too short\"]"));
+    }
+
+    [Test]
     public async Task Filter_GivesOkForAValue()
     {
         await using var host = await Host(api => api.MapGet("/value", () => Found(7)));
@@ -130,9 +162,10 @@ public class GeneratedResultHttpTests
             .Single(endpoint => endpoint.RoutePattern.RawText == pattern)
             .Metadata.OfType<IProducesResponseTypeMetadata>();
 
-    private static async Task<(int Status, string Body)> Execute(HttpResult result)
+    private static async Task<(int Status, string Body)> Execute(HttpResult result, Action<IServiceCollection>? configure = null)
     {
         var services = new ServiceCollection().AddLogging().AddProblemDetails();
+        configure?.Invoke(services);
         await using var provider = services.BuildServiceProvider();
         var context = new DefaultHttpContext { RequestServices = provider };
         context.Response.Body = new MemoryStream();

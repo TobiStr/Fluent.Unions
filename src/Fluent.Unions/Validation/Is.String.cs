@@ -143,9 +143,12 @@ public static partial class Is
         return value => value is not null && regex.IsMatch(value);
     }
 
-    /// <summary>Creates a predicate for strings that match the pattern. The pattern compiles once and a match times out after one second.</summary>
-    public static Func<string?, bool> Matches(string pattern, RegexOptions options = RegexOptions.None) =>
-        Matches(new Regex(pattern, options, RegexTimeout));
+    /// <summary>Creates a predicate for strings that match the pattern. The pattern is cached and a match times out after one second.</summary>
+    public static Func<string?, bool> Matches(string pattern, RegexOptions options = RegexOptions.None)
+    {
+        RequireValidPattern(pattern, options);
+        return value => value is not null && Regex.IsMatch(value, pattern, options, RegexTimeout);
+    }
 
     /// <summary>Creates a predicate for strings that do not match the regular expression.</summary>
     public static Func<string?, bool> NotMatches(Regex regex)
@@ -154,9 +157,18 @@ public static partial class Is
         return value => value is not null && !regex.IsMatch(value);
     }
 
-    /// <summary>Creates a predicate for strings that do not match the pattern. The pattern compiles once and a match times out after one second.</summary>
-    public static Func<string?, bool> NotMatches(string pattern, RegexOptions options = RegexOptions.None) =>
-        NotMatches(new Regex(pattern, options, RegexTimeout));
+    /// <summary>Creates a predicate for strings that do not match the pattern. The pattern is cached and a match times out after one second.</summary>
+    public static Func<string?, bool> NotMatches(string pattern, RegexOptions options = RegexOptions.None)
+    {
+        RequireValidPattern(pattern, options);
+        return value => value is not null && !Regex.IsMatch(value, pattern, options, RegexTimeout);
+    }
+
+    private static void RequireValidPattern(string pattern, RegexOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(pattern);
+        Regex.IsMatch(string.Empty, pattern, options, RegexTimeout);
+    }
 
     private static bool AllCharacters(string? value, Func<char, bool> test) => !string.IsNullOrEmpty(value) && value.All(test);
 

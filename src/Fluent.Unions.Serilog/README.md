@@ -4,7 +4,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.Serilog.svg)](https://www.nuget.org/packages/Fluent.Unions.Serilog) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.Serilog.svg)](https://www.nuget.org/packages/Fluent.Unions.Serilog) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2)](https://tobistr.github.io/Fluent.Unions/serilog/)
 
-Logs `Result`, `Result<T>`, `Result<T, TError>`, `Option<T>` and `Loadable<T>` as structured values instead of opaque objects. It builds on Fluent.Unions and Serilog.
+Logs `Result`, `Result<T>`, your own result types, `Option<T>` and `Loadable<T>` as structured values instead of opaque objects. It builds on Fluent.Unions and Serilog.
 
 ## Installation
 

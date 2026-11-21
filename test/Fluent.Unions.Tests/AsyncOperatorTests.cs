@@ -88,22 +88,6 @@ public class AsyncOperatorTests
     }
 
     [Test]
-    public async Task SelectManyAwaitChainsTasks()
-    {
-        var age = await GetNameAsync("Ada").SelectManyAwait(GetAgeAsync);
-
-        Assert.That(age.GetValue(), Is.EqualTo(36));
-    }
-
-    [Test]
-    public async Task SelectManyAwaitToNonGenericResult()
-    {
-        var saved = await GetNameAsync("Ada").SelectManyAwait(SaveAsync);
-
-        Assert.True(saved.IsSuccess);
-    }
-
-    [Test]
     public async Task ChainOnTaskResult()
     {
         var length = await GetNameAsync("Ada").Chain(name => (Result<int>)name.Length);
@@ -196,6 +180,26 @@ public class AsyncOperatorTests
         var result = await GetNameAsync("Ada").Check();
 
         Assert.That(result.GetValue(), Is.EqualTo("Ada"));
+    }
+
+    [Test]
+    public void TaskOperatorsRejectNullDelegatesImmediately()
+    {
+        var results = Task.FromResult<Result<string>>("Ada");
+        var options = Task.FromResult<Option<string>>("Ada");
+
+        Assert.Throws<ArgumentNullException>(() => results.Select((Func<string, int>)null!));
+        Assert.Throws<ArgumentNullException>(() => results.Chain((Func<string, Result<int>>)null!));
+        Assert.Throws<ArgumentNullException>(() => results.SelectAwait((Func<string, Task<int>>)null!));
+        Assert.Throws<ArgumentNullException>(() => results.ChainAwait((Func<string, Task<Result<int>>>)null!));
+        Assert.Throws<ArgumentNullException>(() => results.Do((Action<string>)null!));
+        Assert.Throws<ArgumentNullException>(() => results.Ensure(null!, "message"));
+        Assert.Throws<ArgumentNullException>(() => options.Select((Func<string, int>)null!));
+        Assert.Throws<ArgumentNullException>(() => options.Where(null!));
+        Assert.Throws<ArgumentNullException>(() => options.SelectAwait((Func<string, Task<int>>)null!));
+        Assert.Throws<ArgumentNullException>(() => options.ChainAwait((Func<string, Task<Option<int>>>)null!));
+        Assert.Throws<ArgumentNullException>(() => options.WhereAwait(null!));
+        Assert.Throws<ArgumentNullException>(() => options.DoAwait(null!));
     }
 
     private static async Task<Result<string>> GetNameAsync(string? name)

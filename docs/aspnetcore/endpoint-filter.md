@@ -47,7 +47,7 @@ Handlers may be synchronous or asynchronous. Minimal APIs await the returned `Ta
 | `Option<T>` | 200 with `T`, 404 |
 | your own result type | 200 with `T` (204 without a value), 400, 500 |
 
-Add `.Produces(...)` yourself for other statuses you map, such as 404 or 409.
+The errors are always described as 400 and 500. The metadata does not list the statuses of the built-in mappings (404, 403, 504) or of your `Map<TException>` calls. Add `.Produces(...)` yourself for the statuses you return, such as 404 or 409.
 
 ## What passes through
 
@@ -57,13 +57,13 @@ The filter does not catch exceptions. An exception thrown by the handler goes th
 
 ## With your own result type
 
-The filter handles any result type, including one declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) and `Result<T, TError>`. A value gives 200 with the value, a value-less success gives 204, and an error gives the configured [error mapping](error-mapping.md). The OpenAPI metadata uses the same shape. The filter finds `IResult<TSelf, T, TError>` at runtime, reads the type arguments once per type and caches them.
+The filter handles any result type, including one declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). A value gives 200 with the value, a value-less success gives 204, and an error gives the configured [error mapping](error-mapping.md). The OpenAPI metadata uses the same shape. The filter finds `IResult<TSelf, T, TError>` at runtime, reads the type arguments once per type and caches them.
 
 | Handler returns | Response |
 | --- | --- |
 | a value | 200 with the value |
 | an error that is an `Exception` | `ProblemDetails`, status from [error mapping](error-mapping.md) |
-| an error that is not an `Exception` | the error is wrapped in a `ResultErrorException` and mapped through `ResultHttpOptions`, so 500 unless you map `ResultErrorException` |
+| an error that is not an `Exception` | the error is wrapped in a `ResultErrorException`, so 500 without details |
 | a `default` result | `ProblemDetails` with 500 |
 
 The library cannot know what status each of your error cases means, so a data error is a server error by default and its content is not shown. Map the cases yourself in the handler with `ToHttpResult(onError)`. The returned `IResult` passes through the filter untouched:
@@ -80,18 +80,14 @@ checkout.MapGet("/{id}", (int id) => Checkout(id).ToHttpResult(error => error sw
 }));
 ```
 
-To give every data error one status, map `ResultErrorException`. Its message names the error, so expose it only if that is safe:
-
-```csharp
-builder.Services.Configure<ResultHttpOptions>(o => o.Map<ResultErrorException>(StatusCodes.Status409Conflict, exposeMessage: true));
-```
+Data errors should always use `ToHttpResult(onError)`. Do not map `ResultErrorException` with `exposeMessage: true`: its message is the `ToString()` of the error record, with its type name and every property.
 
 A result type must be a struct. Other structs and classes pass through.
 
 ## Pitfalls
 
 - **Only the listed types are converted.** `Result`, `Result<T>`, `Option<T>` and every result type. Check the tables before you rely on it for another type.
-- **A data error gives 500 by default.** Use `ToHttpResult(onError)` or map `ResultErrorException`.
+- **A data error gives 500.** Use `ToHttpResult(onError)`.
 - **The filter does not catch.** Wrap code that throws in `Result.TryAsync`.
 
 ## See also

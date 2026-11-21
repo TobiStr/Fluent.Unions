@@ -18,7 +18,7 @@ public sealed class AsyncLambdaAnalyzer : DiagnosticAnalyzer
         .Add("Try", "TryAsync")
         .Add("Select", "SelectAwait")
         .Add("Chain", "ChainAwait")
-        .Add("SelectMany", "SelectManyAwait")
+        .Add("SelectMany", "ChainAwait")
         .Add("Do", "DoAwait");
 
     /// <inheritdoc />

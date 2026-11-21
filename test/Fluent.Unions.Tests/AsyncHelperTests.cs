@@ -46,6 +46,26 @@ public class AsyncHelperTests
     }
 
     [Test]
+    public async Task AsyncStreamOperatorsKeepExceptionValuesApartFromErrors()
+    {
+        var value = new TimeoutException("a value");
+        var failure = new IOException("an error");
+
+        Assert.That(await ToListAsync(ExceptionStream(value, failure).Values()), Is.EqualTo(new[] { value }));
+        Assert.That(await ToListAsync(ExceptionStream(value, failure).Errors()), Is.EqualTo(new[] { failure }));
+        Assert.That((await ExceptionStream(value).CombineAsync()).GetValue(), Is.EqualTo(new[] { value }));
+        Assert.That((await ExceptionStream(value, failure).CombineAsync()).GetError(), Is.SameAs(failure));
+    }
+
+    [Test]
+    public async Task AsyncStreamOperatorsTreatDefaultResultsAsErrors()
+    {
+        Assert.That(await ToListAsync(Stream(1, default).Values()), Is.EqualTo(new[] { 1 }));
+        Assert.That(await ToListAsync(Stream(1, default).Errors()), Has.Count.EqualTo(1));
+        Assert.That((await Stream(1, default).CombineAsync()).GetError(), Is.InstanceOf<InvalidOperationException>());
+    }
+
+    [Test]
     public async Task CombineAsyncCapturesStreamExceptions()
     {
         var result = await ThrowingStream().CombineAsync();
@@ -127,6 +147,39 @@ public class AsyncHelperTests
     }
 
     [Test]
+    public async Task RetryAsyncRetriesACancellationThatIsNotTheCallers()
+    {
+        var calls = 0;
+
+        var result = await Result.RetryAsync<int>(_ =>
+        {
+            if (++calls < 3)
+                throw new TaskCanceledException("HTTP timeout");
+
+            return Task.FromResult<Result<int>>(calls);
+        }, maxAttempts: 5);
+
+        Assert.That(result.GetValue(), Is.EqualTo(3));
+        Assert.That(calls, Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task RetryAsyncReturnsTheTimeoutWhenAttemptsRunOut()
+    {
+        using var other = new CancellationTokenSource();
+        var calls = 0;
+
+        var result = await Result.RetryAsync<int>(_ =>
+        {
+            calls++;
+            throw new OperationCanceledException(other.Token);
+        }, maxAttempts: 2, cancellationToken: CancellationToken.None);
+
+        Assert.That(result.GetError(), Is.InstanceOf<OperationCanceledException>());
+        Assert.That(calls, Is.EqualTo(2));
+    }
+
+    [Test]
     public async Task TimeoutGivesATimeoutError()
     {
         var slow = DelayedAsync(1, 5_000);
@@ -153,6 +206,14 @@ public class AsyncHelperTests
             await Task.Yield();
             yield return result;
         }
+    }
+
+    private static async IAsyncEnumerable<Result<Exception>> ExceptionStream(Exception value, Exception? error = null)
+    {
+        await Task.Yield();
+        yield return Result<Exception>.Ok(value);
+        if (error is not null)
+            yield return Result<Exception>.Error(error);
     }
 
     private static async IAsyncEnumerable<Option<int>> OptionStream()

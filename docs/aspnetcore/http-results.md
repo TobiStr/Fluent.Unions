@@ -9,18 +9,16 @@ This page covers `ToHttpResult`, the extension methods in `Fluent.Unions.AspNetC
 | `Result<T>` | 200 with the value | `ProblemDetails`, status from [error mapping](error-mapping.md) |
 | `Result` | 204 | `ProblemDetails` |
 | `Option<T>` | 200 with the value | 404 for `None` |
-| `Result<T, TError>` with `onError` | 200 with the value | the response from `onError` |
 | your own result type, `ToHttpResult()` with `TError : Exception` | 200 with the value | `ProblemDetails`, status from [error mapping](error-mapping.md) |
 | your own result type, with `onError` | 200 with the value | the response from `onError` |
 
-Each of them has a `Task` overload, so a pipeline stays one expression:
+Each of them except your own result type has a `Task` overload, so a pipeline stays one expression:
 
 | Receiver | Task overload |
 | --- | --- |
 | `Task<Result<T>>` | `ToHttpResult()` |
 | `Task<Result>` | `ToHttpResult()` |
 | `Task<Option<T>>` | `ToHttpResult()` |
-| `Task<Result<T, TError>>` | `ToHttpResult(onError)` |
 
 The value is written as JSON with `TypedResults.Ok`. The 404 for `None` has no body.
 
@@ -42,18 +40,20 @@ Handlers can return the `Task<IResult>` directly. The `await` in the first line 
 
 ## A faulted task
 
-The `Task<Result<T>>` and `Task<Result>` overloads treat a faulted task as an error result. An exception that escapes the operation becomes `ProblemDetails`, usually 500 without a message:
+None of the `Task` overloads settles the task. A faulted task throws as usual, and the exception goes through ASP.NET Core's exception handling, which logs it and gives 500:
 
 ```csharp
-Task.FromException<Result<int>>(new InvalidOperationException("secret")).ToHttpResult();
-// 500, ProblemDetails without a detail
+await Task.FromException<Result<int>>(new InvalidOperationException("secret")).ToHttpResult();
+// throws InvalidOperationException
 ```
 
-The `Task<Option<T>>` and `Task<Result<T, TError>>` overloads do not settle the task. A faulted task there throws as usual and the exception goes through ASP.NET Core's exception handling.
+Wrap code that throws in `Result.TryAsync` if the exception should become an error result instead.
+
+A `default` result of your own type is not mapped through your `FromException`. It gives `ProblemDetails` with 500 and is logged, like the [endpoint filter](endpoint-filter.md) does.
 
 ## Errors as data
 
-`Result<T, TError>` has no default mapping, because an error is a record and not an exception. Pass `onError`, and a `switch` makes the compiler check every case:
+A result type whose error is a record has no default mapping, because the error is not an exception. Pass `onError`, and a `switch` makes the compiler check every case:
 
 ```csharp
 app.MapGet("/checkout/{id}", (int id) => Checkout(id).ToHttpResult(error => error switch
@@ -64,7 +64,7 @@ app.MapGet("/checkout/{id}", (int id) => Checkout(id).ToHttpResult(error => erro
     Unexpected => TypedResults.StatusCode(500)
 }));
 
-app.MapGet("/checkout-async/{id}", async (int id) => await Task.FromResult(Checkout(id)).ToHttpResult(ToResponse));
+app.MapGet("/checkout-async/{id}", async (int id) => (await CheckoutAsync(id)).ToHttpResult(ToResponse));
 ```
 
 Pass a method group when several endpoints share the mapping:
@@ -83,7 +83,7 @@ static IResult ToResponse(CheckoutError error) => error switch
 
 ## With your own result type
 
-A result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) has two overloads. `ToHttpResult<TSelf, T, TError>(this IResult<TSelf, T, TError>)` needs `TError : Exception` and maps like the default `Result<T>`. `ToHttpResult(onError)` works for any error type: a value gives 200 and an error gives the response from `onError`.
+A result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) has two overloads. Both take any type that implements `IResult<TSelf, T, TError>`, which the generator does for you. Do not implement the interface by hand. `ToHttpResult<TSelf, T, TError>(this IResult<TSelf, T, TError>)` needs `TError : Exception` and maps like the default `Result<T>`. `ToHttpResult(onError)` works for any error type: a value gives 200 and an error gives the response from `onError`.
 
 ```csharp
 app.MapGet("/customers/{id}", (Guid id) => GetCustomer(id).ToHttpResult(error => error switch
@@ -93,7 +93,7 @@ app.MapGet("/customers/{id}", (Guid id) => GetCustomer(id).ToHttpResult(error =>
 }));
 ```
 
-The concrete overloads for `Result<T>` and `Result<T, TError>` stay in use for those types. `IResult` in the signature is `Microsoft.AspNetCore.Http.IResult`. `Fluent.Unions.Abstractions.IResult<TSelf, T, TError>` has three type arguments, so the names do not clash, but an alias such as `using HttpResult = Microsoft.AspNetCore.Http.IResult;` can make a file easier to read.
+There is no `Task` overload for your own type. `IResult` in the signature is `Microsoft.AspNetCore.Http.IResult`. `Fluent.Unions.Abstractions.IResult<TSelf, T, TError>` has three type arguments, so the names do not clash, but an alias such as `using HttpResult = Microsoft.AspNetCore.Http.IResult;` can make a file easier to read.
 
 ## Controllers
 
@@ -126,7 +126,6 @@ An empty `input` makes `Validate` fail with a `ValidationErrors`, which gives 40
 
 - **A result is not serializable.** Do not return a `Result<T>` from a minimal API without `ToHttpResult` or the [endpoint filter](endpoint-filter.md). `JsonSerializer` throws for it.
 - **Only `None` is 404.** A result never gives 404 by itself. Return a `KeyNotFoundException` error, or use `Option<T>`, for "not found".
-- **`Task<Result<T, TError>>` needs `onError` as well.** There is no overload without it.
 - **Your own result type has no `Task` overload.** Await the task, then call `ToHttpResult()` or `ToHttpResult(onError)` on the result.
 - **Messages are hidden by default.** Only validation errors and types mapped with `exposeMessage: true` show their message, so log the error before you convert it, for example with `OnErrorDo`.
 
@@ -134,7 +133,7 @@ An empty `input` makes `Validate` fail with a `ValidationErrors`, which gives 40
 
 - [Endpoint filter](endpoint-filter.md): return results straight from handlers.
 - [Error mapping](error-mapping.md): the status code table.
-- [Errors as data](../errors/errors-as-data.md): declaring `Result<T, TError>`.
+- [Errors as data](../errors/errors-as-data.md): an error union with an exhaustive `switch`.
 - `test/Fluent.Unions.AspNetCore.Tests/HttpResultTests.cs` in the repo: the status codes as tests.
 
 ---

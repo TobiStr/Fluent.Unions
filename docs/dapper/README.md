@@ -17,7 +17,7 @@ This folder has one page. The topics are below.
 using Dapper;
 using Fluent.Unions.Dapper;
 
-OptionHandlers.RegisterCommon();
+FluentUnionsDapper.Register();
 
 public class PersonRow
 {
@@ -40,8 +40,8 @@ Dapper keeps one handler per closed type, so each `Option<T>` is registered on i
 
 | Member | Registers |
 | --- | --- |
-| `OptionHandlers.Register<T>()` | a handler for `Option<T>` |
-| `OptionHandlers.RegisterCommon()` | `Option<T>` for bool, byte, short, int, long, float, double, decimal, string, Guid, DateTime, DateTimeOffset, TimeSpan and byte[] |
+| `FluentUnionsDapper.Register<T>()` | a handler for `Option<T>` |
+| `FluentUnionsDapper.Register()` | `Option<T>` for bool, byte, short, int, long, float, double, decimal, string, Guid, DateTime, DateTimeOffset, TimeSpan and byte[] |
 
 `OptionTypeHandler<T>` is the handler itself, for `SqlMapper.AddTypeHandler` if you prefer to register it yourself. Registering a type twice is harmless. An enum is registered with `Register<MyEnum>()`; it is written as its underlying integer.
 
@@ -56,7 +56,7 @@ Dapper keeps one handler per closed type, so each `Option<T>` is registered on i
 
 The parameter keeps its database type for the common types, so a `NULL` option still has a type. For other types the provider infers it from the value.
 
-A column value that is not a `T` is converted: numbers with `Convert`, text with the type's converter (for example text to `Guid`, `DateTime` or `DateTimeOffset` on SQLite), bytes to `Guid`, numbers to an enum. A value that cannot be converted throws.
+A column value that is not a `T` is converted: numbers with `Convert`, text with the type's converter (for example text to `Guid`, `DateTime` or `DateTimeOffset` on SQLite), bytes to `Guid`, a `DateTime` to `DateTimeOffset`, and enums from their name (case-insensitive, like plain Dapper) or from a number. A value that cannot be converted throws.
 
 ## Rules
 

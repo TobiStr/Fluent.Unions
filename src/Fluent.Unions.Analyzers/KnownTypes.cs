@@ -13,7 +13,6 @@ internal sealed class KnownTypes
     {
         Result = result;
         ResultOfT = resultOfT;
-        ResultOfTError = compilation.GetTypeByMetadataName("Fluent.Unions.Result`2");
         Option = compilation.GetTypeByMetadataName("Fluent.Unions.Option`1");
         Loadable = compilation.GetTypeByMetadataName("Fluent.Unions.Loadable`1");
         Ok = compilation.GetTypeByMetadataName("Fluent.Unions.Ok");
@@ -38,8 +37,6 @@ internal sealed class KnownTypes
     public INamedTypeSymbol Result { get; }
 
     public INamedTypeSymbol ResultOfT { get; }
-
-    public INamedTypeSymbol? ResultOfTError { get; }
 
     public INamedTypeSymbol? Option { get; }
 
@@ -85,7 +82,7 @@ internal sealed class KnownTypes
     }
 
     /// <summary>
-    /// <c>true</c> for <c>Result</c>, <c>Result&lt;T&gt;</c>, <c>Result&lt;T, TError&gt;</c> and custom result types.
+    /// <c>true</c> for <c>Result</c>, <c>Result&lt;T&gt;</c> and every other result type.
     /// </summary>
     public bool IsMustUse(ITypeSymbol? type)
     {
@@ -107,11 +104,11 @@ internal sealed class KnownTypes
         UnwrapTask(type) is { } inner && IsMustUse(inner);
 
     /// <summary>
-    /// <c>true</c> for <c>Result</c>, <c>Result&lt;T&gt;</c> and <c>Result&lt;T, TError&gt;</c> of this library,
+    /// <c>true</c> for <c>Result</c> and <c>Result&lt;T&gt;</c> of this library,
     /// and for result types declared with <c>[FluentResult]</c>.
     /// </summary>
     public bool IsLibraryResult(ITypeSymbol? type) =>
-        type is not null && (Is(type, Result) || Is(type, ResultOfT) || Is(type, ResultOfTError) || IsGeneratedResult(type));
+        type is not null && (Is(type, Result) || Is(type, ResultOfT) || IsGeneratedResult(type));
 
     /// <summary>
     /// <c>true</c> for a result type with a value: <c>Result&lt;T&gt;</c> or one declared with <c>[FluentResult]</c>.

@@ -61,7 +61,7 @@ The aggregate is always flattened, also for a single failure, the same as `Valid
 
 ## With your own result type
 
-`Validate(validator)` and `ValidateAsync` work on a result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) and on `Result<T, TError>`, without explicit type arguments. They return your own type and call the validator only for a value. `ValidateToResult` always returns the default `Fluent.Unions.Result<T>`. With your own type, start with `Result.From(value).Validate(validator)`.
+`Validate(validator)` and `ValidateAsync` work on a result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)), without explicit type arguments. They return your own type and call the validator only for a value. `ValidateToResult` always returns the default `Fluent.Unions.Result<T>`. With your own type, start with `Result.From(value).Validate(validator)`.
 
 | Member | A failure becomes |
 | --- | --- |

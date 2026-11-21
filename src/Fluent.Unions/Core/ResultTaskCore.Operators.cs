@@ -16,6 +16,7 @@ public static partial class ResultTaskCore
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -30,6 +31,7 @@ public static partial class ResultTaskCore
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -45,6 +47,7 @@ public static partial class ResultTaskCore
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -61,6 +64,8 @@ public static partial class ResultTaskCore
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
+        ArgumentNullException.ThrowIfNull(resultSelector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector, resultSelector);
@@ -76,6 +81,7 @@ public static partial class ResultTaskCore
         where TUnit : struct, IFluentUnitResult<TUnit, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -90,6 +96,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -105,6 +112,7 @@ public static partial class ResultTaskCore
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -119,6 +127,7 @@ public static partial class ResultTaskCore
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -133,6 +142,7 @@ public static partial class ResultTaskCore
         where TUnit : struct, IFluentUnitResult<TUnit, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -146,6 +156,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -160,6 +171,7 @@ public static partial class ResultTaskCore
         where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
@@ -173,6 +185,8 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(predicate);
+        ArgumentNullException.ThrowIfNull(error);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, predicate, error);
@@ -186,6 +200,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(predicate);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, predicate, message);
@@ -194,49 +209,52 @@ public static partial class ResultTaskCore
             ResultEnsureCore.Ensure<TSelf, T, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), predicate, message);
     }
 
-    /// <inheritdoc cref="ResultTupleCore.BindAppend{TSelf, T, TError, TNextResult, TNext, TOutResult}(TSelf, Func{T, TNextResult})"/>
-    public static Task<TOutResult> BindAppend<TSelf, T, TError, TNextResult, TNext, TOutResult>(Task<TSelf> task, Func<T, TNextResult> selector)
+    /// <inheritdoc cref="ResultTupleCore.ChainAppend{TSelf, T, TError, TNextResult, TNext, TOutResult}(TSelf, Func{T, TNextResult})"/>
+    public static Task<TOutResult> ChainAppend<TSelf, T, TError, TNextResult, TNext, TOutResult>(Task<TSelf> task, Func<T, TNextResult> selector)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TNextResult : struct, IFluentResult<TNextResult, TNext, TError>
         where TOutResult : struct, IFluentResult<TOutResult, (T, TNext), TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
 
         static async Task<TOutResult> Run(Task<TSelf> task, Func<T, TNextResult> selector) =>
-            ResultTupleCore.BindAppend<TSelf, T, TError, TNextResult, TNext, TOutResult>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), selector);
+            ResultTupleCore.ChainAppend<TSelf, T, TError, TNextResult, TNext, TOutResult>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), selector);
     }
 
-    /// <inheritdoc cref="ResultTupleCore.BindAppend{TSelf, T1, T2, TError, TNextResult, TNext, TOutResult}(TSelf, Func{T1, T2, TNextResult})"/>
-    public static Task<TOutResult> BindAppend<TSelf, T1, T2, TError, TNextResult, TNext, TOutResult>(Task<TSelf> task, Func<T1, T2, TNextResult> selector)
+    /// <inheritdoc cref="ResultTupleCore.ChainAppend{TSelf, T1, T2, TError, TNextResult, TNext, TOutResult}(TSelf, Func{T1, T2, TNextResult})"/>
+    public static Task<TOutResult> ChainAppend<TSelf, T1, T2, TError, TNextResult, TNext, TOutResult>(Task<TSelf> task, Func<T1, T2, TNextResult> selector)
         where TSelf : struct, IFluentResult<TSelf, (T1, T2), TError>
         where TNextResult : struct, IFluentResult<TNextResult, TNext, TError>
         where TOutResult : struct, IFluentResult<TOutResult, (T1, T2, TNext), TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
 
         static async Task<TOutResult> Run(Task<TSelf> task, Func<T1, T2, TNextResult> selector) =>
-            ResultTupleCore.BindAppend<TSelf, T1, T2, TError, TNextResult, TNext, TOutResult>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), selector);
+            ResultTupleCore.ChainAppend<TSelf, T1, T2, TError, TNextResult, TNext, TOutResult>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), selector);
     }
 
-    /// <inheritdoc cref="ResultTupleCore.BindAppend{TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult}(TSelf, Func{T1, T2, T3, TNextResult})"/>
-    public static Task<TOutResult> BindAppend<TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult>(Task<TSelf> task, Func<T1, T2, T3, TNextResult> selector)
+    /// <inheritdoc cref="ResultTupleCore.ChainAppend{TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult}(TSelf, Func{T1, T2, T3, TNextResult})"/>
+    public static Task<TOutResult> ChainAppend<TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult>(Task<TSelf> task, Func<T1, T2, T3, TNextResult> selector)
         where TSelf : struct, IFluentResult<TSelf, (T1, T2, T3), TError>
         where TNextResult : struct, IFluentResult<TNextResult, TNext, TError>
         where TOutResult : struct, IFluentResult<TOutResult, (T1, T2, T3, TNext), TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, selector);
 
         static async Task<TOutResult> Run(Task<TSelf> task, Func<T1, T2, T3, TNextResult> selector) =>
-            ResultTupleCore.BindAppend<TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), selector);
+            ResultTupleCore.ChainAppend<TSelf, T1, T2, T3, TError, TNextResult, TNext, TOutResult>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), selector);
     }
 
     /// <inheritdoc cref="ResultTupleCore.WithValue{TSelf, TError, TOutResult, T}(TSelf, T)"/>
@@ -286,6 +304,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(defaultValueFactory);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, defaultValueFactory);
@@ -299,6 +318,8 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onError);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, onSuccess, onError);
@@ -312,6 +333,8 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onError);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, onSuccess, onError);
@@ -326,6 +349,7 @@ public static partial class ResultTaskCore
         where TRule : struct, IFluentUnitResult<TRule, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(rules);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, rules);
@@ -335,7 +359,7 @@ public static partial class ResultTaskCore
     }
 
     /// <inheritdoc cref="ResultAnnotationCore.ValidateAnnotations{TSelf, T, TError}(TSelf)"/>
-    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(ResultAnnotationExtensions.TrimmingMessage)]
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(ResultAnnotationCore.TrimmingMessage)]
     public static Task<TSelf> ValidateAnnotations<TSelf, T, TError>(Task<TSelf> task)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
@@ -344,7 +368,7 @@ public static partial class ResultTaskCore
 
         return Run(task);
 
-        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(ResultAnnotationExtensions.TrimmingMessage)]
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(ResultAnnotationCore.TrimmingMessage)]
         static async Task<TSelf> Run(Task<TSelf> task) =>
             ResultAnnotationCore.ValidateAnnotations<TSelf, T, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false));
     }
@@ -354,6 +378,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(handler);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, handler);
@@ -368,6 +393,7 @@ public static partial class ResultTaskCore
         where TError : notnull
         where TException : Exception
     {
+        ArgumentNullException.ThrowIfNull(handler);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, handler);
@@ -394,6 +420,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(handler);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, handler);
@@ -409,6 +436,7 @@ public static partial class ResultTaskCore
         where TError : notnull
         where TException : Exception
     {
+        ArgumentNullException.ThrowIfNull(handler);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, handler);
@@ -435,6 +463,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(onSuccess);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, onSuccess);
@@ -448,6 +477,8 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onError);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, onSuccess, onError);
@@ -461,6 +492,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(onSuccess);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, onSuccess);
@@ -474,6 +506,8 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onError);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, onSuccess, onError);
@@ -487,6 +521,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(onError);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, onError);
@@ -500,6 +535,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(onError);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, onError);
@@ -513,6 +549,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentResult<TSelf, T, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(action);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, action);
@@ -526,6 +563,7 @@ public static partial class ResultTaskCore
         where TSelf : struct, IFluentUnitResult<TSelf, TError>
         where TError : notnull
     {
+        ArgumentNullException.ThrowIfNull(action);
         ArgumentNullException.ThrowIfNull(task);
 
         return Run(task, action);

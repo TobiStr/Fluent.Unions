@@ -32,7 +32,7 @@ customer.Nickname.ShouldBeNone();
 
 ## With your own result type
 
-`ShouldBeOk()` and `ShouldBeError()` accept a result type you declare with `[FluentResult<TError>]`, with a value and without (the value-less `Result`), and fail with the same messages. There is no `ShouldBeError<TException>()` for your own types, because `ShouldBeError()` already returns your declared error type. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+`ShouldBeOk()` and `ShouldBeError()` accept a result type you declare with `[FluentResult<TError>]`, with a value and without (the value-less `Result`), and fail with the same messages. `ShouldBeError()` returns your declared error type. When that is an error union, `ShouldBeError<NotFound>()` returns the case, and fails for another case. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ## Documentation
 

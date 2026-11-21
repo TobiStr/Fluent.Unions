@@ -38,8 +38,8 @@ public class OptionHandlerTests
     [OneTimeSetUp]
     public void RegisterHandlers()
     {
-        OptionHandlers.RegisterCommon();
-        OptionHandlers.Register<Level>();
+        FluentUnionsDapper.Register();
+        FluentUnionsDapper.Register<Level>();
     }
 
     [SetUp]
@@ -238,7 +238,7 @@ public class OptionHandlerTests
     [Test]
     public void Register_handles_a_single_type()
     {
-        OptionHandlers.Register<sbyte>();
+        FluentUnionsDapper.Register<sbyte>();
 
         var value = _connection.QuerySingle<Option<sbyte>>("SELECT @value", new { value = Option.Some((sbyte)-3) });
 
@@ -266,6 +266,34 @@ public class OptionHandlerTests
 
         Assert.That(handler.Parse(null!).HasValue, Is.False);
         Assert.That(handler.Parse(DBNull.Value).HasValue, Is.False);
+    }
+
+    [Test]
+    public void Handler_parse_maps_enum_names_case_insensitively()
+    {
+        var handler = new OptionTypeHandler<DayOfWeek>();
+
+        Assert.That(handler.Parse("Monday").GetValue(), Is.EqualTo(DayOfWeek.Monday));
+        Assert.That(handler.Parse("monday").GetValue(), Is.EqualTo(DayOfWeek.Monday));
+        Assert.That(handler.Parse(3L).GetValue(), Is.EqualTo(DayOfWeek.Wednesday));
+        Assert.That(handler.Parse(3.0m).GetValue(), Is.EqualTo(DayOfWeek.Wednesday));
+    }
+
+    [Test]
+    public void Enum_column_with_text_is_read()
+    {
+        var level = _connection.QuerySingle<Option<Level>>("SELECT 'High'");
+
+        Assert.That(level.GetValue(), Is.EqualTo(Level.High));
+    }
+
+    [Test]
+    public void Handler_parse_converts_a_date_time_to_a_date_time_offset()
+    {
+        var handler = new OptionTypeHandler<DateTimeOffset>();
+        var moment = new DateTime(2026, 5, 1, 12, 30, 0, DateTimeKind.Utc);
+
+        Assert.That(handler.Parse(moment).GetValue(), Is.EqualTo(new DateTimeOffset(moment)));
     }
 
     private Option<T> RoundTrip<T>(Option<T> option) =>

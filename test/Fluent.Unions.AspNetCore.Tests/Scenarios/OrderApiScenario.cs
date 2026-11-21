@@ -29,6 +29,9 @@ public union PaymentError(PaymentDeclined, PaymentUnavailable) : IFromException<
     public static PaymentError FromException(Exception exception) => new PaymentUnavailable(exception);
 }
 
+[FluentResult<PaymentError>]
+public readonly partial struct PaymentResult<T>;
+
 public sealed class OrderShippedException(int id) : Exception($"Order {id} has shipped.");
 
 public sealed class DuplicateOrderException(string customer) : Exception($"{customer} already has an open order.");
@@ -62,7 +65,7 @@ public sealed class OrderBook
         return loaded.Do(o => orders.Remove(o.Id));
     }
 
-    public Result<Order, PaymentError> Pay(Order order, string card)
+    public PaymentResult<Order> Pay(Order order, string card)
     {
         if (card == "declined")
         {

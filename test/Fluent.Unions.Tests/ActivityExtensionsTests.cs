@@ -56,18 +56,18 @@ public class ActivityExtensionsTests
     {
         using var activity = new Activity("test").Start();
 
-        Result<string, CheckoutError> result = (CheckoutError)new CartEmpty();
+        CheckoutResult<string> result = (CheckoutError)new CartEmpty();
         activity.RecordResult(result);
 
         AssertRecordedException(activity, new ResultErrorException(result.GetError()).Message, typeof(ResultErrorException));
     }
 
     [Test]
-    public void ValueOfTErrorResultSetsStatusOk()
+    public void ValueOfADataErrorResultSetsStatusOk()
     {
         using var activity = new Activity("test").Start();
 
-        Result<string, CheckoutError> result = "order-7";
+        CheckoutResult<string> result = "order-7";
         activity.RecordResult(result);
 
         Assert.That(activity.Status, Is.EqualTo(ActivityStatusCode.Ok));
@@ -83,7 +83,7 @@ public class ActivityExtensionsTests
 
         first.RecordResult(default(Result));
         second.RecordResult(default(Result<int>));
-        third.RecordResult(default(Result<int, CheckoutError>));
+        third.RecordResult(default(CheckoutResult<int>));
 
         foreach (var activity in new[] { first, second, third })
         {
@@ -100,7 +100,7 @@ public class ActivityExtensionsTests
     {
         Activity? activity = null;
         Result<int> result = 5;
-        Result<int, CheckoutError> data = 5;
+        CheckoutResult<int> data = 5;
 
         Assert.That(activity.RecordResult(Result.Ok), Is.Null);
         Assert.That(activity.RecordResult(result), Is.Null);

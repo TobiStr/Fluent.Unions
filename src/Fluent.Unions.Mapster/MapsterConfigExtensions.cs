@@ -9,20 +9,28 @@ namespace Fluent.Unions.Mapster;
 /// </summary>
 public static class MapsterConfigExtensions
 {
+    private static readonly Func<CompileArgument, LambdaExpression> ConverterFactory = CreateConverter;
     private static readonly MethodInfo ToOptionMethod = typeof(OptionMapper).GetMethod(nameof(OptionMapper.ToOption))!;
     private static readonly MethodInfo MapOptionMethod = typeof(OptionMapper).GetMethod(nameof(OptionMapper.MapOption))!;
     private static readonly MethodInfo FromOptionMethod = typeof(OptionMapper).GetMethod(nameof(OptionMapper.FromOption))!;
 
     /// <summary>
-    /// Maps <c>Option&lt;T&gt;</c> to and from <c>T?</c>, and <c>Option&lt;TSource&gt;</c> to <c>Option&lt;TDestination&gt;</c>.
+    /// Maps <c>Option&lt;T&gt;</c> to and from <c>T?</c>, and <c>Option&lt;TSource&gt;</c> to <c>Option&lt;TDestination&gt;</c>. Calling it again on the same config changes nothing.
     /// </summary>
     public static TypeAdapterConfig AddFluentUnions(this TypeAdapterConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
 
-        var settings = config.When((source, destination, _) => IsOption(source) || IsOption(destination)).Settings;
-        settings.ConverterFactory = CreateConverter;
-        settings.ConverterToTargetFactory = CreateConverterToTarget;
+        lock (config)
+        {
+            if (config.Rules.Any(rule => rule.Settings.ConverterFactory == ConverterFactory))
+                return config;
+
+            var settings = config.When((source, destination, _) => IsOption(source) || IsOption(destination)).Settings;
+            settings.ConverterFactory = ConverterFactory;
+            settings.ConverterToTargetFactory = CreateConverterToTarget;
+        }
+
         return config;
     }
 

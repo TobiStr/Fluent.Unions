@@ -17,10 +17,8 @@ public readonly partial struct Result;
 /// A <c>default</c> result, or one created from <c>null</c>, counts as an error.
 /// </summary>
 /// <typeparam name="T">The type of the value.</typeparam>
-[FluentResult<Exception>(Companion = false)]
+[FluentResult<Exception>]
 public readonly partial struct Result<T>
 {
-    internal object Case => Value ?? ResultErrors.Uninitialized(typeof(Result<T>));
-
     internal static Result<T> Of(T? value) => new(value!);
 }

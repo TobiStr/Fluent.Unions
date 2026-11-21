@@ -50,7 +50,7 @@ The `.verified.txt` file reads:
 | Value | Snapshot |
 | --- | --- |
 | `Result.Ok` | `Ok` |
-| `Result<T>` or `Result<T, TError>` with a value | `{ Ok: value }` |
+| `Result<T>` or your own result type with a value | `{ Ok: value }` |
 | a result with an error | `{ Error: ... }` |
 | `Option<T>` with a value | `{ Some: value }` |
 | `Option<T>` without a value | `None` |
@@ -59,7 +59,9 @@ The `.verified.txt` file reads:
 | `Loadable<T>` loaded | `{ Value: value }` |
 | `Loadable<T>` faulted | `{ Error: ... }` |
 
-The same text appears when a result, option or loadable is a property of an object, an item of a list or a value of a dictionary. A `default` result is an error, as in the core, and shows the error the core gives it.
+Results, options and loadables nest with their labels: `Result.From(Option.Some(5))` is `{ Ok: { Some: 5 } }` and an option without a value inside a result is `{ Ok: None }`. A result is told apart by its state, so a result whose value has the type of its error still shows `Ok` for the value and `Error` for the error.
+
+The same text appears when a result, option or loadable is an item of a list or a value of a dictionary. As a property of an object it appears too, except `None` and `NotLoaded`: they equal `default`, so Verify leaves the property out like any other default value. A `default` result is an error, as in the core, and shows the error the core gives it.
 
 ## Errors
 
@@ -76,7 +78,7 @@ An error that is an exception is written as its `Type` and `Message`.
 
 A `ValidationError` adds its `MemberName` when it has one, and a `ValidationErrors` adds its `Errors` list.
 
-For `Result<T, TError>` the error is its data. When `TError` is a union of error records, the snapshot shows the record that is held, without a wrapper:
+For your own result type the error is its data. When `TError` is a union of error records, the snapshot shows the record that is held, without a wrapper:
 
 ```
 {
@@ -111,7 +113,7 @@ See the [Verify maintenance fee](https://github.com/VerifyTests/Verify/blob/main
 - **Call `Initialize` before the first snapshot.** A module initializer in the test project does it once for all tests.
 - **Write-only.** The converters only write snapshots. Verify never reads a result back.
 - **No stack traces.** Exceptions show their type and message.
-- **Only result types and the core types.** Your own unions are written by Verify's default rules, except a union that is the error of a `Result<T, TError>`, which is unwrapped to its case.
+- **Only result types and the core types.** Your own unions are written by Verify's default rules, except a union that is the error of your own result type, which is unwrapped to its case.
 - **Verify.NUnit needs NUnit 5.** `Verify.NUnit` 33.7.1 requires NUnit 5.0.0 or later.
 - **Name clash.** Inside a namespace that starts with `Fluent.Unions.Verify`, write `Verifier.Verify(...)` instead of `Verify(...)`, because the namespace hides the method.
 

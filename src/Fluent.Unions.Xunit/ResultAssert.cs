@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Fluent.Unions.Abstractions;
 using Assert = global::Xunit.Assert;
 
@@ -136,6 +137,37 @@ public static class ResultAssert
         }
 
         return typed;
+    }
+
+    /// <summary>
+    /// Asserts that a custom result type is an error of type <typeparamref name="TCase"/> and returns it. For an error union, <typeparamref name="TCase"/> may be a case of the union.
+    /// </summary>
+    public static TCase Error<TCase>(IUnion result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        if (!ResultTypes.IsResult(result.GetType()))
+        {
+            Assert.Fail($"Expected a result, but it was {result.GetType().Name}");
+        }
+
+        if (((IErrorResult)result).IsSuccess)
+        {
+            Assert.Fail($"Expected an error of type {typeof(TCase).Name}, but the result was ok");
+        }
+
+        var error = ((IErrorResult)result).Error!;
+
+        switch (error)
+        {
+            case TCase direct:
+                return direct;
+            case IUnion { Value: TCase inner }:
+                return inner;
+        }
+
+        Assert.Fail($"Expected an error of type {typeof(TCase).Name}, but it failed with {Describe(error)}");
+        return default!;
     }
 
     private static string Describe(object error) => error is Exception exception

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Fluent.Unions.Abstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -9,7 +10,7 @@ namespace Fluent.Unions.NewtonsoftJson;
 /// <summary>
 /// Serializes your own unions with the case name, so they can be read back:
 /// <c>{"$type":"Circle","$value":{"Radius":2}}</c>. Apply it with <c>[JsonConverter(typeof(UnionJsonConverter))]</c>.
-/// An empty union is written as <c>null</c>.
+/// An empty union is written as <c>null</c>. Results and <see cref="Option{T}"/> are never handled here, so they keep their own converters.
 /// </summary>
 public sealed class UnionJsonConverter : JsonConverter
 {
@@ -29,7 +30,10 @@ public sealed class UnionJsonConverter : JsonConverter
     public override bool CanConvert(Type objectType)
     {
         var unionType = Nullable.GetUnderlyingType(objectType) ?? objectType;
-        return unionType.IsValueType && typeof(IUnion).IsAssignableFrom(unionType);
+        return unionType.IsValueType
+            && typeof(IUnion).IsAssignableFrom(unionType)
+            && !ResultTypes.IsResult(unionType)
+            && !(unionType.IsGenericType && unionType.GetGenericTypeDefinition() == typeof(Option<>));
     }
 
     /// <inheritdoc />

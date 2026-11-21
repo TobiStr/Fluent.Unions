@@ -19,7 +19,7 @@ using MessagePack;
 using Fluent.Unions;
 using Fluent.Unions.MessagePack;
 
-var options = MessagePackSerializerOptions.Standard.WithUnions();
+var options = MessagePackSerializerOptions.Standard.WithFluentUnions();
 
 byte[] bytes = MessagePackSerializer.Serialize<Option<int>>(7, options);
 Option<int> back = MessagePackSerializer.Deserialize<Option<int>>(bytes, options); // 7
@@ -27,7 +27,7 @@ Option<int> back = MessagePackSerializer.Deserialize<Option<int>>(bytes, options
 MessagePackSerializer.Serialize<Option<int>>(Option.None, options); // a single nil byte
 ```
 
-`WithUnions()` returns options that ask `UnionsResolver` first and then the resolver the options already had. Without it, MessagePack does not know `Option<T>`.
+`WithFluentUnions()` returns options that ask `UnionsResolver` first and then the resolver the options already had. Options that already have it are returned unchanged. Without it, MessagePack does not know `Option<T>`.
 
 ## Options
 
@@ -69,11 +69,11 @@ public class Scoreboard
 - **`[MessagePackFormatter(typeof(OptionFormatter<T>))]`** names the formatter for one member. The type keeps its generated formatter.
 - **`SuppressSourceGeneration = true`** makes the type use the reflection-based resolver at runtime, which finds `UnionsResolver` through the options. Use it when a member is an array or collection of options.
 
-Both work with `WithUnions()`. The MessagePack analyzer reports nothing for either form, so keep the attribute in place.
+Both work with `WithFluentUnions()`. The MessagePack analyzer reports nothing for either form, so keep the attribute in place.
 
 ## Results refuse to serialize
 
-`Result`, `Result<T>` and `Result<T, TError>` throw when written and when read. So does your own [result type](../errors/custom-error-types.md), refused like the default type. An error would be written with its message and stack trace, which leaks internals. MessagePack wraps the exception:
+`Result` and `Result<T>` throw when written and when read. So does your own [result type](../errors/custom-error-types.md), refused like the default type. An error would be written with its message and stack trace, which leaks internals. MessagePack wraps the exception:
 
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");
@@ -86,7 +86,7 @@ Convert a result before serializing it, for example with `Match`, `GetValueOrDef
 
 ## Rules
 
-- `UnionsResolver` needs to be in the options. `WithUnions()` is the shortest way, or add `UnionsResolver.Instance` to a `CompositeResolver` yourself.
+- `UnionsResolver` needs to be in the options. `WithFluentUnions()` is the shortest way, or add `UnionsResolver.Instance` to a `CompositeResolver` yourself.
 - `Option<T>` in a `[MessagePackObject]` type needs one of the two source generator workarounds above.
 - `UnionsResolver` creates formatters through reflection (`MakeGenericType`). AOT and trimming have not been investigated or tested.
 - Your own C# 15 unions are not covered. MessagePack's own `[Union]` attribute is for class hierarchies, and has not been tried with `union` types.

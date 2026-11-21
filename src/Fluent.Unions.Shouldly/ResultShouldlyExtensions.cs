@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Fluent.Unions.Abstractions;
 using Shouldly;
 
@@ -63,6 +64,33 @@ public static class ResultShouldlyExtensions
         return result.TryGetError(out var error)
             ? error as TException ?? throw Fail($"Expected an error of type {typeof(TException).Name}, but it failed with {Describe(error)}", customMessage)
             : throw Fail($"Expected an error of type {typeof(TException).Name}, but the result was ok", customMessage);
+    }
+
+    /// <summary>
+    /// Asserts that a custom result type is an error of type <typeparamref name="TCase"/> and returns it. For an error union, <typeparamref name="TCase"/> may be a case of the union.
+    /// </summary>
+    public static TCase ShouldBeError<TCase>(this IUnion result, string? customMessage = null)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        if (!ResultTypes.IsResult(result.GetType()))
+        {
+            throw Fail($"Expected a result, but it was {result.GetType().Name}", customMessage);
+        }
+
+        if (((IErrorResult)result).IsSuccess)
+        {
+            throw Fail($"Expected an error of type {typeof(TCase).Name}, but the result was ok", customMessage);
+        }
+
+        var error = ((IErrorResult)result).Error!;
+
+        return error switch
+        {
+            TCase direct => direct,
+            IUnion { Value: TCase inner } => inner,
+            _ => throw Fail($"Expected an error of type {typeof(TCase).Name}, but it failed with {Describe(error)}", customMessage),
+        };
     }
 
     /// <summary>

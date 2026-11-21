@@ -9,10 +9,28 @@ public class ErrorExtensionsTests
     [Test]
     public void ValidationError_GivesInvalidArgumentWithItsMessage()
     {
-        var exception = new ValidationError("Too short.", "name").ToRpcException();
+        var exception = new ValidationError("Too short.").ToRpcException();
 
         Assert.That(exception.StatusCode, Is.EqualTo(StatusCode.InvalidArgument));
         Assert.That(exception.Status.Detail, Is.EqualTo("Too short."));
+    }
+
+    [Test]
+    public void ValidationError_NamesItsMember()
+    {
+        var exception = new ValidationError("Too short.", "name").ToRpcException();
+
+        Assert.That(exception.Status.Detail, Is.EqualTo("name: Too short."));
+    }
+
+    [Test]
+    public void ValidationErrors_NameTheirMembers()
+    {
+        var errors = new ValidationErrors([new ValidationError("is required", "Name"), new ValidationError("must be positive", "Age"), new ValidationError("Not allowed")]);
+
+        var exception = errors.ToRpcException();
+
+        Assert.That(exception.Status.Detail, Is.EqualTo("Name: is required; Age: must be positive; Not allowed"));
     }
 
     [Test]
@@ -23,7 +41,7 @@ public class ErrorExtensionsTests
         var exception = errors.ToRpcException();
 
         Assert.That(exception.StatusCode, Is.EqualTo(StatusCode.InvalidArgument));
-        Assert.That(exception.Status.Detail, Is.EqualTo("A. B."));
+        Assert.That(exception.Status.Detail, Is.EqualTo("A.; B."));
     }
 
     [TestCase(typeof(KeyNotFoundException), StatusCode.NotFound)]
@@ -51,9 +69,13 @@ public class ErrorExtensionsTests
     [Test]
     public void RpcException_IsReturnedAsItIs()
     {
-        var original = new RpcException(new Status(StatusCode.Aborted, "Retry"));
+        var original = new RpcException(new Status(StatusCode.Aborted, "Retry"), new Metadata { { "hint", "later" } });
 
-        Assert.That(original.ToRpcException(), Is.SameAs(original));
+        var exception = original.ToRpcException();
+
+        Assert.That(exception, Is.SameAs(original));
+        Assert.That(exception.Status.Detail, Is.EqualTo("Retry"));
+        Assert.That(exception.Trailers, Has.Count.EqualTo(1));
     }
 
     [Test]

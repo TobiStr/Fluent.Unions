@@ -33,7 +33,7 @@ The assertions are static methods and not part of `Assert`, because the partial 
 
 ## With your own result type
 
-`ResultAssert.Ok` and `ResultAssert.Error` accept a result type you declare with `[FluentResult<TError>]`, with a value and without (the value-less `Result`), and fail with the same messages. There is no `Error<TException>` for your own types, because the untyped `Error` already returns your declared error type. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+`ResultAssert.Ok` and `ResultAssert.Error` accept a result type you declare with `[FluentResult<TError>]`, with a value and without (the value-less `Result`), and fail with the same messages. The untyped `Error` returns your declared error type. When that is an error union, `Error<NotFound>(result)` returns the case, and fails for another case. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ## Documentation
 

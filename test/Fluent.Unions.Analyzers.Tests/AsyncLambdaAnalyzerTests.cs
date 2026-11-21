@@ -43,7 +43,6 @@ public class AsyncLambdaAnalyzerTests
     [TestCase("void M(Result<int> r) { var s = r.Select(x => x + 1); }")]
     [TestCase("void M(Result<int> r) { var s = r.Chain(x => Result.From(x)); }")]
     [TestCase("void M(Loadable<int> l) { var s = l.Select(async x => await LoadAsync()); }")]
-    [TestCase("void M(Result<int, OrderError> r) { var s = r.Select(async x => await LoadAsync()); }")]
     [TestCase("void M() { Func<Task<int>> f = async () => await LoadAsync(); var r = Result.Try(f); }")]
     [TestCase("void M(IEnumerable<int> e) { var s = e.Select(async x => await LoadAsync()); }")]
     public async Task IgnoresAwaitedOrNonAsyncShapes(string member)
