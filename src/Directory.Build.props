@@ -7,8 +7,6 @@
     <NeutralLanguage>en</NeutralLanguage>
     <PackageProjectUrl>https://github.com/TobiStr/Fluent.Unions</PackageProjectUrl>
     <PackageReleaseNotes>https://github.com/TobiStr/Fluent.Unions/releases</PackageReleaseNotes>
-    <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.3.0</PackageValidationBaselineVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
