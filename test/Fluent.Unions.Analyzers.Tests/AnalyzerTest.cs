@@ -86,11 +86,14 @@ internal static class AnalyzerTest
 
     private static CSharpCompilation Compile(string source)
     {
-        var compilation = CSharpCompilation.Create(
+        var snippet = CSharpCompilation.Create(
             "Snippet",
             [CSharpSyntaxTree.ParseText(source, ParseOptions)],
             References,
             CompilationOptions);
+        CSharpGeneratorDriver.Create([new Generators.FluentResultGenerator().AsSourceGenerator()], parseOptions: ParseOptions)
+            .RunGeneratorsAndUpdateCompilation(snippet, out var generated, out _);
+        var compilation = (CSharpCompilation)generated;
 
         var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
         Assert.That(errors, Is.Empty, string.Join(Environment.NewLine, errors));

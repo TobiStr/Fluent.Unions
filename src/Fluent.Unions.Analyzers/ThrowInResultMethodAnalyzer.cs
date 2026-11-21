@@ -114,6 +114,6 @@ public sealed class ThrowInResultMethodAnalyzer : DiagnosticAnalyzer
     {
         var returnType = function.IsAsync ? types.UnwrapTask(function.ReturnType) : function.ReturnType;
 
-        return returnType is not null && (KnownTypes.Is(returnType, types.Result) || KnownTypes.Is(returnType, types.ResultOfT));
+        return returnType is not null && (KnownTypes.Is(returnType, types.Result) || KnownTypes.Is(returnType, types.ResultOfT) || types.GeneratedErrorType(returnType) is not null);
     }
 }

@@ -51,7 +51,7 @@ public sealed class ResultToOptionAnalyzer : DiagnosticAnalyzer
     }
 
     private static bool IsResultOfT(ITypeSymbol? type, KnownTypes types) =>
-        type is not null && KnownTypes.Is(types.UnwrapTask(type) ?? type, types.ResultOfT);
+        type is not null && types.IsResultWithValue(types.UnwrapTask(type) ?? type);
 
     private static IOperation? Receiver(IInvocationOperation invocation)
     {

@@ -27,6 +27,9 @@ internal sealed class KnownTypes
         TaskOfT = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task`1");
         ValueTask = compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask");
         ValueTaskOfT = compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask`1");
+        FluentResult = compilation.GetTypeByMetadataName("Fluent.Unions.Abstractions.IFluentResult`3");
+        FluentUnitResult = compilation.GetTypeByMetadataName("Fluent.Unions.Abstractions.IFluentUnitResult`2");
+        ResultOperator = compilation.GetTypeByMetadataName("Fluent.Unions.Core.ResultOperatorAttribute");
     }
 
     /// <summary>The library assembly; operators are recognized only when they come from it.</summary>
@@ -64,6 +67,12 @@ internal sealed class KnownTypes
 
     public INamedTypeSymbol? ValueTaskOfT { get; }
 
+    public INamedTypeSymbol? FluentResult { get; }
+
+    public INamedTypeSymbol? FluentUnitResult { get; }
+
+    public INamedTypeSymbol? ResultOperator { get; }
+
     /// <summary>
     /// Resolves the types, or returns <c>null</c> when the compilation does not reference the library.
     /// </summary>
@@ -98,10 +107,26 @@ internal sealed class KnownTypes
         UnwrapTask(type) is { } inner && IsMustUse(inner);
 
     /// <summary>
-    /// <c>true</c> for <c>Result</c>, <c>Result&lt;T&gt;</c> and <c>Result&lt;T, TError&gt;</c> of this library.
+    /// <c>true</c> for <c>Result</c>, <c>Result&lt;T&gt;</c> and <c>Result&lt;T, TError&gt;</c> of this library,
+    /// and for result types declared with <c>[FluentResult]</c>.
     /// </summary>
     public bool IsLibraryResult(ITypeSymbol? type) =>
-        type is not null && (Is(type, Result) || Is(type, ResultOfT) || Is(type, ResultOfTError));
+        type is not null && (Is(type, Result) || Is(type, ResultOfT) || Is(type, ResultOfTError) || IsGeneratedResult(type));
+
+    /// <summary>
+    /// <c>true</c> for a result type with a value: <c>Result&lt;T&gt;</c> or one declared with <c>[FluentResult]</c>.
+    /// </summary>
+    public bool IsResultWithValue(ITypeSymbol? type) =>
+        type is not null && (Is(type, ResultOfT) || FluentResult is not null && type.AllInterfaces.Any(i => Is(i, FluentResult)));
+
+    /// <summary>
+    /// The error type of a result type declared with <c>[FluentResult]</c>, or <c>null</c>.
+    /// </summary>
+    public ITypeSymbol? GeneratedErrorType(ITypeSymbol? type) =>
+        type?.AllInterfaces.FirstOrDefault(i => Is(i, FluentResult)) is { } contract ? contract.TypeArguments[2] : null;
+
+    private bool IsGeneratedResult(ITypeSymbol type) =>
+        type.AllInterfaces.Any(i => Is(i, FluentResult) || Is(i, FluentUnitResult));
 
     /// <summary>
     /// <c>true</c> for every union of this library: the results, <c>Option&lt;T&gt;</c> and <c>Loadable&lt;T&gt;</c>.
@@ -127,7 +152,8 @@ internal sealed class KnownTypes
     /// <c>true</c> when the method is declared in the library assembly.
     /// </summary>
     public bool IsLibraryMethod(IMethodSymbol method) =>
-        SymbolEqualityComparer.Default.Equals(method.ContainingAssembly, Library);
+        SymbolEqualityComparer.Default.Equals(method.ContainingAssembly, Library)
+        || ResultOperator is not null && method.OriginalDefinition.GetAttributes().Any(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, ResultOperator));
 
     /// <summary>
     /// <c>true</c> when the library declares an operator called <paramref name="name"/> that takes the same receiver and the same number of parameters as <paramref name="method"/>.
@@ -136,7 +162,11 @@ internal sealed class KnownTypes
     {
         var original = method.OriginalDefinition;
 
-        return Operators(Library.GlobalNamespace).Any(candidate =>
+        var candidates = Operators(Library.GlobalNamespace);
+        if (!SymbolEqualityComparer.Default.Equals(original.ContainingAssembly, Library) && original.ContainingType?.ContainingNamespace is { } local)
+            candidates = candidates.Concat(local.GetTypeMembers().SelectMany(type => type.GetMembers().OfType<IMethodSymbol>()).Where(m => m.IsStatic));
+
+        return candidates.Any(candidate =>
             candidate.Name == name
             && candidate.IsExtensionMethod == original.IsExtensionMethod
             && candidate.Parameters.Length == original.Parameters.Length

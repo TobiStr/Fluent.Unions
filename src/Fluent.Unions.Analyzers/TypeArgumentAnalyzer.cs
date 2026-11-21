@@ -38,9 +38,8 @@ public sealed class TypeArgumentAnalyzer : DiagnosticAnalyzer
     {
         var name = (GenericNameSyntax)context.Node;
 
-        if (!UnionNames.Contains(name.Identifier.ValueText)
-            || context.SemanticModel.GetSymbolInfo(name, context.CancellationToken).Symbol is not INamedTypeSymbol type
-            || !types.IsLibraryUnion(type))
+        if (context.SemanticModel.GetSymbolInfo(name, context.CancellationToken).Symbol is not INamedTypeSymbol type
+            || types.GeneratedErrorType(type) is null && (!UnionNames.Contains(name.Identifier.ValueText) || !types.IsLibraryUnion(type)))
             return;
 
         if (FindOverlap(type, types, compilation) is var (argument, other))
@@ -75,6 +74,9 @@ public sealed class TypeArgumentAnalyzer : DiagnosticAnalyzer
 
     private static IEnumerable<ITypeSymbol> ExtraCases(INamedTypeSymbol type, KnownTypes types)
     {
+        if (types.GeneratedErrorType(type) is { } error)
+            return new[] { error }.Concat(UnionCases(error));
+
         IEnumerable<ITypeSymbol?> extras =
             KnownTypes.Is(type, types.ResultOfT) ? [types.Exception]
             : KnownTypes.Is(type, types.Option) ? [types.None]
@@ -83,6 +85,14 @@ public sealed class TypeArgumentAnalyzer : DiagnosticAnalyzer
 
         return extras.OfType<ITypeSymbol>();
     }
+
+    private static IEnumerable<ITypeSymbol> UnionCases(ITypeSymbol error) =>
+        error is INamedTypeSymbol named && named.AllInterfaces.Any(i => i.ToDisplayString() == "System.Runtime.CompilerServices.IUnion")
+            ? named.InstanceConstructors
+                .Where(constructor => constructor.Parameters.Length == 1 && constructor.DeclaredAccessibility == Accessibility.Public)
+                .Select(constructor => constructor.Parameters[0].Type)
+                .Where(caseType => !SymbolEqualityComparer.Default.Equals(caseType, named))
+            : [];
 
     private static bool Overlaps(CSharpCompilation compilation, ITypeSymbol first, ITypeSymbol second) =>
         IsReferenceOrBoxing(compilation.ClassifyConversion(first, second)) || IsReferenceOrBoxing(compilation.ClassifyConversion(second, first));

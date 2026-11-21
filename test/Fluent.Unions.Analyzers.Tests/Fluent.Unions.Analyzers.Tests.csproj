@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Fluent.Unions\Fluent.Unions.csproj" />
     <ProjectReference Include="..\..\src\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Generators\Fluent.Unions.Generators.csproj" />
     <ProjectReference Include="..\..\src\Fluent.Unions.Analyzers.CodeFixes\Fluent.Unions.Analyzers.CodeFixes.csproj" />
     <ProjectReference Include="..\..\src\Fluent.Unions.AspNetCore\Fluent.Unions.AspNetCore.csproj" />
   </ItemGroup>
