@@ -73,7 +73,7 @@ Both work with `WithUnions()`. The MessagePack analyzer reports nothing for eith
 
 ## Results refuse to serialize
 
-`Result`, `Result<T>` and `Result<T, TError>` throw when written and when read. An error would be written with its message and stack trace, which leaks internals. MessagePack wraps the exception:
+`Result`, `Result<T>` and `Result<T, TError>` throw when written and when read. So does your own [result type](../errors/custom-error-types.md), refused like the default type. An error would be written with its message and stack trace, which leaks internals. MessagePack wraps the exception:
 
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");

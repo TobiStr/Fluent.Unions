@@ -50,6 +50,62 @@ Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, s
 
 `using Fluent.Unions;` brings in the types and every operator. The ready-made validation rules live in `Fluent.Unions.Validation`. In ASP.NET Core code that also imports `Microsoft.AspNetCore.Http.HttpResults`, the success case `Ok` has the same name as the HTTP result; add `using Ok = Fluent.Unions.Ok;` to the file.
 
+## Choose your Result
+
+**Use the default.** `using Fluent.Unions;` gives you `Result<T>` and `Result`, whose error is any `Exception`. Start here when your code calls APIs that throw and you map errors by exception type.
+
+**Or declare your own.** One declaration gives you a `Result<T>` whose error is your own type, with every operator, every `Task` overload, and the value-less `Result` next to it:
+
+```csharp
+namespace Shop;
+
+public class DomainException(string message, Exception? inner = null)
+    : Exception(message, inner), IFromException<DomainException>
+{
+    public static DomainException FromException(Exception exception) =>
+        exception as DomainException ?? new UnexpectedDomainException(exception);
+}
+
+[FluentResult<DomainException>]
+public readonly partial struct Result<T>;
+```
+
+- The generator writes the union cases, `Result` without a value (`Result.From`, `Result.Try`, `Result.WhenAll`, ...) and every operator. The operators forward to the library, so they behave exactly like the default ones.
+- `FromException` decides what any other exception becomes, whether it is thrown inside a step or comes from `Ensure(..., "message")` as a `ValidationError`.
+- Declare the type in your root namespace. Code in `Shop` and everything below it then uses your `Result<T>`, even with `using Fluent.Unions;`. A file outside `Shop` that imports both namespaces writes `Shop.Result<T>`.
+
+**Or close the set of errors.** The error type can be a union. The compiler then checks that every case is handled, and each case converts straight to the result:
+
+```csharp
+public sealed record Unexpected(Exception Exception);
+
+public union CheckoutError(NotFoundException, OutOfStockException, Unexpected) : IFromException<CheckoutError>
+{
+    public static CheckoutError FromException(Exception exception) => exception switch
+    {
+        NotFoundException notFound => notFound,
+        OutOfStockException outOfStock => outOfStock,
+        _ => new Unexpected(exception)
+    };
+}
+
+[FluentResult<CheckoutError>]
+public readonly partial struct Outcome<T>;
+
+Outcome<Order> Find(int id) => orders.TryGetValue(id, out var order) ? order : new NotFoundException($"No order {id}.");
+
+int status = Find(id).Match(_ => 200, error => error switch
+{
+    NotFoundException => 404,
+    OutOfStockException => 409,
+    Unexpected => 500   // leave a case out and the build fails (CS8509 as an error)
+});
+```
+
+The examples below use the default `Result<T>`. With your own type the operators are the same; only the errors you return are your own types instead of BCL exceptions.
+
+Results store their value without boxing. Creating a `Result<int>` and calling `Select`, `Chain`, `Ensure`, `Do` or `Match` with a static lambda allocates nothing. The numbers are in [`bench/results`](https://github.com/TobiStr/Fluent.Unions/tree/main/bench/results).
+
 ## Common scenarios
 
 **Return a value or an error, and handle both.** A result is always one of the two, and the compiler reports a `switch` that misses a case:
@@ -140,17 +196,20 @@ public static Receipt? PlaceOrder(Shop shop, CheckoutRequest request, out string
 With Fluent.Unions it is one chain, and each step runs only if the previous one succeeded:
 
 ```csharp
-public static Result<Receipt> PlaceOrder(Shop shop, CheckoutRequest request) =>
+public static Result<Receipt> PlaceOrder(Shop shop, ILogger logger, CheckoutRequest request) =>
     Result.From(request)
         .Validate(
             r => r.Sku.EnsureNotWhiteSpace(),
             r => r.Quantity.EnsureInRange(1, 10))
         .Chain(r => FindCustomer(shop, r.CustomerId)
             .Zip(FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
-        .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}."))
+        .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}.")).Out(out var order)
         .Chain(o => Result.Try(() => shop.Charge(o.Customer, o.Total))
             .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
-        .Do(shop.Save);
+        .Do(shop.Save)
+        .Do(receipt => logger.LogInformation(
+            "Placed {Quantity} x {Sku} for customer {CustomerId}, payment {PaymentId}",
+            order.Value.Quantity, receipt.Sku, order.Value.Customer.Id, receipt.PaymentId));
 
 private sealed record Order(Customer Customer, Product Product, int Quantity)
 {
@@ -167,7 +226,7 @@ private static Result<Product> FindProduct(Shop shop, string sku) =>
 The caller matches on the error's type instead of parsing strings:
 
 ```csharp
-int status = PlaceOrder(shop, request) switch
+int status = PlaceOrder(shop, logger, request) switch
 {
     Receipt => 201,
     ValidationErrors => 400,            // every validation error at once
@@ -185,6 +244,7 @@ What the union gives you:
 - **Typed errors.** Status codes come from exception types, not from message text.
 - **No `try`/`catch`, no `null`.** `Result.Try` turns the declined card into an error and `ToResult` turns the repository's `null` into one, so the order is not saved. Unlike the traditional version, an unexpected exception from the payment SDK also becomes an error instead of escaping.
 - **Every validation error at once**, each with the name of its property, instead of stopping at the first.
+- **Earlier values stay at hand.** `Out(out var order)` keeps the order, so the last step can log its quantity and customer although the receipt does not carry them.
 
 Both versions are tested side by side in [`CheckoutSample.cs`](https://github.com/TobiStr/Fluent.Unions/blob/main/test/Fluent.Unions.Tests/Samples/CheckoutSample.cs).
 
@@ -194,14 +254,14 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **Matching:** `switch` over a result or option warns when a case is missing.
   - **Analyzers:** warn when a result is ignored, an async lambda escapes a result, a union cannot tell its cases apart, a result is serialized, and more.
 - **LINQ and Rx operators:**
-  - **On the value:** `Select`, `Chain`, `Ensure`, `Zip`, `BindAppend`.
+  - **On the value:** `Select`, `Chain`, `Ensure`, `Zip`, `BindAppend`, `Out`.
   - **On the error and side effects:** `Catch`, `Do`, `OnErrorDo`, `Finally`.
   - **Leaving the chain:** `Match`, `TryGetValue`, `GetValueOrDefault`.
   - **Query syntax** works too.
 - **`Option<T>`** for missing values: `TryParse`, `FirstOrNone`, `GetValueOrNone`, `Or`, and conversions to and from results.
 - **Async everywhere:** `Task` overloads, `...Await` operators, `Result.WhenAll`, `RetryAsync`, `Timeout`, async streams.
 - **Validation** that collects every error as `ValidationErrors` with property names: `Validate`, `CombineAll`, and a catalogue of ready-made rules such as `EnsureNotEmpty` and `EnsureInRange`.
-- **Custom error types:** restrict errors to your own base exception, or model errors as data with `Result<T, TError>` and a union of error records.
+- **Your own Result type:** `[FluentResult<DomainException>] public readonly partial struct Result<T>;` generates a result with your error type, the value-less `Result`, and every operator, or use a union as the error type and let the compiler check every case.
 - **More unions:** `Loadable<T>` for UI state, plus `Is`/`As` and a JSON converter for your own unions.
 - **Integrations:**
   - **ASP.NET Core:** HTTP responses with ProblemDetails, validation errors as ValidationProblemDetails, and OpenAPI response types for endpoints that return results.
@@ -253,7 +313,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 |                       | [Streams](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/streams.md)                                       | `IAsyncEnumerable` of results and options                                                                                   |
 | Validation            | [Validation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/validation/README.md)                                | `Validate`, `CombineAll`, the rule catalogue, and validation errors over HTTP                                               |
 | Errors                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/README.md)                                      | Choosing between exceptions, custom types and errors as data                                                                |
-|                       | [Custom error types](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md)                | Your own result type with `IResult`                                                                                         |
+|                       | [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md)              | `[FluentResult<TError>]`: your error type, every operator, a closed set of errors                                           |
 |                       | [Errors as data](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/errors-as-data.md)                        | `Result<T, TError>` with a union of error records                                                                           |
 | Unions                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/README.md)                                      | Helpers for unions in short                                                                                                 |
 |                       | [Your own unions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/your-own-unions.md)                      | `Is`, `As`, and the JSON converter for your unions                                                                          |
@@ -286,7 +346,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | gRPC | [gRPC](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/grpc/README.md) | `ToResult()` on gRPC calls and a server interceptor that maps errors to status codes |
 | Verify | [Verify](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/verify/README.md) | Readable Verify snapshots of `Result`, `Option` and `Loadable` |
 | Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                                     |
-| Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013`: ignored results, async lambdas, overlapping cases and more, with code fixes                     |
+| Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013` and the generator's `FLU0101` to `FLU0103`, with code fixes                                     |
 
 ## Build and test
 
@@ -300,6 +360,7 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions`                   | The `Fluent.Unions` package                                                                          |
 | `src/Fluent.Unions.Analyzers`         | The analyzers packed into `Fluent.Unions`                                                            |
 | `src/Fluent.Unions.Analyzers.CodeFixes` | The code fixes for the analyzers, packed into `Fluent.Unions`                                      |
+| `src/Fluent.Unions.Generators` | The source generator behind `[FluentResult]`, packed into `Fluent.Unions` |
 | `src/Fluent.Unions.AspNetCore`        | The `Fluent.Unions.AspNetCore` package                                                               |
 | `src/Fluent.Unions.FluentValidation`  | The `Fluent.Unions.FluentValidation` package                                                         |
 | `src/Fluent.Unions.Polly`             | The `Fluent.Unions.Polly` package                                                                    |
@@ -327,6 +388,9 @@ dotnet test Fluent.Unions.slnx
 | `src/Fluent.Unions.Grpc` | The `Fluent.Unions.Grpc` package |
 | `src/Fluent.Unions.Verify` | The `Fluent.Unions.Verify` package |
 | `test/Fluent.Unions.Scenarios.Tests` | Real-world scenarios that show the core library end to end |
+| `test/Fluent.Unions.Api.Tests` | Snapshots of every package's public API |
+| `test/Fluent.Unions.Generators.Tests` | Tests for the generator: diagnostics, caching, and one forwarder per core operator |
+| `bench/Fluent.Unions.Benchmarks` | BenchmarkDotNet benchmarks; run with `dotnet run -c Release -- --filter "*" --inProcess` |
 | `test/`                               | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/`                               | The documentation                                                                                    |
 | `assets/`                             | The package icon (`icon.png`, 128 px) and a 1024 px master                                           |

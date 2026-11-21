@@ -48,7 +48,8 @@ The surrogate is stored in grain state, so keep its field ids as they are in you
 
 ## Results refuse to serialize
 
-`Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException` when serialized, in a grain call and in grain state:
+`Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException` when serialized, in a grain call and in grain state. Your own [result type](../errors/custom-error-types.md) is refused like the default type.
+
 
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");

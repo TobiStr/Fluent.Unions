@@ -29,6 +29,10 @@ Assert.That(customer.Nickname, IsOption.None);
 // passes when the customer has no nickname
 ```
 
+## With your own result type
+
+The `IsResult` constraints recognize a result type you declare with `[FluentResult<TError>]`. An error that is not an exception prints as `failed with Type: ...`. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+
 ## Documentation
 
 - [Testing documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/testing/README.md)

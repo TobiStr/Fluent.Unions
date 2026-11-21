@@ -8,7 +8,7 @@ This folder has one page. The topics are below.
 
 - [Quick example](#quick-example): retry a call that returns a result.
 - [What you get back](#what-you-get-back): the result for each outcome.
-- [Custom result types](#custom-result-types): the same members for your own `IResult` type.
+- [With your own result type](#with-your-own-result-type): the same members for your own result type.
 - [When to use](#when-to-use): where it helps, and when the core operators are enough.
 - [Rules](#rules): what is handled and what is not.
 
@@ -54,9 +54,9 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 
 `ToResult` converts the outcome that Polly passes to callbacks such as `OnRetry`: an exception becomes an error, and an outcome without a value is empty.
 
-## Custom result types
+## With your own result type
 
-For a type that implements `IResult<TSelf, T, TError>`, including `Result<T, TError>`, the same members take two type arguments: the result type and its error type. Polly's builders carry only the result type, so the compiler cannot infer `TError`. Write both type arguments at the call.
+A result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) and `Result<T, TError>` work with the same members. `HandleError<TResult, TError>()` and `ExecuteResultAsync<TResult, TError>(...)` take two type arguments: the result type and its error type. Polly's builders carry only the result type, so the compiler cannot infer `TError`. Write both at the call, for example `HandleError<Result<int>, DomainException>()`.
 
 ```csharp
 var pipeline = new ResiliencePipelineBuilder<CallResult<Payment>>()

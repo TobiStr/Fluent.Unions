@@ -6,6 +6,8 @@ This page walks through the main features in about ten minutes, using a small on
 using Fluent.Unions;
 ```
 
+The examples use the default `Result<T>`, whose error is any `Exception`. If you want your own error type, declare `[FluentResult<DomainException>] public readonly partial struct Result<T>;` in your root namespace first; every step below works the same, with your exceptions in place of the BCL ones. See [Your own Result type](../errors/custom-error-types.md).
+
 ## Return a result
 
 Return the value or the exception directly. The union provides the implicit conversions.

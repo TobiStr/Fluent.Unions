@@ -44,7 +44,11 @@ Result<UserId> result = await sender.Send(new CreateUser("", 0));
 - `ExceptionToResultBehavior<TRequest, TResponse>` returns an exception thrown by the handler or a later behavior as the error. `OperationCanceledException` still throws.
 - `ValidationToResultBehavior<TRequest, TResponse>` validates the request with its `System.ComponentModel.DataAnnotations` attributes and `IValidatableObject`, and returns `ValidationErrors`. Put `[property: ...]` on record parameters.
 
-`TResponse` must be a struct that implements `IErrorResult<TResponse, Exception>`: `Result`, `Result<T>` or your own `IResult<TSelf, T, Exception>` type. A request with another response type is left alone. `Result<T, TError>` is not covered.
+### With your own result type
+
+`TResponse` can be any result type: `Result`, `Result<T>`, `Result<T, TError>` or your own declared result. The error is what the response type's `FromException` makes of the exception or of the `ValidationErrors`. A request with another response type is left alone.
+
+The behaviors use reflection, so they are not trimming or AOT friendly. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ## Documentation
 

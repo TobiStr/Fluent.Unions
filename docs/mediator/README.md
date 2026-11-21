@@ -9,7 +9,7 @@ This folder has one page. The topics are below.
 - [Quick example](#quick-example): register the behaviors and send a request.
 - [Which package](#which-package): the libraries and their licenses.
 - [The behaviors](#the-behaviors): what each one does.
-- [Custom result types](#custom-result-types): which response types are covered.
+- [With your own result type](#with-your-own-result-type): which response types are covered.
 - [Using FluentValidation](#using-fluentvalidation): a behavior built on `Fluent.Unions.FluentValidation`.
 - [Rules](#rules): order, cancellation and limits.
 
@@ -65,11 +65,23 @@ MediatR names the first type parameter `TRequest`. Both classes are sealed and h
 
 `ValidationToResultBehavior` uses `System.ComponentModel.DataAnnotations`: the attributes on the request's properties and `IValidatableObject`. Each failed member becomes one `ValidationError` with its `MemberName`. A failure without a member has a `null` member name. The handler does not run for an invalid request. A request without rules passes. On a record, write `[property: Required]`, or the attribute lands on the constructor parameter and is ignored.
 
-## Custom result types
+## With your own result type
 
-`TResponse` must be a struct that implements `IErrorResult<TResponse, Exception>`. That is `Result`, `Result<T>` and any type that implements `IResult<TSelf, T, Exception>`. The behaviors turn an exception into `TResponse.FromError(exception)`.
+Both behaviors apply to every result type: `Result`, `Result<T>`, `Result<T, TError>` and a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). The constraint on `TResponse` is just `struct`. A request with a response that is not a result passes through untouched.
 
-A request with any other response is passed through untouched: both libraries skip a behavior whose type constraints the response does not meet. That includes `Result<T, TError>` with a data error, whose error type is not `Exception`: open generic behaviors cannot carry the extra `TError` argument. Return `Result<T>` from the pipeline and convert at the edge.
+The error is built with the response type's `FromException`. For a `DomainException` result, the exception (or the `ValidationErrors`) is mapped by `DomainException.FromException`.
+
+Mediator's source generator cannot see types that another generator emits. When a request returns the value-less result, declare it explicitly and turn the companion off on `Result<T>`:
+
+```csharp
+[FluentResult<DomainException>(Companion = false)]
+public readonly partial struct Result<T>;
+
+[FluentResult<DomainException>]
+public readonly partial struct Result;
+```
+
+The behaviors use reflection, so they are not trimming or AOT friendly.
 
 ## Using FluentValidation
 

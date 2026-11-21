@@ -1,64 +1,62 @@
 # Errors as data
 
-This page covers `Result<T, TError>`, where an error is a union of plain records and the compiler checks that every case is handled.
+This page covers results whose error is a union of cases, so the compiler checks that every case is handled.
 
 ## Declaring the error union
 
-The error type only has to say how an unexpected exception is represented. Implement `IFromException<TSelf>` on a union of records:
+The cases can be exceptions, records, or both. The union only has to say how an unexpected exception is represented:
 
 ```csharp
 using Fluent.Unions;
 using Fluent.Unions.Abstractions;
 
-public record CustomerNotFound(int Id);
-public record CartEmpty;
-public record PaymentDeclined(string Reason);
-public record Unexpected(Exception Exception);
+namespace Shop;
+
+public sealed record CustomerNotFound(int Id);
+public sealed record CartEmpty;
+public sealed record PaymentDeclined(string Reason);
+public sealed record Unexpected(Exception Exception);
 
 public union CheckoutError(CustomerNotFound, CartEmpty, PaymentDeclined, Unexpected) : IFromException<CheckoutError>
 {
     public static CheckoutError FromException(Exception exception) => new Unexpected(exception);
 }
+
+[FluentResult<CheckoutError>]
+public readonly partial struct Outcome<T>;
 ```
 
-`FromException` has the same contract as on [custom error types](custom-error-types.md#the-three-static-members): it must not return `null` and must not throw.
+`FromException` must not return `null` and must not throw. `Outcome<T>` gets every operator, `Task` overload and the value-less `Outcome`, like [your own Result type](custom-error-types.md).
 
 ## Returning an error
 
-A value converts to `Result<T, TError>` implicitly. An error case needs a cast to the error union first, because C# applies only one implicit conversion and `CustomerNotFound` to `Result<Customer, CheckoutError>` would take two:
+Each case converts straight to the result, so no cast is needed:
 
 ```csharp
-static Result<Customer, CheckoutError> GetCustomer(int id) =>
-    id > 0 ? new Customer(id, "Ada") : (CheckoutError)new CustomerNotFound(id);
+static Outcome<Customer> GetCustomer(int id) =>
+    id > 0 ? new Customer(id, "Ada") : new CustomerNotFound(id);
 
-static Result<Cart, CheckoutError> GetCart(Customer customer) =>
-    customer.Id == 2 ? (CheckoutError)new CartEmpty() : new Cart(customer.Id, 3);
+static Outcome<Cart> GetCart(Customer customer) =>
+    customer.Id == 2 ? new CartEmpty() : new Cart(customer.Id, 3);
 
-static Result<Order, CheckoutError> Pay(Cart cart) =>
-    cart.Items > 5 ? (CheckoutError)new PaymentDeclined("Limit exceeded") : new Order(cart.CustomerId, cart.Items);
+static Outcome<Order> Pay(Cart cart) =>
+    cart.Items > 5 ? new PaymentDeclined("Limit exceeded") : new Order(cart.CustomerId, cart.Items);
 ```
 
-The cast is the only ceremony. Without it, the compiler reports that it cannot implicitly convert the record to the result.
+Set `CaseConversions = false` on the attribute if you prefer to write `(CheckoutError)new CustomerNotFound(id)`. A case that is an interface gets no conversion and is reported as `FLU0103`.
 
 ## Chaining
 
-The operators of [custom error types](custom-error-types.md#operators) apply as they are: `Chain`, `Catch`, `Do`, `OnErrorDo`, `Finally`, `Ensure`, `Match` and the rest. `Select`, `SelectMany` and `MapError` need no wrapper, because the library ships them for `Result<T, TError>`.
-
 ```csharp
-static Result<Order, CheckoutError> Checkout(int customerId) =>
+static Outcome<Order> Checkout(int customerId) =>
     GetCustomer(customerId).Chain(GetCart).Chain(Pay);
 ```
 
-The first error stops the chain. An exception thrown inside a step becomes the error through `FromException`:
-
-```csharp
-var thrown = GetCustomer(1).Chain(Result<Order, CheckoutError> (_) => throw new InvalidOperationException("Boom"));
-// error: an Unexpected case that holds the InvalidOperationException
-```
+The first error stops the chain. An exception thrown inside a step becomes the error through `FromException`, here an `Unexpected` case.
 
 ## Matching every case
 
-`Match` takes one callback for the value and one for the error. A `switch` inside the error callback must cover every record, or the compiler reports CS8509:
+A `switch` inside `Match` must cover every case, or the compiler reports CS8509:
 
 ```csharp
 int status = Checkout(id).Match(
@@ -72,50 +70,29 @@ int status = Checkout(id).Match(
     });
 ```
 
-Add a case to `CheckoutError` and every such `switch` stops compiling until it handles the new case. This is the main reason to choose errors as data. CS8509 is only a warning by default. Add `<WarningsAsErrors>CS8509</WarningsAsErrors>` to the project to make it fail the build.
+Add a case to `CheckoutError` and every such `switch` stops compiling until it handles the new case. CS8509 is only a warning by default; add `<WarningsAsErrors>CS8509</WarningsAsErrors>` to the project to make it fail the build.
 
 ## Catching one case
 
-Typed `Catch` matches a case inside the error union. Other errors pass through:
+Typed `Catch` matches a case inside the error union when the case is an exception. Other errors pass through:
 
 ```csharp
-Result<Order, CheckoutError> recovered = Checkout(2).Catch((CartEmpty _) => new Order(2, 1));
-// ok: Order { CustomerId = 2, Items = 1 }
-
-Checkout(0).Catch((CartEmpty _) => new Order(2, 1));
-// error: CustomerNotFound { Id = 0 }
-```
-
-## Select, query syntax and MapError
-
-`Select` projects the value. `SelectMany` enables query syntax with several `from` clauses:
-
-```csharp
-Result<string, CheckoutError> name = GetCustomer(1).Select(customer => customer.Name); // "Ada"
-
-Result<Order, CheckoutError> order =
-    from customer in GetCustomer(1)
-    from cart in GetCart(customer)
-    select new Order(customer.Id, cart.Items);
-```
-
-`MapError` converts the error into another error type, for example at a layer boundary. The target type needs `IFromException` too:
-
-```csharp
-public union AuditError(string, Unexpected) : IFromException<AuditError>
+public union LookupError(NotFoundException, Unexpected) : IFromException<LookupError>
 {
-    public static AuditError FromException(Exception exception) => new Unexpected(exception);
+    public static LookupError FromException(Exception exception) => new Unexpected(exception);
 }
 
-Result<Order, AuditError> audited = Checkout(0).MapError(error => (AuditError)$"Checkout failed: {error.Value}");
-// error: "Checkout failed: CustomerNotFound { Id = 0 }"
+[FluentResult<LookupError>]
+public readonly partial struct Lookup<T>;
+
+Lookup<Customer> recovered = Find(id).Catch((NotFoundException _) => Lookup<Customer>.Ok(Customer.Guest));
 ```
 
-A `null` from the mapping becomes an error.
+For record cases, match inside `Catch(error => error switch { ... })`.
 
 ## Check
 
-`Check()` throws on an error. The error is not an exception, so it is wrapped in a `ResultErrorException`:
+`Check()` throws on an error. An exception case is rethrown with its stack trace. A record case is thrown inside a `ResultErrorException`; read `Error` instead of the message:
 
 ```csharp
 try
@@ -128,23 +105,13 @@ catch (ResultErrorException ex)
 }
 ```
 
-Read `Error` instead of the message. The message only names the error union type: `The result failed with CheckoutError.` On a result that holds a value, `Check()` returns it unchanged.
+## The value type must differ from every case
 
-## Mapping to HTTP
+`Outcome<CartEmpty>` would make a `CartEmpty` value indistinguishable from the error case, and the case conversion would turn values into errors. The analyzer reports it as `FLU0004`.
 
-`ToHttpResult` for `Result<T, TError>` needs the mapping passed in, so the compiler checks every case. See [Error mapping](../aspnetcore/error-mapping.md#errors-as-data) for the full example:
+## `Result<T, TError>`
 
-```csharp
-app.MapGet("/checkout/{id}", (int id) => Checkout(id).ToHttpResult(error => error switch
-{
-    CustomerNotFound => TypedResults.NotFound(),
-    CartEmpty => TypedResults.BadRequest(),
-    PaymentDeclined declined => TypedResults.Problem(declined.Reason, statusCode: StatusCodes.Status402PaymentRequired),
-    Unexpected => TypedResults.StatusCode(500)
-}));
-```
-
-The endpoint filter maps `Result<T, TError>` with a fixed rule: an error gives 500. Use `ToHttpResult(onError)` for status codes of your own, see [Endpoint filter](../aspnetcore/endpoint-filter.md#custom-result-types).
+The library also ships `Result<T, TError>`, which takes the error union as a type argument instead of a declaration: `Result<Order, CheckoutError>`. It has fewer operators, needs `(CheckoutError)` casts, and boxes on every operator call. Prefer a declared `[FluentResult<CheckoutError>]` type; `Result<T, TError>` stays for code that already uses it.
 
 ## When to choose this over exceptions
 
@@ -154,20 +121,17 @@ Choose errors as data when:
 - the list of reasons is closed and you want the compiler to flag a forgotten one;
 - a failure is a normal outcome of the business rule, such as "payment declined", not a fault.
 
-Stay with `Result<T>` or a [custom error type](custom-error-types.md) when a stack trace matters, when errors come from code that throws anyway, or when the caller only logs or maps by exception type.
+Stay with an exception error type when a stack trace matters, when errors come from code that throws anyway, or when the caller only logs or maps by exception type.
 
 ## Pitfalls
 
-- **Forgetting the cast.** `return new CustomerNotFound(id);` does not compile. Write `(CheckoutError)new CustomerNotFound(id)`.
-- **A `Task` of `Result<T, TError>` has no operators.** There are no `Task` overloads for it, except `ToHttpResult`. Await first.
-- **No JSON.** `JsonSerializer` throws `NotSupportedException` for `Result<T, TError>`, as for every result. Convert it first, for example with `Match`.
+- **No JSON.** Every serializer refuses results. Convert first, for example with `Match`.
 - **`Check()` is for the edge.** It turns data back into an exception. Prefer `Match`.
 
 ## See also
 
-- [Custom error types](custom-error-types.md): exceptions restricted to your own base class.
+- [Your own Result type](custom-error-types.md): an exception base class as the error type.
 - [Error mapping](../aspnetcore/error-mapping.md): the HTTP mapping for errors as data.
-- `test/Fluent.Unions.Tests/ErrorsAsDataTests.cs` in the repo: every operator on `Result<T, TError>`.
 
 ---
 

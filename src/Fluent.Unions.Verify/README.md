@@ -58,6 +58,10 @@ Verify is MIT source, but its binaries carry the Open Source Maintenance Fee EUL
 
 See the [Verify maintenance fee](https://github.com/VerifyTests/Verify/blob/main/docs/maintenance-fee.md) for the current terms and options.
 
+## With your own result type
+
+Verify snapshots any result type, including one declared with `[FluentResult<TError>]`. A value-less success writes `Ok`, a result with a value writes `{ Ok: ... }`, and an error is written as data as before. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+
 ## Documentation
 
 - [Verify documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/verify/README.md)

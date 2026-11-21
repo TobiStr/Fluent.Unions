@@ -72,7 +72,7 @@ With the convention, every `Option<T>` member without a value is left out of the
 
 ## Results refuse to serialize
 
-`Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException` when written and when read. Without that, an error would expose its message, stack trace and target site in the stored document. When a result is a member of a class, the driver wraps the exception in a `BsonSerializationException` (writing) or a `FormatException` (reading). The `NotSupportedException` is its inner exception.
+`Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException` when written and when read. Your own [result type](../errors/custom-error-types.md) is refused like the default type. Without that, an error would expose its message, stack trace and target site in the stored document. When a result is a member of a class, the driver wraps the exception in a `BsonSerializationException` (writing) or a `FormatException` (reading). The `NotSupportedException` is its inner exception.
 
 Convert a result before it reaches the serializer, for example with `Match`, `GetValueOrDefault()` or `ToOption()`. See [Serialization](../serialization/README.md#results-refuse-to-serialize).
 

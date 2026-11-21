@@ -1,4 +1,6 @@
 using Fluent.Unions.Validation;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Is = NUnit.Framework.Is;
 
 namespace Fluent.Unions.Tests.Samples;
@@ -67,17 +69,20 @@ public static class TraditionalCheckout
 
 public static class ResultCheckout
 {
-    public static Result<Receipt> PlaceOrder(Shop shop, CheckoutRequest request) =>
+    public static Result<Receipt> PlaceOrder(Shop shop, ILogger logger, CheckoutRequest request) =>
         Result.From(request)
             .Validate(
                 r => r.Sku.EnsureNotWhiteSpace(),
                 r => r.Quantity.EnsureInRange(1, 10))
             .Chain(r => FindCustomer(shop, r.CustomerId)
                 .Zip(FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
-            .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}."))
+            .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}.")).Out(out var order)
             .Chain(o => Result.Try(() => shop.Charge(o.Customer, o.Total))
                 .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
-            .Do(shop.Save);
+            .Do(shop.Save)
+            .Do(receipt => logger.LogInformation(
+                "Placed {Quantity} x {Sku} for customer {CustomerId}, payment {PaymentId}",
+                order.Value.Quantity, receipt.Sku, order.Value.Customer.Id, receipt.PaymentId));
 
     private sealed record Order(Customer Customer, Product Product, int Quantity)
     {
@@ -89,6 +94,18 @@ public static class ResultCheckout
 
     private static Result<Product> FindProduct(Shop shop, string sku) =>
         shop.FindProduct(sku).ToResult(() => new KeyNotFoundException($"No product {sku}."));
+}
+
+public sealed class ListLogger : ILogger
+{
+    public List<string> Messages { get; } = [];
+
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+    public bool IsEnabled(LogLevel logLevel) => true;
+
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+        Messages.Add(formatter(state, exception));
 }
 
 public record HttpError(int StatusCode, string Message);
@@ -136,7 +153,7 @@ public class CheckoutSampleTests
     public void BothVersionsAnswerTheSame(CheckoutRequest request, int expected)
     {
         Assert.That(TraditionalCheckout.ToStatusCode(NewShop(), request), Is.EqualTo(expected));
-        Assert.That(ResultCheckout.PlaceOrder(NewShop(), request).ToHttpResponse(201).StatusCode, Is.EqualTo(expected));
+        Assert.That(ResultCheckout.PlaceOrder(NewShop(), NullLogger.Instance, request).ToHttpResponse(201).StatusCode, Is.EqualTo(expected));
     }
 
     [TestCaseSource(nameof(Requests))]
@@ -144,7 +161,7 @@ public class CheckoutSampleTests
     {
         var shop = NewShop();
 
-        int status = ResultCheckout.PlaceOrder(shop, request) switch
+        int status = ResultCheckout.PlaceOrder(shop, NullLogger.Instance, request) switch
         {
             Receipt => 201,
             ValidationErrors => 400,
@@ -160,7 +177,7 @@ public class CheckoutSampleTests
     [Test]
     public void ErrorsBecomeHttpErrorsInOnePlace()
     {
-        var invalid = ResultCheckout.PlaceOrder(NewShop(), new CheckoutRequest(Ada.Id, " ", 0)).ToHttpResponse(201);
+        var invalid = ResultCheckout.PlaceOrder(NewShop(), NullLogger.Instance, new CheckoutRequest(Ada.Id, " ", 0)).ToHttpResponse(201);
         var unexpected = new IOException("Disk C:\\secrets is full.").ToHttpError();
 
         Assert.That(invalid.Body, Is.EqualTo(new HttpError(400, "Sku must not be empty or white space. Quantity must be between 1 and 10.")));
@@ -172,16 +189,36 @@ public class CheckoutSampleTests
     {
         var shop = NewShop();
 
-        var receipt = ResultCheckout.PlaceOrder(shop, new CheckoutRequest(Ada.Id, "TEA", 2));
+        var receipt = ResultCheckout.PlaceOrder(shop, NullLogger.Instance, new CheckoutRequest(Ada.Id, "TEA", 2));
 
         Assert.That(receipt.GetValue(), Is.EqualTo(new Receipt("Ada", "TEA", 9m, "PAY-1")));
         Assert.That(shop.Orders, Is.EqualTo(new[] { receipt.GetValue() }));
     }
 
     [Test]
+    public void PlacedOrderIsLoggedWithTheCapturedOrder()
+    {
+        var logger = new ListLogger();
+
+        ResultCheckout.PlaceOrder(NewShop(), logger, new CheckoutRequest(Ada.Id, "TEA", 2));
+
+        Assert.That(logger.Messages, Is.EqualTo(new[] { $"Placed 2 x TEA for customer {Ada.Id}, payment PAY-1" }));
+    }
+
+    [Test]
+    public void FailedOrderIsNotLogged()
+    {
+        var logger = new ListLogger();
+
+        ResultCheckout.PlaceOrder(NewShop(), logger, new CheckoutRequest(Ada.Id, "TEA", 3));
+
+        Assert.That(logger.Messages, Is.Empty);
+    }
+
+    [Test]
     public void ValidationReportsEveryProblemAtOnce()
     {
-        var result = ResultCheckout.PlaceOrder(NewShop(), new CheckoutRequest(Ada.Id, " ", 0));
+        var result = ResultCheckout.PlaceOrder(NewShop(), NullLogger.Instance, new CheckoutRequest(Ada.Id, " ", 0));
 
         var errors = ((ValidationErrors)result.GetError()).Errors;
         Assert.That(errors.Select(e => e.Message), Is.EqualTo(new[] { "Sku must not be empty or white space.", "Quantity must be between 1 and 10." }));
@@ -193,7 +230,7 @@ public class CheckoutSampleTests
     {
         var shop = NewShop();
 
-        var result = ResultCheckout.PlaceOrder(shop, new CheckoutRequest(Ada.Id, "TEA", 3));
+        var result = ResultCheckout.PlaceOrder(shop, NullLogger.Instance, new CheckoutRequest(Ada.Id, "TEA", 3));
 
         Assert.That(result.GetError(), Is.TypeOf<PaymentDeclinedException>());
         Assert.That(result.GetError().Message, Is.EqualTo("The card of Ada was declined."));

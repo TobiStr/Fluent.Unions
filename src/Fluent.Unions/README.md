@@ -14,6 +14,26 @@ dotnet add package Fluent.Unions
 
 Requires .NET 11. C# 15 is the default language version for `net11.0`.
 
+## Choose your Result
+
+Use the default `Result<T>`, whose error is any `Exception`, with `using Fluent.Unions;`. Or declare your own in your root namespace, with the error type you want:
+
+```csharp
+namespace Shop;
+
+public class DomainException(string message, Exception? inner = null)
+    : Exception(message, inner), IFromException<DomainException>
+{
+    public static DomainException FromException(Exception exception) =>
+        exception as DomainException ?? new UnexpectedDomainException(exception);
+}
+
+[FluentResult<DomainException>]
+public readonly partial struct Result<T>;
+```
+
+The generator adds the union cases, the value-less `Result` with `Result.From` and `Result.Try`, and every operator of the default type. The error type can also be a union of your error cases; the compiler then checks that a `switch` handles each one. Results store their value without boxing, so a `Result<int>` and a chain of `Select`, `Chain`, `Ensure` and `Do` allocate nothing.
+
 ## Common scenarios
 
 **Return a value or an error, and handle both.** The compiler reports a `switch` that misses a case:

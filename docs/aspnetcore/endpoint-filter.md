@@ -45,7 +45,7 @@ Handlers may be synchronous or asynchronous. Minimal APIs await the returned `Ta
 | `Result<T>` or `Task<Result<T>>` | 200 with `T`, 400 `HttpValidationProblemDetails`, 500 `ProblemDetails` |
 | `Result` | 204, 400, 500 |
 | `Option<T>` | 200 with `T`, 404 |
-| a custom result type | 200 with `T`, 400, 500 |
+| your own result type | 200 with `T` (204 without a value), 400, 500 |
 
 Add `.Produces(...)` yourself for other statuses you map, such as 404 or 409.
 
@@ -55,9 +55,9 @@ Every other return value is left alone: strings, objects, `IResult` values such 
 
 The filter does not catch exceptions. An exception thrown by the handler goes through ASP.NET Core's normal exception handling. If you want a thrown exception to become an error, wrap the call in `Result.Try` or `Result.TryAsync`.
 
-## Custom result types
+## With your own result type
 
-The filter also converts a handler that returns a type implementing `IResult<TSelf, T, TError>`, including `Result<T, TError>` and your own result types. It finds the interface at runtime, reads the type arguments once per type and caches them.
+The filter handles any result type, including one declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) and `Result<T, TError>`. A value gives 200 with the value, a value-less success gives 204, and an error gives the configured [error mapping](error-mapping.md). The OpenAPI metadata uses the same shape. The filter finds `IResult<TSelf, T, TError>` at runtime, reads the type arguments once per type and caches them.
 
 | Handler returns | Response |
 | --- | --- |
@@ -86,11 +86,11 @@ To give every data error one status, map `ResultErrorException`. Its message nam
 builder.Services.Configure<ResultHttpOptions>(o => o.Map<ResultErrorException>(StatusCodes.Status409Conflict, exposeMessage: true));
 ```
 
-A custom result type must be a struct, as `IResult<TSelf, T, TError>` requires. Other structs and classes pass through.
+A result type must be a struct. Other structs and classes pass through.
 
 ## Pitfalls
 
-- **Only the listed types are converted.** `Result`, `Result<T>`, `Option<T>` and types that implement `IResult<TSelf, T, TError>`. Check the tables before you rely on it for another type.
+- **Only the listed types are converted.** `Result`, `Result<T>`, `Option<T>` and every result type. Check the tables before you rely on it for another type.
 - **A data error gives 500 by default.** Use `ToHttpResult(onError)` or map `ResultErrorException`.
 - **The filter does not catch.** Wrap code that throws in `Result.TryAsync`.
 

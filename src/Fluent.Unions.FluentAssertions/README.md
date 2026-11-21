@@ -46,7 +46,9 @@ Assert on the inner exceptions of an aggregate error, such as the output of `Val
 registered.Should().BeAggregateError().WithInnerCount(2);
 ```
 
-Assert on a custom result type that implements `IResult<TSelf, T, TError>`, including `Result<T, TError>`. `BeError<TCase>()` also matches a case inside an error union.
+## With your own result type
+
+`Should()` works on a result type you declare with `[FluentResult<TError>]` when it has a value, and on `Result<T, TError>`. There are no assertions for the value-less `Result` of your own type. `BeError<TCase>()` also matches a case inside an error union. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ```csharp
 StockResult<Reservation> reserved = await stock.ReserveAsync(sku, quantity);

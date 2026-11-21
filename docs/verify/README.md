@@ -10,6 +10,7 @@ This folder has one page. The topics are below.
 - [What the snapshots look like](#what-the-snapshots-look-like): the text for each case.
 - [Errors](#errors): exceptions, validation errors and errors as data.
 - [License of Verify](#license-of-verify): the maintenance fee and the build check.
+- [With your own result type](#with-your-own-result-type): what is written for a declared result type.
 - [Rules](#rules): what is and is not covered.
 
 ## Quick example
@@ -87,6 +88,10 @@ For `Result<T, TError>` the error is its data. When `TError` is a union of error
 
 An exception inside such a record, for example `Unexpected(Exception)`, is written by Verify itself, with its `$type`, `Type` and `Message`.
 
+## With your own result type
+
+Verify snapshots any result type, including one declared with `[FluentResult<TError>]` (see [Your own Result type](../errors/custom-error-types.md)). A value-less success writes `Ok`, a result with a value writes `{ Ok: ... }`, and an error is written as data as before.
+
 ## License of Verify
 
 Verify is MIT source, but its binaries carry the Open Source Maintenance Fee EULA. Organisations with an annual gross revenue of US$10,000 or more pay a maintenance fee. Smaller users and some open source projects are exempt.
@@ -106,7 +111,7 @@ See the [Verify maintenance fee](https://github.com/VerifyTests/Verify/blob/main
 - **Call `Initialize` before the first snapshot.** A module initializer in the test project does it once for all tests.
 - **Write-only.** The converters only write snapshots. Verify never reads a result back.
 - **No stack traces.** Exceptions show their type and message.
-- **Only the core types.** Your own unions and `IResult` types are written by Verify's default rules, except a union that is the error of a `Result<T, TError>`, which is unwrapped to its case.
+- **Only result types and the core types.** Your own unions are written by Verify's default rules, except a union that is the error of a `Result<T, TError>`, which is unwrapped to its case.
 - **Verify.NUnit needs NUnit 5.** `Verify.NUnit` 33.7.1 requires NUnit 5.0.0 or later.
 - **Name clash.** Inside a namespace that starts with `Fluent.Unions.Verify`, write `Verifier.Verify(...)` instead of `Verify(...)`, because the namespace hides the method.
 

@@ -34,4 +34,4 @@ Your own unions are written with `$type` and `$value`. Apply the converter with 
 public union Shape(Circle, Square);
 ```
 
-`Result` and `Result<T>` throw `NotSupportedException` when written or read. Convert them first. See the [documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/newtonsoft-json/README.md).
+Every result type throws `NotSupportedException` when written or read: `Result`, `Result<T>` and your own types declared with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md). Convert them first. See the [documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/newtonsoft-json/README.md).

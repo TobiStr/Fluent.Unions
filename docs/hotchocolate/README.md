@@ -1,6 +1,6 @@
 # HotChocolate
 
-The package `Fluent.Unions.HotChocolate` (namespace `Fluent.Unions.HotChocolate`) lets [HotChocolate](https://chillicream.com/docs/hotchocolate) 16 resolvers return `Result<T>` and `Option<T>`. It depends on `HotChocolate.Types` and registers a type interceptor, a field middleware and an error filter.
+The package `Fluent.Unions.HotChocolate` (namespace `Fluent.Unions.HotChocolate`) lets [HotChocolate](https://chillicream.com/docs/hotchocolate) 16 resolvers return `Result<T>` and `Option<T>`. A resolver can also return your own [result type](../errors/custom-error-types.md) with a value, exposed like `Result<T>`. It depends on `HotChocolate.Types` and registers a type interceptor, a field middleware and an error filter.
 
 ## In this section
 
@@ -89,7 +89,7 @@ public Result<Order> PlaceOrder(string sku, IOrders orders) => orders.Place(sku)
 
 ## Limitations
 
-- Only `Result<T>` and `Option<T>` on object type fields are rewritten. Other union types, such as the non-generic `Result`, are not. HotChocolate fails when it builds the schema for the non-generic `Result`, so the mistake is not silent.
+- Only `Result<T>`, your own result types with a value, and `Option<T>` on object type fields are rewritten. Other union types, such as the non-generic `Result` or any value-less result, are not. HotChocolate fails when it builds the schema for the non-generic `Result`, so the mistake is not silent.
 - Interface fields are not rewritten. Return the union from the implementing object type.
 - Arguments and input fields of these types are not supported.
 - HotChocolate removes the `Async` suffix from a field name, so `GetBookAsync` and `GetBook` collide as `book`.

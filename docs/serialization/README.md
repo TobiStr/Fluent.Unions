@@ -1,6 +1,6 @@
 # Serialization
 
-`System.Text.Json` works with options and your own unions. Results are deliberately not serialized. This page covers what is written and read for each, and the limits.
+`System.Text.Json` works with options and your own unions. Results, including your own result types, are deliberately not serialized. This page covers what is written and read for each, and the limits.
 
 ## In this section
 
@@ -98,7 +98,7 @@ public partial class AppJsonContext : JsonSerializerContext;
 
 ## Results refuse to serialize
 
-`JsonSerializer` throws `NotSupportedException` for `Result`, `Result<T>` and `Result<T, TError>`, when writing and when reading. Without that, an error would be written with its message, stack trace and target site, which leaks internals to clients.
+`JsonSerializer` throws `NotSupportedException` for `Result`, `Result<T>` and `Result<T, TError>`, when writing and when reading. `ResultJsonConverter` refuses every result type, so the same holds for your own [result type](../errors/custom-error-types.md) declared with `[FluentResult<TError>]`, like the default type. Integration authors can recognize result types with `Fluent.Unions.Abstractions.ResultTypes` (`IsResult(Type)`, `ErrorType(Type)`, `ValueType(Type)`). Without that, an error would be written with its message, stack trace and target site, which leaks internals to clients.
 
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");
@@ -157,7 +157,7 @@ Not supported. `OptionJsonConverter` and `UnionJsonConverter` create converters 
 
 - `JsonIgnoreCondition.WhenWritingNull` does not omit `None`.
 - A source-generated context without `T` registered fails at runtime for `Option<T>`.
-- Serializing a `Result<T>` throws. Convert it before the serializer sees it.
+- Serializing a `Result<T>`, or your own result type, throws. Convert it before the serializer sees it.
 - Two union cases with the same type name cannot be told apart.
 
 ## See also

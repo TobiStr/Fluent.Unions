@@ -10,7 +10,7 @@ The types:
 | `Result<T>` | a `T` or an `Exception` | An operation that returns a value or fails. |
 | `Option<T>` | a `T` or `None` | A value that may be missing, where missing is normal. |
 | `Loadable<T>` | not loaded, loading, a `T` or an `Exception` | UI state for data that loads asynchronously. |
-| `Result<T, TError>` | a `T` or an error you define | Errors as data: a union of plain records instead of exceptions. |
+| Your own `Result<T>` | a `T` or your error type | Errors restricted to your own exception type, or a closed set of cases checked by the compiler. Declared with `[FluentResult<TError>]`. |
 
 Operators are named after LINQ and Rx.NET: `Select`, `SelectMany`, `Catch`, `Do`, `Finally`, `Match`, plus `Chain` and `Ensure`. The same names work on `Task<Result<T>>`, so an asynchronous pipeline stays one expression.
 
@@ -18,6 +18,17 @@ Two packages:
 
 - `Fluent.Unions` has the types, the operators and analyzers that warn when you ignore a result or misuse a union.
 - `Fluent.Unions.AspNetCore` turns results and options into HTTP responses.
+
+## Choose your Result
+
+Start with the default `Result<T>` from `using Fluent.Unions;`. When you want errors of your own type, declare it once in your root namespace and keep writing `Result<T>`:
+
+```csharp
+[FluentResult<DomainException>]
+public readonly partial struct Result<T>;
+```
+
+Every operator below works on both. See [Your own Result type](../errors/custom-error-types.md).
 
 ## In this section
 

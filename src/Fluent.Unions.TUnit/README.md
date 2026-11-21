@@ -31,6 +31,15 @@ await Assert.That(customer.Nickname).IsNone();
 
 The extension methods are generated into `TUnit.Assertions.Extensions`, which TUnit projects import globally. The package depends on TUnit.Assertions only, so the assertions also work in a test project of another framework.
 
+## With your own result type
+
+Assert a result type you declare with `[FluentResult<TError>]` through `AsResult()`. C# does not allow the result interface as a type argument, so the generated assertions cannot take your type directly. The default types keep `Assert.That(result).IsOk()`. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+
+```csharp
+await Assert.That(result.AsResult()).IsOk();
+await Assert.That(result.AsResult()).IsError();
+```
+
 ## Documentation
 
 - [Testing documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/testing/README.md)

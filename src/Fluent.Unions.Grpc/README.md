@@ -43,6 +43,14 @@ builder.Services.AddSingleton(new ResultGrpcOptions().Map<OutOfStockException>(S
 
 `error.ToRpcException()` does the same mapping by hand.
 
+### With your own result type
+
+`ToResult()` produces the default `Fluent.Unions.Result<T>`. To get your own type, wrap the call in your own `Result.TryAsync(...)`, or convert with `Match`. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+
+```csharp
+Shop.Result<UserReply> mine = user.Match(value => (Shop.Result<UserReply>)value, error => DomainException.FromException(error));
+```
+
 ## Documentation
 
 - [gRPC documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/grpc/README.md)

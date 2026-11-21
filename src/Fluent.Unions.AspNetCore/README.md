@@ -31,11 +31,15 @@ var group = app.MapGroup("/v2/orders").WithResultMapping();
 group.MapGet("/{id}", (Guid id, IOrders orders) => orders.LoadOrderAsync(id)); // Task<Result<Order>>
 ```
 
-Return a custom result type that implements `IResult<TSelf, T, TError>`, or `Result<T, TError>`, from a filtered endpoint. A value gives 200, and an error that is not an exception gives 500 unless you map `ResultErrorException`. `ToHttpResult(onError)` takes over the mapping.
+### With your own result type
+
+`WithResultMapping` handles any result type, also one declared with `[FluentResult<TError>]`: a value gives 200, a succeeded value-less result gives 204, and an error gives the configured error mapping. The OpenAPI metadata has the same shape.
 
 ```csharp
-group.MapGet("/customers/{id}", (Guid id) => GetCustomer(id)); // your own IResult type
+group.MapGet("/customers/{id}", (Guid id) => GetCustomer(id)); // Shop.Result<Customer>
 ```
+
+`ToHttpResult()` also accepts `IResult<TSelf, T, TError>` when `TError : Exception`, and maps like the default type. `ToHttpResult(onError)` works for any error type. There are no `Task` overloads for your own type, so await first. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 By default `ValidationError` and `ValidationErrors` give 400, `KeyNotFoundException` 404, `UnauthorizedAccessException` 403 and `TimeoutException` 504. Everything else gives 500. Only validation errors show their messages to the client. Map your own exception types, including their subclasses, and choose whether the message is safe to expose:
 

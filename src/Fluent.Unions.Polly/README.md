@@ -38,14 +38,16 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 // an Ok payment after the last attempt, or the last HttpRequestException as the error
 ```
 
-Use a custom result type that implements `IResult<TSelf, T, TError>` with explicit type arguments, because Polly's builders carry only the result type.
+### With your own result type
+
+Your own result type works with the same members, but `HandleError<TResult, TError>()` and `ExecuteResultAsync<TResult, TError>(...)` need explicit type arguments, because Polly's builders carry only the result type. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ```csharp
-ShouldHandle = new PredicateBuilder<CallResult<Payment>>()
-    .HandleError<CallResult<Payment>, CallError>(error => error.Value is Transient),
+ShouldHandle = new PredicateBuilder<Result<Payment>>()
+    .HandleError<Result<Payment>, DomainException>(error => error is PaymentDeclined),
 
-CallResult<Payment> payment = await pipeline
-    .ExecuteResultAsync<CallResult<Payment>, CallError>(ct => ChargeAsync(order, ct), cancellationToken);
+Result<Payment> payment = await pipeline
+    .ExecuteResultAsync<Result<Payment>, DomainException>(ct => ChargeAsync(order, ct), cancellationToken);
 ```
 
 Convert the outcome that Polly passes to callbacks such as `OnRetry`.
@@ -53,7 +55,7 @@ Convert the outcome that Polly passes to callbacks such as `OnRetry`.
 ```csharp
 OnRetry = args =>
 {
-    Result<Payment> attempt = args.Outcome.ToResult();
+    Result<Payment> attempt = args.Outcome.ToResult<Result<Payment>, DomainException>();
     return ValueTask.CompletedTask;
 },
 ```

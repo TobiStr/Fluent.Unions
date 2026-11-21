@@ -24,7 +24,7 @@ Add `Fluent.Unions.AspNetCore` only to web projects. It references `Fluent.Union
 | --- | --- |
 | `Fluent.Unions` | `Result`, `Result<T>`, `Option<T>`, `Loadable<T>`, `Result<T, TError>`, `Ok`, `None`, `Captured<T>`, `ValidationError(s)`, and every operator |
 | `Fluent.Unions.Validation` | `Is` and the ready-made `Ensure*` rules |
-| `Fluent.Unions.Abstractions` | `IResult<TSelf, T, TError>` and `IFromException<T>`, for your own result types |
+| `Fluent.Unions.Abstractions` | `IFromException<T>` for the error type of your own result type, `ResultTypes`, and the result interfaces |
 | `Fluent.Unions.Serialization` | JSON converters, such as `UnionJsonConverter` |
 | `Fluent.Unions.AspNetCore` | `ToHttpResult`, `WithResultMapping`, `ResultHttpOptions` |
 
@@ -36,7 +36,7 @@ global using Fluent.Unions;
 
 In ASP.NET Core files that also import `Microsoft.AspNetCore.Http.HttpResults`, the case `Ok` clashes with the HTTP result `Ok` (CS0104). Add `using Ok = Fluent.Unions.Ok;` there.
 
-If you declare your own `Result<T>`, see [Custom error types](../errors/custom-error-types.md#namespaces) for the namespace rules.
+If you declare your own `Result<T>` with `[FluentResult<TError>]`, put it in your root namespace. See [Your own Result type](../errors/custom-error-types.md#namespaces) for the namespace rules.
 
 ## The bundled analyzers
 

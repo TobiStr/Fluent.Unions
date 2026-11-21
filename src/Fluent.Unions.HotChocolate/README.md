@@ -4,7 +4,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Fluent.Unions.HotChocolate.svg)](https://www.nuget.org/packages/Fluent.Unions.HotChocolate) [![Downloads](https://img.shields.io/nuget/dt/Fluent.Unions.HotChocolate.svg)](https://www.nuget.org/packages/Fluent.Unions.HotChocolate) [![Publish](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml/badge.svg)](https://github.com/TobiStr/Fluent.Unions/actions/workflows/publish.yml) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-7e57c2)](https://tobistr.github.io/Fluent.Unions/hotchocolate/)
 
-Lets HotChocolate resolvers return `Result<T>` and `Option<T>`. The schema shows `T` for a result and a nullable `T` for an option, and an error in a result is rethrown so HotChocolate's error handling and mutation conventions deal with it. It builds on Fluent.Unions and HotChocolate 16.
+Lets HotChocolate resolvers return `Result<T>`, your own result type with a value (declared with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md)) and `Option<T>`. The schema shows `T` for a result and a nullable `T` for an option, and an error in a result is rethrown so HotChocolate's error handling and mutation conventions deal with it. It builds on Fluent.Unions and HotChocolate 16.
 
 ## Installation
 

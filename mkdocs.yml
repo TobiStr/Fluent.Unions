@@ -73,7 +73,7 @@ nav:
   - Validation: validation/README.md
   - Errors:
       - errors/README.md
-      - Custom error types: errors/custom-error-types.md
+      - Your own Result type: errors/custom-error-types.md
       - Errors as data: errors/errors-as-data.md
   - Unions:
       - unions/README.md

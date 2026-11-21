@@ -10,6 +10,7 @@ This folder has one page. The topics are below.
 - [What you get back](#what-you-get-back): the result for each outcome.
 - [Why not a Result return type](#why-not-a-result-return-type): why the methods return `IApiResponse<T>`.
 - [Methods that return the content](#methods-that-return-the-content): `Result.TryAsync` for `Task<T>`.
+- [With your own result type](#with-your-own-result-type): get your own type from the call.
 - [Rules](#rules): what is an error and what is thrown.
 
 ## Quick example
@@ -76,6 +77,15 @@ Result<User> user = await Result.TryAsync(() => api.GetUser(7));
 ```
 
 Use the response shapes above when you need the 404 as `None` or want the status code without an exception.
+
+## With your own result type
+
+`ToResult()` produces the default `Fluent.Unions.Result<T>`, not a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). Wrap the call in your own `Result.TryAsync(...)`, or convert with `Match`:
+
+```csharp
+Shop.Result<User> mine = (await api.GetUser(7).ToResult())
+    .Match(value => (Shop.Result<User>)value, error => DomainException.FromException(error));
+```
 
 ## Rules
 

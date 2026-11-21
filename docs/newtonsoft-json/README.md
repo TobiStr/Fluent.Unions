@@ -41,7 +41,7 @@ JsonConvert.SerializeObject(new CustomerDto("Ada", "Countess"), settings);  // {
 - A missing property reads as a `default` option, which holds no value.
 - `DefaultValueHandling.Ignore` omits only `default` options. `NullValueHandling.Ignore` does not omit `None`.
 - `Option<Option<T>>` loses the difference between its levels.
-- `Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException` in both directions, with the same message as the core.
+- `Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException` in both directions, with the same message as the core. Your own [result types](../errors/custom-error-types.md) are refused like the default type.
 - A nullable `Option<T>?` reads `null` as `null`, not as `None`.
 
 ## Options
@@ -81,7 +81,7 @@ An option is a struct, so `null` checks do not apply to it.
 
 ## Results refuse to serialize
 
-`ResultJsonConverter` throws `NotSupportedException` for `Result`, `Result<T>` and `Result<T, TError>`, when writing and when reading. Without it, an error would be written with its message, stack trace and target site, which leaks internals to clients.
+`ResultJsonConverter` throws `NotSupportedException` for `Result`, `Result<T>` and `Result<T, TError>`, when writing and when reading. With your own [result type](../errors/custom-error-types.md), it is refused like the default type. Without it, an error would be written with its message, stack trace and target site, which leaks internals to clients.
 
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");
@@ -130,7 +130,7 @@ Not supported. The converters use reflection (`MakeGenericType`, constructor loo
 
 - Forgetting `AddFluentUnions()` writes options as objects.
 - `NullValueHandling.Ignore` does not omit `None`.
-- Serializing a `Result<T>` throws. Convert it first.
+- Serializing a `Result<T>`, or your own result type, throws. Convert it first.
 - Two union cases with the same type name cannot be told apart.
 - The converter classes share their names with the core ones in `Fluent.Unions.Serialization`. Import only one of the two namespaces per file.
 

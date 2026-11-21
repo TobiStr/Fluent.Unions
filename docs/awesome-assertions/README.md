@@ -9,7 +9,7 @@ This folder has one page. The topics are below.
 - [Quick example](#quick-example): assert on an Ok result, an error and an option.
 - [Result assertions](#result-assertions): the state and value checks.
 - [Option assertions](#option-assertions): some, none and the value.
-- [Custom result types](#custom-result-types): assertions for your own `IResult` type and `Result<T, TError>`.
+- [Custom result types](#custom-result-types): assertions for your own result type (declared with `[FluentResult<TError>]`) and `Result<T, TError>`.
 - [Error assertions](#error-assertions): the exception type and message, and aggregate errors.
 - [When to use](#when-to-use): where it helps.
 - [Rules](#rules): `default` results, failure messages and chaining.
@@ -67,7 +67,7 @@ For validation failures use `BeError<ValidationErrors>()` and read `Which.Errors
 
 ## Custom result types
 
-`Should()` on a type that implements `IResult<TSelf, T, TError>` returns `CustomResultAssertions<TSelf, T, TError>`. This includes `Result<T, TError>`. The concrete `Should()` overloads for `Result` and `Result<T>` still apply to those types.
+With your own result type, declared with `[FluentResult<TError>]` (see [Your own Result type](../errors/custom-error-types.md)), `Should()` returns `CustomResultAssertions<TSelf, T, TError>`. This works when the type has a value, and for `Result<T, TError>`. There are no assertions for the value-less `Result` of your own type. A hand-written type that implements `IResult<TSelf, T, TError>` is covered the same way. The concrete `Should()` overloads for `Result` and `Result<T>` still apply to those types.
 
 | Method | Passes when |
 | --- | --- |

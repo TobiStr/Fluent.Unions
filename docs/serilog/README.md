@@ -9,6 +9,7 @@ This folder has one page. The topics are below.
 - [Quick example](#quick-example): register the policy and log a result.
 - [Log shape](#log-shape): what each type becomes.
 - [Exceptions and stack traces](#exceptions-and-stack-traces): the safe default and the exception slot.
+- [With your own result type](#with-your-own-result-type): what is logged for a declared result type.
 - [When to use](#when-to-use)
 - [Rules](#rules): what is and is not destructured.
 
@@ -64,6 +65,10 @@ if (order.TryGetError(out var error))
 }
 ```
 
+## With your own result type
+
+`.Destructure.WithFluentUnions()` destructures any result type, including one declared with `[FluentResult<TError>]` (see [Your own Result type](../errors/custom-error-types.md)), like the default ones. A value-less success logs `"Ok"`.
+
 ## When to use
 
 - You log results, options or loadables with `{@Name}` and want searchable properties instead of text.
@@ -72,7 +77,7 @@ if (order.TryGetError(out var error))
 ## Rules
 
 - **Destructure with `@`.** `{Order}` renders with `ToString()`, which is the value or an empty string. Serilog applies destructuring policies only for `{@Order}`.
-- **Only the five types are handled.** Other values, including your own unions, are left to Serilog and other policies.
+- **Only the five types and result types are handled.** Other values, including your own unions, are left to Serilog and other policies.
 - **No `null` values.** An option or result never holds `null`. A `null` in the log means an option with no value.
 - **An error and a value can look alike.** A value that is a structure with only an `Error` property is indistinguishable from an error in the log. Use `Match` and log the cases yourself when that matters.
 - **Reflection for the generic types.** The policy reads the union through `IUnion` and the generic type definition. AOT and trimming have not been tested.

@@ -12,6 +12,7 @@ This folder has one page. The topics are below.
 - [TUnit](#tunit): generated assertions on `Assert.That`.
 - [NUnit](#nunit): constraints from `IsResult` and `IsOption`.
 - [xUnit](#xunit): static `ResultAssert` and `OptionAssert`.
+- [With your own result type](#with-your-own-result-type): what changes for a declared result type.
 - [Failure messages](#failure-messages): what a failed check says.
 - [When to use](#when-to-use): where it helps.
 - [Rules](#rules): `default` values, returned values and limits.
@@ -122,6 +123,14 @@ string nickname = OptionAssert.Some(customer.Nickname);
 ```
 
 `ResultAssert.Error<TException>(result)` takes a `Result`, and a `Result<T>` converts to it implicitly, so it works for both. Inside the namespace `Fluent.Unions.Xunit` the name `Xunit` refers to that namespace, so write `global::Xunit.Assert` or an alias there.
+
+## With your own result type
+
+A result type you declare with `[FluentResult<TError>]` (see [Your own Result type](../errors/custom-error-types.md)) works in all four packages, with these differences.
+
+- **Shouldly and xUnit.** `ShouldBeOk`, `ShouldBeError`, `ResultAssert.Ok` and `ResultAssert.Error` accept any result type, with a value and without (the value-less `Result`), with the same messages. There is no typed `ShouldBeError<TException>` or `Error<TException>` for your own types, because the untyped form already returns your declared error type.
+- **TUnit.** Assert through `AsResult()`, because C# does not allow the result interface as a type argument: `await Assert.That(result.AsResult()).IsOk()` and `.IsError()`. The default types keep `Assert.That(result).IsOk()`.
+- **NUnit.** The `IsResult` constraints recognize any result type. An error that is not an exception prints as `failed with Type: ...`.
 
 ## Failure messages
 

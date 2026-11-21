@@ -11,6 +11,7 @@ This folder has one page. The topics are below.
 - [Server](#server): why a service method does not return a result, and the interceptor.
 - [Status code mapping](#status-code-mapping): defaults and `ResultGrpcOptions`.
 - [Code generation](#code-generation): protoc with C# 15.
+- [With your own result type](#with-your-own-result-type): get your own type from the call.
 - [Rules](#rules): limits and pitfalls.
 
 ## Quick example
@@ -89,6 +90,15 @@ Only the status code and a message are sent. Structured details such as `google.
 ## Code generation
 
 `Grpc.Tools` runs protoc and generates plain classes from the `.proto` files. It does not know about C# 15 unions and is not affected by them: the tests build a service and client from a `.proto` file with `net11.0` and run them in process.
+
+## With your own result type
+
+`ToResult()` produces the default `Fluent.Unions.Result<T>`, not a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). Wrap the call in your own `Result.TryAsync(...)`, or convert with `Match`:
+
+```csharp
+Shop.Result<UserReply> mine = (await client.GetUserAsync(request).ToResult())
+    .Match(value => (Shop.Result<UserReply>)value, error => DomainException.FromException(error));
+```
 
 ## Rules
 

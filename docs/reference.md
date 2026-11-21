@@ -5,7 +5,7 @@ Every public type and operator, grouped by what you do with it. Each row links t
 ```csharp
 using Fluent.Unions;               // Result, Result<T>, Option<T>, Loadable<T>, Result<T, TError>, ValidationError(s), and all operators
 using Fluent.Unions.Validation;    // Is and the EnsureXxx rules
-using Fluent.Unions.Abstractions;  // IResult, IErrorResult, IFromException (custom error types)
+using Fluent.Unions.Abstractions;  // IFromException for your own error type, ResultTypes, result interfaces
 using Fluent.Unions.Serialization; // OptionJsonConverter, ResultJsonConverter, UnionJsonConverter
 using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHttpOptions (Fluent.Unions.AspNetCore)
 ```
@@ -70,7 +70,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `Catch(e => ...)`, `Catch((IOException e) => ...)`, `Catch(fallback)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `OnErrorDo(e => ...)`, `Do(v => ..., e => ...)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `MapError(e => ...)` | `Result<T, TError>`, custom types (explicit type arguments) | [Errors as data](errors/errors-as-data.md) |
-| `Validate(rules...)` | `Result<T>`, `Task<Result<T>>`, custom types (`Validate(combine, rules...)`) | [Validation](validation/README.md), [Custom error types](errors/custom-error-types.md) |
+| `Validate(rules...)` | `Result<T>`, `Task<Result<T>>`, your own result types | [Validation](validation/README.md), [Your own Result type](errors/custom-error-types.md) |
 | `ValidateAnnotations()` | `Result<T>`, `Task<Result<T>>` | [Validation](validation/README.md#dataannotations) |
 
 ## Validation rules
@@ -159,15 +159,17 @@ Namespace `Fluent.Unions.Validation`.
 | `Result.WhenAll(tasks)`, `Result.Retry(...)`, `Result.RetryAsync(...)`, `task.Timeout(duration)` | [Concurrency and resilience](async/concurrency-and-resilience.md) |
 | `Values()`, `Errors()`, `CombineAsync()` on `IAsyncEnumerable` | [Streams](async/streams.md) |
 
-## Your own unions and custom error types
+## Your own Result type and your own unions
 
 | Member | Docs |
 | --- | --- |
+| `[FluentResult<TError>]` on a `readonly partial struct`, with `Companion` and `CaseConversions` | [Your own Result type](errors/custom-error-types.md) |
+| Every operator of `Result<T>` and `Result`, generated for your type | [Your own Result type](errors/custom-error-types.md#what-the-generator-writes) |
+| `IFromException<TSelf>` on the error type, or `FromException` on the struct | [Your own Result type](errors/custom-error-types.md#unexpected-exceptions) |
+| A union as the error type, case conversions, exhaustive `switch` | [Errors as data](errors/errors-as-data.md) |
+| `ResultTypes.IsResult(type)`, `ResultTypes.ErrorType(type)`, `ResultTypes.ValueType(type)` | Runtime checks for any result type |
 | `union.Is<TCase>()`, `union.As<TCase>()` | [Your own unions](unions/your-own-unions.md) |
-| `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>` | [Custom error types](errors/custom-error-types.md) |
-| `Ensure`, `Validate`, `Out`, `DoAwait`, `CatchAwait`, `FinallyAwait`, `WhereAwait`, `ToOption`, `ToLoadable`, `Unwrap`, `RecordResult` on `IResult` | [Custom error types](errors/custom-error-types.md) |
-| `SelectAwait`, `Zip`, `BindAppend`, `WithValue`, `Transpose` on `IResult` (explicit type arguments) | [Custom error types](errors/custom-error-types.md) |
-| `IFromException<TSelf>`, `Result<T, TError>` | [Errors as data](errors/errors-as-data.md) |
+| `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>` and the operators on them, `Result<T, TError>` | Hand-written result types from 0.3.0, see [Migrating](errors/custom-error-types.md#migrating-from-a-hand-written-type) |
 
 ## FluentValidation
 
@@ -177,7 +179,7 @@ Package `Fluent.Unions.FluentValidation`, namespace `Fluent.Unions.FluentValidat
 | --- | --- | --- |
 | `ValidateToResult(instance)`, `ValidateToResultAsync(instance, cancellationToken)` | `IValidator<T>` | [FluentValidation](fluent-validation/README.md) |
 | `Validate(validator)`, `ValidateAsync(validator, cancellationToken)` | `Result<T>` | [FluentValidation](fluent-validation/README.md) |
-| `Validate(validator)`, `Validate(validator, map)`, `ValidateAsync(validator, cancellationToken)`, `ValidateAsync(validator, map, cancellationToken)` | custom types | [FluentValidation](fluent-validation/README.md#custom-result-types) |
+| `Validate(validator)`, `Validate(validator, map)`, `ValidateAsync(validator, cancellationToken)`, `ValidateAsync(validator, map, cancellationToken)` | custom types | [FluentValidation](fluent-validation/README.md#with-your-own-result-type) |
 | `RuleForSome(expression)` | `AbstractValidator<T>`, `Option<T>` properties | [FluentValidation](fluent-validation/README.md#option-properties) |
 
 ## Polly
@@ -189,9 +191,9 @@ Package `Fluent.Unions.Polly`, namespace `Fluent.Unions.Polly`.
 | `HandleError()`, `HandleError(predicate)` | `PredicateBuilder<Result<T>>` | [Polly](polly/README.md) |
 | `ExecuteResultAsync(operation, cancellationToken)` | `ResiliencePipeline<Result<T>>`, `ResiliencePipeline` | [Polly](polly/README.md) |
 | `ToResult()` | `Outcome<Result<T>>` | [Polly](polly/README.md) |
-| `HandleError<TResult, TError>()`, `HandleError<TResult, TError>(predicate)` | `PredicateBuilder<TResult>`, custom types (explicit type arguments) | [Polly](polly/README.md#custom-result-types) |
-| `ExecuteResultAsync<TResult, TError>(operation, cancellationToken)` | `ResiliencePipeline<TResult>`, `ResiliencePipeline`, custom types (explicit type arguments) | [Polly](polly/README.md#custom-result-types) |
-| `ToResult<TResult, TError>()` | `Outcome<TResult>`, custom types (explicit type arguments) | [Polly](polly/README.md#custom-result-types) |
+| `HandleError<TResult, TError>()`, `HandleError<TResult, TError>(predicate)` | `PredicateBuilder<TResult>`, custom types (explicit type arguments) | [Polly](polly/README.md#with-your-own-result-type) |
+| `ExecuteResultAsync<TResult, TError>(operation, cancellationToken)` | `ResiliencePipeline<TResult>`, `ResiliencePipeline`, custom types (explicit type arguments) | [Polly](polly/README.md#with-your-own-result-type) |
+| `ToResult<TResult, TError>()` | `Outcome<TResult>`, custom types (explicit type arguments) | [Polly](polly/README.md#with-your-own-result-type) |
 
 ## OpenAPI
 
@@ -398,9 +400,9 @@ Package `Fluent.Unions.Verify`, namespace `Fluent.Unions.Verify`.
 | Member | Docs |
 | --- | --- |
 | `ToHttpResult()` on results, options, `Result<T, TError>` and their `Task` versions | [HTTP results](aspnetcore/http-results.md) |
-| `ToHttpResult(onError)` on custom result types | [HTTP results](aspnetcore/http-results.md#custom-result-types) |
+| `ToHttpResult(onError)` on custom result types | [HTTP results](aspnetcore/http-results.md#with-your-own-result-type) |
 | `WithResultMapping()`, `ResultEndpointFilter` | [Endpoint filter](aspnetcore/endpoint-filter.md) |
-| `WithResultMapping()` on handlers that return custom result types | [Endpoint filter](aspnetcore/endpoint-filter.md#custom-result-types) |
+| `WithResultMapping()` on handlers that return custom result types | [Endpoint filter](aspnetcore/endpoint-filter.md#with-your-own-result-type) |
 | `ResultHttpOptions.Map<TException>(statusCode)` | [Error mapping](aspnetcore/error-mapping.md) |
 
 ## Analyzer

@@ -59,6 +59,6 @@ The first names the formatter per member and keeps the source generator. The sec
 ## Rules
 
 - **Nil is `None`.** Nil reads as `None`, and a formatter that returns `null` also gives `None`. `null` never becomes a value.
-- **Results throw.** `Result`, `Result<T>` and `Result<T, TError>` throw `NotSupportedException`, wrapped by MessagePack in a `MessagePackSerializationException`, when writing and when reading. An error would expose exception details such as the stack trace. Convert the result first.
+- **Results throw.** `Result`, `Result<T>` and `Result<T, TError>` and every result type you declare with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md) throw `NotSupportedException`, wrapped by MessagePack in a `MessagePackSerializationException`, when writing and when reading. An error would expose exception details such as the stack trace. Convert the result first.
 - **Reflection.** `UnionsResolver` creates formatters with `MakeGenericType`. AOT and trimming are not tested.
 - **Your own unions** are not covered by this package.

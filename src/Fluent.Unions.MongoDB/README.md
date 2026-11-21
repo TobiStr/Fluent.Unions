@@ -35,7 +35,7 @@ new Customer { Name = "Ada", Nickname = Option.None }.ToBsonDocument(); // { "Na
 
 `None` is written as BSON null. Reading BSON null or a missing element gives an option without a value. To leave out the element instead, register `OmitNoneConvention` in a `ConventionPack`.
 
-`Result`, `Result<T>` and `Result<T, TError>` are not serialized: the serializer throws `NotSupportedException`, because an error would expose exception details. Convert a result first.
+`Result`, `Result<T>` and `Result<T, TError>`, and your own result types declared with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md), are not serialized: the serializer throws `NotSupportedException`, because an error would expose exception details. Convert a result first.
 
 ## Documentation
 

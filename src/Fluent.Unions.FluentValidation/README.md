@@ -33,12 +33,12 @@ Result<PlaceOrder> parsed = ParseCommand(request);
 Result<PlaceOrder> checkedCommand = await parsed.ValidateAsync(validator, cancellationToken);
 ```
 
-Validate a custom result type that implements `IResult<TSelf, T, TError>`. Without `map`, a failure goes through `FromException`. With `map`, an error type that is data gets every failure.
+### With your own result type
+
+`Validate(validator)` works on your own result type without type arguments. `ValidateToResult` returns the default `Fluent.Unions.Result<T>`, so start with `Result.From(value).Validate(validator)` instead. Without `map`, a failure goes through `FromException`. With `map`, an error type that is data gets every failure. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ```csharp
-CheckoutResult<PlaceOrder> validated = command.Validate(
-    validator,
-    failures => new InvalidOrder(failures.Select(f => f.ErrorMessage).ToList()));
+Result<PlaceOrder> validated = Result.From(new PlaceOrder(Guid.Empty, 0)).Validate(validator);
 ```
 
 Validate an `Option<T>` property only when it has a value. `None` is always valid.

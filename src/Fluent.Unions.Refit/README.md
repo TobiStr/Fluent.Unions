@@ -40,6 +40,14 @@ Result deleted = await api.DeleteUser(7).ToResult();
 
 Cancellation and timeouts are thrown, never turned into an error. `Task<ApiResponse<T>>` works the same way, and `ToResult()` and `ToOptionalResult()` convert a response you already hold.
 
+### With your own result type
+
+`ToResult()` and `ToOptionalResult()` produce the default `Fluent.Unions.Result<T>`. To get your own type, wrap the call in your own `Result.TryAsync(...)`, or convert with `Match`. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+
+```csharp
+Shop.Result<User> mine = user.Match(value => (Shop.Result<User>)value, error => DomainException.FromException(error));
+```
+
 ## Documentation
 
 - [Refit documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/refit/README.md)

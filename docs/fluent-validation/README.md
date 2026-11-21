@@ -8,7 +8,7 @@ This folder has one page. The topics are below.
 
 - [Quick example](#quick-example): validate a command and a result.
 - [What you get back](#what-you-get-back): the error shape for each state.
-- [Custom result types](#custom-result-types): validate your own `IResult` type.
+- [With your own result type](#with-your-own-result-type): validate your own result type.
 - [Option properties](#option-properties): rules that run only when an option has a value.
 - [When to use](#when-to-use): where it helps.
 - [Rules](#rules): name clash, severity and what is not covered.
@@ -59,9 +59,9 @@ The aggregate is always flattened, also for a single failure, the same as `Valid
 | `Validate(validator)` | `Result<T>` |
 | `ValidateAsync(validator, cancellationToken)` | `Result<T>` |
 
-## Custom result types
+## With your own result type
 
-`Validate` and `ValidateAsync` also work on a type that implements `IResult<TSelf, T, TError>`, including `Result<T, TError>`. The concrete `Result<T>` overloads still apply to `Result<T>`. They return your own type and call the validator only for a value.
+`Validate(validator)` and `ValidateAsync` work on a result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)) and on `Result<T, TError>`, without explicit type arguments. They return your own type and call the validator only for a value. `ValidateToResult` always returns the default `Fluent.Unions.Result<T>`. With your own type, start with `Result.From(value).Validate(validator)`.
 
 | Member | A failure becomes |
 | --- | --- |

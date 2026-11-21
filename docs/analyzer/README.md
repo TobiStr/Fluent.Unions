@@ -23,6 +23,9 @@ This folder has one page, this one. Each rule has its own section below, and the
 | [FLU0011](#flu0011) | Info | A cast of `Value` | |
 | [FLU0012](#flu0012) | Info | A `throw` in a method that returns a result | Return the exception |
 | [FLU0013](#flu0013) | Info | `ToOption()` that drops an error | |
+| [FLU0101](#flu0101) | Error | A `[FluentResult]` declaration of an unsupported shape | |
+| [FLU0102](#flu0102) | Error | A `[FluentResult]` error type that cannot represent an unexpected exception | |
+| [FLU0103](#flu0103) | Info | An interface case of an error union that gets no conversion | |
 
 The errors mark a type or a call that is wrong every time it appears, so they fail the build. The warnings point at bugs. The info rules point at code that works, but is easy to get wrong. They show as suggestions in the IDE and do not appear in the build output.
 
@@ -300,6 +303,35 @@ Option<Customer> logged = LoadCustomer(id)
 ```
 
 A chain that contains `OnErrorDo`, `Do(onSuccess, onError)` or `Catch` before `ToOption()` is not reported.
+
+## Your own Result type
+
+Every rule above treats a type declared with `[FluentResult<TError>]` like the library's `Result<T>`. `FLU0004` also reports a value type that is the error type or one of its union cases, such as `Outcome<CartEmpty>`, because a value of that type would become an error.
+
+The generator adds three rules:
+
+<a id="flu0101"></a>
+
+### FLU0101: Unsupported declaration
+
+The type must be a top-level `readonly partial struct` with at most one type parameter and no constraints:
+
+```csharp
+[FluentResult<DomainException>]
+public partial struct Result<T>;   // error FLU0101: must be a top-level 'readonly partial struct'
+```
+
+<a id="flu0102"></a>
+
+### FLU0102: No exception mapping
+
+The error type must implement `IFromException<TError>`, or the struct must declare `public static TError FromException(Exception exception)`. Without it, an exception thrown inside a step would have nowhere to go.
+
+<a id="flu0103"></a>
+
+### FLU0103: Interface case without a conversion
+
+A case of the error union that is an interface cannot convert to the result, because C# does not allow conversions from interfaces. Return it through `Error(...)` instead.
 
 ---
 

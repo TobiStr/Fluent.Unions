@@ -30,6 +30,10 @@ customer.Nickname.ShouldBeNone();
 // passes when the customer has no nickname
 ```
 
+## With your own result type
+
+`ShouldBeOk()` and `ShouldBeError()` accept a result type you declare with `[FluentResult<TError>]`, with a value and without (the value-less `Result`), and fail with the same messages. There is no `ShouldBeError<TException>()` for your own types, because `ShouldBeError()` already returns your declared error type. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+
 ## Documentation
 
 - [Testing documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/testing/README.md)

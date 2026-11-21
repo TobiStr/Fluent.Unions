@@ -146,7 +146,7 @@ Add a case to `CheckoutError` and the `switch` no longer compiles until you map 
 - **Exposed messages are public.** Only pass `exposeMessage: true` for exception types whose messages you write for clients.
 - **The mapping is by exception type, not by `Result` type.** A custom `DomainException` hierarchy is mapped with one `Map<DomainException>` call and refined with `Map<NotFoundException>`.
 - **Validation messages are public.** The messages of `ValidationError` reach the client. The built-in rules never echo the value itself.
-- **Errors as data bypass the options in `ToHttpResult(onError)`.** `Configure<ResultHttpOptions>` has no effect there. The [endpoint filter](endpoint-filter.md#custom-result-types) wraps such an error in a `ResultErrorException`, which the options map.
+- **Errors as data bypass the options in `ToHttpResult(onError)`.** `Configure<ResultHttpOptions>` has no effect there. The [endpoint filter](endpoint-filter.md#with-your-own-result-type) wraps such an error in a `ResultErrorException`, which the options map.
 
 ## See also
 

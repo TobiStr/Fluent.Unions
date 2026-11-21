@@ -1,10 +1,11 @@
 # Fluent.Unions documentation
 
-Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and `Loadable<T>` to C# 15, built on the `union` keyword. Fluent operators are named after LINQ and Rx.NET. An analyzer and an ASP.NET Core package help you use results safely from the first method to the HTTP response.
+Fluent.Unions brings `Result`, `Result<T>`, `Option<T>` and `Loadable<T>` to C# 15, built on the `union` keyword. Use the default `Result<T>`, whose error is any `Exception`, or declare your own with `[FluentResult<TError>]` and get every operator for your error type. Fluent operators are named after LINQ and Rx.NET. An analyzer and an ASP.NET Core package help you use results safely from the first method to the HTTP response.
 
 ## Start here
 
 - [Getting started](getting-started/README.md): what the library is, installation, and a quick start.
+- [Your own Result type](errors/custom-error-types.md): one declaration for a `Result<T>` with your own error type.
 - [Reference](reference.md): every type and operator on one page, with links to the detailed docs.
 
 ## Concepts and operators
@@ -15,7 +16,7 @@ Fluent.Unions brings `Result`, `Result<T>`, `Option<T>`, `Result<T, TError>` and
 | [Option](option/README.md) | `Option<T>`: values that may be missing, operators, collections, conversions, patterns. |
 | [Async](async/README.md) | `Task` pipelines, the `...Await` operators, `WhenAll`, retries, timeouts, async streams. |
 | [Validation](validation/README.md) | Running every rule and collecting every error with `Validate` and `CombineAll`, plus the rule catalogue. |
-| [Errors](errors/README.md) | Custom error types: your own result type, and errors as data with `Result<T, TError>`. |
+| [Errors](errors/README.md) | Your own Result type with `[FluentResult<TError>]`, and a closed set of errors as a union. |
 | [Unions](unions/README.md) | Helpers for your own unions, `Loadable<T>` for UI state, and modeling with unions. |
 | [Serialization](serialization/README.md) | `System.Text.Json` support for options, results and your own unions. |
 

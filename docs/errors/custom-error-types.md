@@ -1,243 +1,140 @@
-# Custom error types
+# Your own Result type
 
-This page shows how to declare your own result type whose errors are limited to a base exception, and how the library's operators work on it.
+This page shows how to declare a `Result<T>` whose error is your own type, what the generator writes for it, and how it behaves.
 
 ## Declaring the type
 
-Declare a union with a value case and an error case, and implement `IResult<TSelf, T, TError>` from `Fluent.Unions.Abstractions`:
+Give your error type a way to represent an unexpected exception, then mark a `readonly partial struct`:
 
 ```csharp
+using Fluent.Unions;
 using Fluent.Unions.Abstractions;
 
-namespace Shop.Domain;
+namespace Shop;
 
-public class DomainException(string message, Exception? inner = null) : Exception(message, inner);
-
-public class NotFoundException(string message) : DomainException(message);
-
-public class UnexpectedDomainException(Exception inner) : DomainException(inner.Message, inner);
-
-public union Result<T>(T, DomainException) : IResult<Result<T>, T, DomainException>
+public class DomainException(string message, Exception? inner = null)
+    : Exception(message, inner), IFromException<DomainException>
 {
-    public static Result<T> FromValue(T value) => value;
-    public static Result<T> FromError(DomainException error) => error;
     public static DomainException FromException(Exception exception) =>
         exception as DomainException ?? new UnexpectedDomainException(exception);
 }
+
+public sealed class NotFoundException(string message) : DomainException(message);
+
+public sealed class UnexpectedDomainException(Exception inner) : DomainException(inner.Message, inner);
+
+[FluentResult<DomainException>]
+public readonly partial struct Result<T>;
 ```
 
-Your methods now return `Result<T>` from `Shop.Domain`. Only a `DomainException` can be an error, and the compiler enforces it:
+Your methods now return `Result<T>` from `Shop`. Only a `DomainException` can be an error:
 
 ```csharp
-using Shop.Domain;
-
 static Result<Customer> GetCustomer(Guid id) =>
-    id == Guid.Empty ? new NotFoundException($"No customer {id}.") : new Customer(id, "Ada");
+    customers.TryGetValue(id, out var customer) ? customer : new NotFoundException($"No customer {id}.");
 ```
 
-### The three static members
-
-| Member | Contract |
-| --- | --- |
-| `FromValue(value)` | Creates the ok result. Operators that produce a value, such as `Select`, call it. |
-| `FromError(error)` | Creates the failed result. |
-| `FromException(exception)` | Turns an exception thrown inside an operator into your error type. |
-
-`FromException` is the member with a trap. An operator keeps an exception that already is a `DomainException` as it is. Every other exception goes through the hook. The hook:
-
-- **must not return `null`.** The operator then throws `InvalidOperationException` with the original exception as `InnerException`.
-- **must not throw.** The exception from the hook escapes the operator, so the chain throws, which defeats the point.
-
-Wrapping the original exception, as `UnexpectedDomainException` does, keeps the cause and its stack trace.
-
-## Operators
-
-`using Fluent.Unions;` brings in operators that work on any `IResult` implementation and return your type.
-
-| Operator | Notes |
-| --- | --- |
-| `Chain(next)`, `ChainAwait(next)` | `next` must return a result with the same error type. |
-| `Catch(e => ...)`, `Catch((NotFoundException e) => ...)`, `Catch(fallback)` | The typed form needs the exception type on the lambda parameter. |
-| `CatchAwait(e => ...)` | `e` is your error type and the handler returns a `Task` of your result. |
-| `Do`, `DoAwait`, `OnErrorDo`, `Finally`, `FinallyAwait` | Same behavior as on the library's `Result<T>`. |
-| `TryGetError(out error)` | Gets your error type, if the result holds one. A `default` result holds the error `FromException` makes of an `InvalidOperationException`. |
-| `Out(out var value)` | Captures the value for later steps. Filled only when the result holds a value. |
-| `Ensure(predicate, e => ...)`, `Ensure(predicate, message)` | The first form returns your error type. The message form makes a `ValidationError` and passes it through `FromException`. |
-| `Validate(combine, rules...)` | Runs every rule and collects all errors. `combine` turns the list of errors into one error of your type. |
-| `GetValueOrDefault()`, `GetValueOrDefault(fallback)` | The value, or `default` or the fallback for an error. |
-| `Check()` | Rethrows the error with its stack trace. An error that is not an exception is thrown inside a `ResultErrorException`. |
-| `Match(onSuccess, onError)` | `onError` receives your error type. |
-| `ToOption()`, `ToLoadable()` | An error gives no value or a failed state. A failed `ToLoadable` wraps an error that is not an exception in `ResultErrorException`. |
-| `Unwrap()` | Flattens a result of a result with the same error type. |
-| `activity.RecordResult(result)` | Sets the status and records the error on an `Activity`. |
-| `Select`, `SelectAwait`, `MapError`, `Zip`, `BindAppend`, `WithValue`, `Transpose` | Change the result type, so they need explicit type arguments. See below. |
-
-### Chain
-
-`Chain` infers your result type from what `next` returns. A method group works as is:
+If the error type cannot implement `IFromException<TError>`, declare the mapping on the struct instead:
 
 ```csharp
-Result<Order> order = GetCustomer(id).Chain(GetCart).Chain(PlaceOrder);
-```
-
-A lambda that returns a plain value has no result type to infer. Give it a return type or cast the value:
-
-```csharp
-Result<int> length = GetCustomer(id).Chain(Result<int> (c) => c.Name.Length);
-Result<int> sameLength = GetCustomer(id).Chain(c => (Result<int>)c.Name.Length);
-```
-
-An error passes through without calling `next`. An exception thrown in `next` becomes an error through `FromException`.
-
-### Catch
-
-One operator recovers, translates and falls back:
-
-```csharp
-var missing = GetCustomer(Guid.Empty);
-
-Result<Customer> recovered = missing.Catch(e => new Customer(Guid.Empty, "Guest"));
-Result<Customer> translated = missing.Catch(e => new DomainException("Lookup failed", e));
-Result<Customer> typed = missing.Catch((NotFoundException e) => new Customer(Guid.Empty, "Guest"));
-```
-
-The typed form handles only that type. Other errors pass through unchanged.
-
-## Writing the wrappers
-
-C# cannot express "the same kind of result with another type argument", so `Select` and `MapError` cannot infer your type. They exist with explicit type arguments. Wrap them once, one line each:
-
-```csharp
-public static class ResultExtensions
+[FluentResult<PaymentException>]
+public readonly partial struct PaymentResult<T>
 {
-    public static Result<TOut> Select<T, TOut>(this Result<T> result, Func<T, TOut> selector) =>
-        result.Select<Result<T>, T, DomainException, Result<TOut>, TOut>(selector);
-
-    public static Result<T> ToDomain<T>(this Fluent.Unions.Result<T> result) =>
-        result.MapError<Fluent.Unions.Result<T>, T, Exception, Result<T>, DomainException>(Result<T>.FromException);
-
-    public static async Task<Result<TOut>> Chain<T, TOut>(this Task<Result<T>> task, Func<T, Result<TOut>> next) =>
-        (await task).Chain(next);
+    public static PaymentException FromException(Exception exception) => new PaymentException("Unexpected failure.", exception);
 }
 ```
 
-What each wrapper gives you:
+## What the generator writes
 
-- **`Select`** projects the value. It also enables query syntax with a single `from`. A projection that returns `null` gives an error.
+| Part | Members |
+| --- | --- |
+| The union | Constructors for the value and the error, implicit conversions, `Value`, `IsSuccess`, `IsError`, `TryGetValue`, `TryGetError`, `GetValue`, `GetError`, `Deconstruct`, `Ok(value)`, `Error(error)` |
+| `Result` without a value | The same members with `Ok` as the success case, plus `Result.From`, `Try`, `TryAsync`, `WhenAll`, `Retry`, `RetryAsync`, `CombineAll` and `CombineAllAsync` |
+| Operators | Every operator of the default type: `Select`, `Chain`, `Ensure`, `Validate`, `Zip`, `BindAppend`, `Do`, `OnErrorDo`, `Finally`, `Out`, `Catch`, `Match`, `GetValueOrDefault`, `Check`, `Combine`, `CombineAll`, `Partition`, `ToOption`, `ToLoadable`, `Transpose`, `Unwrap`, `WithValue`, `DiscardValue`, query syntax, every `Task` overload and every `...Await` operator |
 
-  ```csharp
-  var length = GetCustomer(id).Select(c => c.Name.Length);                // 3
-  var query = from c in GetCustomer(id) select c.Name.ToUpperInvariant(); // "ADA"
-  ```
-
-- **`ToDomain`** turns a library result into yours. It is how you start from code that throws. A non-domain exception becomes `UnexpectedDomainException` through `FromException`. A mapping that returns `null` gives an error.
-
-  ```csharp
-  var fromThrowing = Fluent.Unions.Result.Try(() => LoadFromDatabase(id)).ToDomain();
-  ```
-
-- **`SelectAwait`, `Zip`, `BindAppend`, `WithValue` and `Transpose`** change the result type as well, so they also need explicit type arguments. Wrap them the same way, or spell the type arguments out at the call site:
-
-  ```csharp
-  Result<int> score = await GetCustomer(id)
-      .SelectAwait<Result<Customer>, Customer, DomainException, Result<int>, int>(LoadScoreAsync);
-
-  Result<(Customer, Cart)> both = GetCustomer(id)
-      .BindAppend<Result<Customer>, Customer, DomainException, Result<Cart>, Cart, Result<(Customer, Cart)>>(GetCart);
-  ```
-
-  The type arguments are the receiver type, its value type, your error type, then the types of the other result and of the result you get back.
-
-### Operators that keep your type
-
-`Ensure`, `Validate`, `Out`, `DoAwait`, `CatchAwait`, `FinallyAwait`, `WhereAwait`, `ToOption`, `ToLoadable`, `Unwrap` and `RecordResult` infer everything from the receiver and need no wrapper:
+Type inference works as with the default type, so no operator needs explicit type arguments:
 
 ```csharp
-Result<Customer> checkedCustomer = GetCustomer(id)
-    .Ensure(c => c.Name.Length > 0, "A customer needs a name.")
-    .Ensure(c => c.Active, c => new DomainException($"{c.Name} is inactive."))
-    .Validate(
-        errors => new DomainException(string.Join("; ", errors.Select(e => e.Message))),
-        CheckAddress,
-        CheckEmail);
+Result<string> label = await GetCustomerAsync(id)
+    .Select(customer => customer.Name)
+    .Ensure(name => name.Length > 0, "A customer needs a name.")
+    .ChainAwait(LoadLabelAsync);
 ```
 
-`Validate` runs every rule, so the caller decides how errors merge. A rule can return any result type that has your error type, such as `Result<Address>`. A rule that throws counts as a failure. Give a rule a typed return, for example through a method group, because the compiler infers the rule's result type from it.
+The operators are one-line forwarders to the library. Behaviour lives in one place, so your type and the default type cannot drift apart.
 
-- **The `Task` wrapper** keeps an asynchronous pipeline one expression:
+### Options
 
-  ```csharp
-  Result<Order> order = await GetCustomerAsync(id).Chain(GetCart).Chain(PlaceOrder);
-  ```
-
-Without the wrapper, await first: `(await GetCustomerAsync(id)).Chain(GetCart)`. `ChainAwait` takes an asynchronous function and is called on the result, not on the task:
-
-```csharp
-Result<Cart> cart = await GetCustomer(id).ChainAwait(LoadCartAsync);
-```
-
-## Extension packages
-
-The extension packages also accept a custom type that implements `IResult<TSelf, T, TError>`, including `Result<T, TError>`. The concrete overloads for `Result<T>` keep binding first.
-
-| Package | What works on your type | Details |
+| Property | Default | Effect |
 | --- | --- | --- |
-| `Fluent.Unions.AwesomeAssertions` | `Should()` with `BeOk`, `BeOkWithValue`, `BeOkMatching`, `BeError`, and `BeError<TCase>` | [AwesomeAssertions](../awesome-assertions/README.md#custom-result-types) |
-| `Fluent.Unions.FluentValidation` | `Validate(validator)` and `Validate(validator, map)`, with async forms | [FluentValidation](../fluent-validation/README.md#custom-result-types) |
-| `Fluent.Unions.AspNetCore` | `ToHttpResult(onError)`, and `WithResultMapping()` for handlers that return your type | [HTTP results](../aspnetcore/http-results.md#custom-result-types), [Endpoint filter](../aspnetcore/endpoint-filter.md#custom-result-types) |
-| `Fluent.Unions.Polly` | `HandleError`, `ExecuteResultAsync` and `ToResult`, with explicit type arguments | [Polly](../polly/README.md#custom-result-types) |
+| `Companion` | `true` | Generates `Result` without a value next to `Result<T>`. Add members to it with `public readonly partial struct Result { ... }`. Set it to `false` only when you declare it yourself with `[FluentResult<DomainException>] public readonly partial struct Result;`. |
+| `CaseConversions` | `true` | When the error type is a union, each case converts straight to the result. See [Errors as data](errors-as-data.md). |
+
+## Unexpected exceptions
+
+- An exception thrown inside a step that already is a `DomainException` is kept as it is.
+- Any other exception goes through `FromException`. That includes the `ValidationError` from `Ensure(predicate, "message")` and the `ValidationErrors` from `Validate`, so `FromException` is the place to map them to your own validation type.
+- An `OperationCanceledException` is never turned into an error. It propagates.
+- A `default` result counts as an error: `FromException` receives an `InvalidOperationException` that says the result is empty.
+
+`FromException` must not throw and must not return `null`. Test it with an exception that is not yours.
 
 ## Namespaces
 
-The operators live in `Fluent.Unions`, next to the library's own `Result<T>`. Code inside your own namespace finds your `Result<T>` first, so `using Fluent.Unions;` is safe there:
+Declare the type in your root namespace, such as `Shop`. C# looks for a type in the enclosing namespaces before it looks at `using` directives, so code in `Shop` and in every namespace below it uses your `Result<T>`, even with `using Fluent.Unions;`.
 
-```csharp
-using Fluent.Unions;
+A file in another root namespace that imports both `Shop` and `Fluent.Unions` sees two `Result<T>` types and reports CS0104. Write `Shop.Result<T>` there, or keep `Fluent.Unions` out of that file.
 
-namespace Shop.Domain;
+## Performance
 
-static Result<int> F() => 1; // Shop.Domain.Result<int>
-```
+Generated types store the value and the error in fields instead of an `object`, so value types are not boxed. The operators take the struct directly and catch exceptions without closures:
 
-In another namespace that imports both, the compiler stops with CS0104 (ambiguous reference):
+| Operator call | Hand-written type on `IResult` (0.3.0) | Generated type |
+| --- | ---: | ---: |
+| Create a `Result<int>` | 24 B | 0 B |
+| `Chain` | 56 B | 0 B |
+| `Select` on an `int` | 80 B | 0 B |
+| `Ensure` | 152 B | 0 B |
+| `Match` | 24 B | 0 B |
 
-```csharp
-using Fluent.Unions;
-using Shop.Domain;
+The default `Result<T>` uses the same layout and operators. See [`bench/results`](https://github.com/TobiStr/Fluent.Unions/tree/main/bench/results) in the repo.
 
-namespace Shop.Api;
+## Diagnostics
 
-static Result<int> F() => 1; // error CS0104: 'Result<>' is an ambiguous reference
-```
+| Rule | Meaning |
+| --- | --- |
+| `FLU0101` | The declaration is not a top-level `readonly partial struct` with at most one type parameter and no constraints. |
+| `FLU0102` | The error type cannot represent an unexpected exception: implement `IFromException<TError>` or declare `FromException` on the struct. |
+| `FLU0103` | A case of the error union is an interface and gets no conversion to the result. |
+| `FLU0004` | `Result<X>` where `X` is the error type or one of its cases: a value of `X` would become an error. |
 
-Give your type a distinct name, such as `DomainResult<T>`, to avoid this altogether. Inside your own namespace, refer to the library's type by its full name, `Fluent.Unions.Result<T>`, as `ToDomain` does.
+The other analyzers, such as `FLU0001` for an ignored result and `FLU0010` for an unchecked `GetValue`, treat your type like the default one.
 
-## Allocations
+## Integration packages
 
-The operators take your result through the interface, which boxes it. The repo README puts this at 24 bytes per operator call in a Release build, on top of what the operator allocates anyway. The library's own `Result<T>` is unaffected and still binds to its concrete operators.
+The integration packages accept your type wherever they accept the default one: ASP.NET Core maps it to HTTP responses, the assertion packages assert on it, Polly and FluentValidation work with it, Serilog and Verify write it, and every serializer refuses it like the default type. See each package's page for details.
 
-## Limitations
+## Migrating from a hand-written type
 
-These are not provided for custom types:
+In 0.3.0 a custom type was a `union` that implemented `IResult<TSelf, T, TError>` by hand, with wrapper methods for `Select` and the `Task` overloads. To move to the generated type:
 
-- `Combine`, `CombineAll`, `Partition` and `Try`.
-- The factory overload of `GetValueOrDefault`.
-- Query syntax with several `from` clauses, so `SelectMany` and `SelectManyAwait`. `Chain` and `ChainAwait` cover that form.
-- `DiscardValue`, the `Ensure*` rule catalogue, and the remaining `...Await` operators such as `EnsureAwait`.
-- `Task` overloads of every operator, unless you write the wrapper above.
+1. Implement `IFromException<TError>` on the error type, or keep `FromException` on the struct.
+2. Replace `public union Result<T>(T, DomainException) : IResult<...> { ... }` with `[FluentResult<DomainException>] public readonly partial struct Result<T>;`.
+3. Delete the wrapper class. Every operator is generated now.
+
+A hand-written type keeps working: the operators in `ResultInterfaceExtensions` still accept any `IResult<TSelf, T, TError>`, with boxing and without the `Task` overloads.
 
 ## Pitfalls
 
-- A `FromException` that returns `null` or throws breaks the rule that chains do not throw. Test it with an exception that is not yours.
-- `Result<T>` in your namespace and in `Fluent.Unions` collide as soon as a file imports both.
-- A `Chain` lambda that returns a plain value does not compile without a cast or a declared return type.
+- A `FromException` that returns `null` or throws breaks the rule that chains do not throw.
+- Mixing your `Result<T>` and `Fluent.Unions.Result<T>` in one file outside your namespace needs the namespace written out.
+- `Result<DomainException>` is reported by `FLU0004`: a `DomainException` value could not be told apart from an error.
 
 ## See also
 
-- [Errors as data](errors-as-data.md): when the error is not an exception at all.
-- [Error mapping](../aspnetcore/error-mapping.md): map a `DomainException` hierarchy to HTTP status codes.
-- [Endpoint filter](../aspnetcore/endpoint-filter.md#custom-result-types): return your result type straight from a handler.
-- `test/Fluent.Unions.Tests/CustomErrors` in the repo: a complete custom type with tests for every operator.
+- [Errors as data](errors-as-data.md): a union as the error type, checked by an exhaustive `switch`.
+- [Error mapping](../aspnetcore/error-mapping.md): map your error types to HTTP status codes.
+- `test/Fluent.Unions.Tests/OwnResult` in the repo: a generated type with tests for every operator family.
 
 ---
 

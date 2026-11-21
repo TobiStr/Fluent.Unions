@@ -40,7 +40,21 @@ Result<UserId> result = await mediator.Send(new CreateUser("", 0));
 - `ExceptionToResultBehavior<TMessage, TResponse>` returns an exception thrown by the handler or a later behavior as the error. `OperationCanceledException` still throws.
 - `ValidationToResultBehavior<TMessage, TResponse>` validates the request with its `System.ComponentModel.DataAnnotations` attributes and `IValidatableObject`, and returns `ValidationErrors`. Put `[property: ...]` on record parameters.
 
-`TResponse` must be a struct that implements `IErrorResult<TResponse, Exception>`: `Result`, `Result<T>` or your own `IResult<TSelf, T, Exception>` type. A request with another response type is left alone. `Result<T, TError>` is not covered.
+### With your own result type
+
+`TResponse` can be any result type: `Result`, `Result<T>`, `Result<T, TError>` or your own declared result. The error is what the response type's `FromException` makes of the exception or of the `ValidationErrors`. A request with another response type is left alone.
+
+A request that returns the value-less result needs it declared explicitly, because the Mediator source generator cannot see types that another generator emits. Also set `Companion = false` on your `Result<T>`.
+
+```csharp
+[FluentResult<DomainException>(Companion = false)]
+public readonly partial struct Result<T>;
+
+[FluentResult<DomainException>]
+public readonly partial struct Result;
+```
+
+The behaviors use reflection, so they are not trimming or AOT friendly. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ## Documentation
 

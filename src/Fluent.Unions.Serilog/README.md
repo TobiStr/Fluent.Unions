@@ -33,6 +33,10 @@ Log.Information("Order {@Order}", LoadOrder(id));
 
 A value is logged as itself and an error as `{ Error: { Type, Message } }`. The stack trace is never logged. Pass the exception to the log call to put it in the log event's exception slot: `Log.Error(result.GetError(), "Load failed")`.
 
+## With your own result type
+
+`.Destructure.WithFluentUnions()` destructures any result type, including one declared with `[FluentResult<TError>]`, like the default ones. A value-less success logs `"Ok"`. See [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+
 ## Documentation
 
 - [Serilog documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/serilog/README.md)

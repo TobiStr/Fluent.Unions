@@ -41,7 +41,7 @@ activity.RecordResult(order);
 | `default` result | `Error` | the message of the `InvalidOperationException` it holds | yes |
 | `null` activity | nothing | | no |
 
-`RecordResult` has overloads for `Result`, `Result<T>` and `Result<T, TError>`.
+`RecordResult` has overloads for `Result`, `Result<T>` and `Result<T, TError>`. It also works on your own [result type](../errors/custom-error-types.md). An error that is not an exception is recorded as a `ResultErrorException`.
 
 ## When to use
 
