@@ -1,0 +1,3 @@
+﻿class Fluent.Unions.Mapster.MapsterConfigExtensions
+  public static Mapster.TypeAdapterConfig AddFluentUnions(this Mapster.TypeAdapterConfig config)
+

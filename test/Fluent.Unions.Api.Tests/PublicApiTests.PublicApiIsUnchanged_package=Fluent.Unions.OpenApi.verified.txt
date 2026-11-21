@@ -1,0 +1,7 @@
+﻿class Fluent.Unions.OpenApi.OpenApiOptionsExtensions
+  public static Microsoft.AspNetCore.OpenApi.OpenApiOptions AddFluentUnions(this Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
+
+class Fluent.Unions.OpenApi.OptionSchemaTransformer : Microsoft.AspNetCore.OpenApi.IOpenApiSchemaTransformer
+  public OptionSchemaTransformer()
+  public System.Threading.Tasks.Task TransformAsync(Microsoft.OpenApi.OpenApiSchema schema, Microsoft.AspNetCore.OpenApi.OpenApiSchemaTransformerContext context, System.Threading.CancellationToken cancellationToken)
+

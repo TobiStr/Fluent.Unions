@@ -1,0 +1,18 @@
+﻿class Fluent.Unions.Grpc.CallExtensions
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<TResponse>> ToResult<TRequest, TResponse>(this Grpc.Core.AsyncClientStreamingCall<TRequest, TResponse> call)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<TResponse>> ToResult<TResponse>(this Grpc.Core.AsyncUnaryCall<TResponse> call)
+
+class Fluent.Unions.Grpc.ErrorExtensions
+  public static Grpc.Core.RpcException ToRpcException(this System.Exception error, [Fluent.Unions.Grpc.ResultGrpcOptions? options = null])
+
+class Fluent.Unions.Grpc.ResultGrpcOptions
+  public Fluent.Unions.Grpc.ResultGrpcOptions Map<TException>(Grpc.Core.StatusCode statusCode, [bool exposeMessage = false]) where TException : System.Exception
+  public ResultGrpcOptions()
+
+class Fluent.Unions.Grpc.ResultServerInterceptor : Grpc.Core.Interceptors.Interceptor
+  public ResultServerInterceptor([Fluent.Unions.Grpc.ResultGrpcOptions? options = null])
+  public override System.Threading.Tasks.Task DuplexStreamingServerHandler<TRequest, TResponse>(Grpc.Core.IAsyncStreamReader<TRequest> requestStream, Grpc.Core.IServerStreamWriter<TResponse> responseStream, Grpc.Core.ServerCallContext context, Grpc.Core.DuplexStreamingServerMethod<TRequest, TResponse> continuation) where TRequest : class where TResponse : class
+  public override System.Threading.Tasks.Task ServerStreamingServerHandler<TRequest, TResponse>(TRequest request, Grpc.Core.IServerStreamWriter<TResponse> responseStream, Grpc.Core.ServerCallContext context, Grpc.Core.ServerStreamingServerMethod<TRequest, TResponse> continuation) where TRequest : class where TResponse : class
+  public override System.Threading.Tasks.Task<TResponse> ClientStreamingServerHandler<TRequest, TResponse>(Grpc.Core.IAsyncStreamReader<TRequest> requestStream, Grpc.Core.ServerCallContext context, Grpc.Core.ClientStreamingServerMethod<TRequest, TResponse> continuation) where TRequest : class where TResponse : class
+  public override System.Threading.Tasks.Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, Grpc.Core.ServerCallContext context, Grpc.Core.UnaryServerMethod<TRequest, TResponse> continuation) where TRequest : class where TResponse : class
+

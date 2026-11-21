@@ -1,0 +1,8 @@
+﻿class Fluent.Unions.Mediator.ExceptionToResultBehavior<TMessage, TResponse> where TMessage : Mediator.IMessage where TResponse : struct : Mediator.IPipelineBehavior<TMessage, TResponse> where TMessage : Mediator.IMessage where TResponse : struct
+  public ExceptionToResultBehavior()
+  public System.Threading.Tasks.ValueTask<TResponse> Handle(TMessage message, Mediator.MessageHandlerDelegate<TMessage, TResponse> next, System.Threading.CancellationToken cancellationToken)
+
+class Fluent.Unions.Mediator.ValidationToResultBehavior<TMessage, TResponse> where TMessage : Mediator.IMessage where TResponse : struct : Mediator.IPipelineBehavior<TMessage, TResponse> where TMessage : Mediator.IMessage where TResponse : struct
+  public System.Threading.Tasks.ValueTask<TResponse> Handle(TMessage message, Mediator.MessageHandlerDelegate<TMessage, TResponse> next, System.Threading.CancellationToken cancellationToken)
+  public ValidationToResultBehavior()
+

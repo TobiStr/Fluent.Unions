@@ -1,0 +1,14 @@
+﻿class Fluent.Unions.Polly.PredicateBuilderExtensions
+  public static Polly.PredicateBuilder<Fluent.Unions.Result<T>> HandleError<T>(this Polly.PredicateBuilder<Fluent.Unions.Result<T>> builder)
+  public static Polly.PredicateBuilder<Fluent.Unions.Result<T>> HandleError<T>(this Polly.PredicateBuilder<Fluent.Unions.Result<T>> builder, System.Func<System.Exception, bool> predicate)
+  public static Polly.PredicateBuilder<TResult> HandleError<TResult, TError>(this Polly.PredicateBuilder<TResult> builder) where TResult : struct, Fluent.Unions.Abstractions.IErrorResult<TResult, TError> where TError : notnull
+  public static Polly.PredicateBuilder<TResult> HandleError<TResult, TError>(this Polly.PredicateBuilder<TResult> builder, System.Func<TError, bool> predicate) where TResult : struct, Fluent.Unions.Abstractions.IErrorResult<TResult, TError> where TError : notnull
+
+class Fluent.Unions.Polly.ResiliencePipelineExtensions
+  public static Fluent.Unions.Result<T> ToResult<T>(this Polly.Outcome<Fluent.Unions.Result<T>> outcome)
+  public static System.Threading.Tasks.ValueTask<Fluent.Unions.Result<T>> ExecuteResultAsync<T>(this Polly.ResiliencePipeline pipeline, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<Fluent.Unions.Result<T>>> operation, [System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)])
+  public static System.Threading.Tasks.ValueTask<Fluent.Unions.Result<T>> ExecuteResultAsync<T>(this Polly.ResiliencePipeline<Fluent.Unions.Result<T>> pipeline, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<Fluent.Unions.Result<T>>> operation, [System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)])
+  public static System.Threading.Tasks.ValueTask<TResult> ExecuteResultAsync<TResult, TError>(this Polly.ResiliencePipeline pipeline, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>> operation, [System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)]) where TResult : struct, Fluent.Unions.Abstractions.IErrorResult<TResult, TError> where TError : notnull
+  public static System.Threading.Tasks.ValueTask<TResult> ExecuteResultAsync<TResult, TError>(this Polly.ResiliencePipeline<TResult> pipeline, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>> operation, [System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)]) where TResult : struct, Fluent.Unions.Abstractions.IErrorResult<TResult, TError> where TError : notnull
+  public static TResult ToResult<TResult, TError>(this Polly.Outcome<TResult> outcome) where TResult : struct, Fluent.Unions.Abstractions.IErrorResult<TResult, TError> where TError : notnull
+

@@ -1,0 +1,123 @@
+﻿class Fluent.Unions.TUnit.ResultAssertions
+  public static Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> AsResult<TSelf, T, TError>(this Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> AsResult<TSelf, TError>(this Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static TUnit.Assertions.Core.AssertionResult IsOk(this Fluent.Unions.Result result)
+  public static TUnit.Assertions.Core.AssertionResult IsOk<TSelf, TError>(this Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static TUnit.Assertions.Core.AssertionResult<System.Exception> IsError(this Fluent.Unions.Result result)
+  public static TUnit.Assertions.Core.AssertionResult<System.Exception> IsError<T>(this Fluent.Unions.Result<T> result)
+  public static TUnit.Assertions.Core.AssertionResult<T> IsOk<T>(this Fluent.Unions.Result<T> result)
+  public static TUnit.Assertions.Core.AssertionResult<T> IsOk<TSelf, T, TError>(this Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TUnit.Assertions.Core.AssertionResult<T> IsSome<T>(this Fluent.Unions.Option<T> option)
+  public static TUnit.Assertions.Core.AssertionResult<TError> IsError<TSelf, T, TError>(this Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TUnit.Assertions.Core.AssertionResult<TError> IsError<TSelf, TError>(this Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static TUnit.Assertions.Core.AssertionResult<TException> IsError<TException>(this Fluent.Unions.Result result) where TException : System.Exception
+  public static TUnit.Assertions.Core.AssertionResult? IsNone<T>(this Fluent.Unions.Option<T> option)
+
+class TUnit.Assertions.Extensions.OptionT_IsNone_Assertion<T> : TUnit.Assertions.Core.Assertion<Fluent.Unions.Option<T>>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.Option<T>> metadata)
+  protected override string GetExpectation()
+  public OptionT_IsNone_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.Option<T>> context)
+
+class TUnit.Assertions.Extensions.OptionT_IsSome_Assertion<T> : TUnit.Assertions.Core.Assertion<Fluent.Unions.Option<T>>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.Option<T>> metadata)
+  protected override string GetExpectation()
+  public OptionT_IsSome_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.Option<T>> context)
+  public System.Runtime.CompilerServices.TaskAwaiter<T> GetAwaiter()
+  public TUnit.Assertions.Extensions.OptionT_IsSome_Assertion<T> Because(string message)
+
+class TUnit.Assertions.Extensions.ResultAssertions
+  public static TUnit.Assertions.Extensions.OptionT_IsNone_Assertion<T> IsNone<T>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.Option<T>> source)
+  public static TUnit.Assertions.Extensions.OptionT_IsSome_Assertion<T> IsSome<T>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.Option<T>> source)
+  public static TUnit.Assertions.Extensions.ResultSubjectTSelfTTError_IsError_Assertion<TSelf, T, TError> IsError<TSelf, T, TError>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>> source) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TUnit.Assertions.Extensions.ResultSubjectTSelfTTError_IsOk_Assertion<TSelf, T, TError> IsOk<TSelf, T, TError>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>> source) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TUnit.Assertions.Extensions.ResultT_IsError_Assertion<T> IsError<T>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.Result<T>> source)
+  public static TUnit.Assertions.Extensions.ResultT_IsOk_Assertion<T> IsOk<T>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.Result<T>> source)
+  public static TUnit.Assertions.Extensions.Result_IsError_Assertion IsError(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.Result> source)
+  public static TUnit.Assertions.Extensions.Result_IsError_Assertion<TException> IsError<TException>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.Result> source) where TException : System.Exception
+  public static TUnit.Assertions.Extensions.Result_IsOk_Assertion IsOk(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.Result> source)
+  public static TUnit.Assertions.Extensions.UnitResultSubjectTSelfTError_IsError_Assertion<TSelf, TError> IsError<TSelf, TError>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>> source) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static TUnit.Assertions.Extensions.UnitResultSubjectTSelfTError_IsOk_Assertion<TSelf, TError> IsOk<TSelf, TError>(this TUnit.Assertions.Core.IAssertionSource<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>> source) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+
+class TUnit.Assertions.Extensions.ResultSubjectTSelfTTError_IsError_Assertion<TSelf, T, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull : TUnit.Assertions.Core.Assertion<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>> metadata)
+  protected override string GetExpectation()
+  public ResultSubjectTSelfTTError_IsError_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>> context)
+  public System.Runtime.CompilerServices.TaskAwaiter<TError> GetAwaiter()
+  public TUnit.Assertions.Extensions.ResultSubjectTSelfTTError_IsError_Assertion<TSelf, T, TError> Because(string message)
+
+class TUnit.Assertions.Extensions.ResultSubjectTSelfTTError_IsOk_Assertion<TSelf, T, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull : TUnit.Assertions.Core.Assertion<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>> metadata)
+  protected override string GetExpectation()
+  public ResultSubjectTSelfTTError_IsOk_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>> context)
+  public System.Runtime.CompilerServices.TaskAwaiter<T> GetAwaiter()
+  public TUnit.Assertions.Extensions.ResultSubjectTSelfTTError_IsOk_Assertion<TSelf, T, TError> Because(string message)
+
+class TUnit.Assertions.Extensions.ResultT_IsError_Assertion<T> : TUnit.Assertions.Core.Assertion<Fluent.Unions.Result<T>>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.Result<T>> metadata)
+  protected override string GetExpectation()
+  public ResultT_IsError_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.Result<T>> context)
+  public System.Runtime.CompilerServices.TaskAwaiter<System.Exception> GetAwaiter()
+  public TUnit.Assertions.Extensions.ResultT_IsError_Assertion<T> Because(string message)
+
+class TUnit.Assertions.Extensions.ResultT_IsOk_Assertion<T> : TUnit.Assertions.Core.Assertion<Fluent.Unions.Result<T>>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.Result<T>> metadata)
+  protected override string GetExpectation()
+  public ResultT_IsOk_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.Result<T>> context)
+  public System.Runtime.CompilerServices.TaskAwaiter<T> GetAwaiter()
+  public TUnit.Assertions.Extensions.ResultT_IsOk_Assertion<T> Because(string message)
+
+class TUnit.Assertions.Extensions.Result_IsError_Assertion : TUnit.Assertions.Core.Assertion<Fluent.Unions.Result>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.Result> metadata)
+  protected override string GetExpectation()
+  public Result_IsError_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.Result> context)
+  public System.Runtime.CompilerServices.TaskAwaiter<System.Exception> GetAwaiter()
+  public TUnit.Assertions.Extensions.Result_IsError_Assertion Because(string message)
+
+class TUnit.Assertions.Extensions.Result_IsError_Assertion<TException> where TException : System.Exception : TUnit.Assertions.Core.Assertion<Fluent.Unions.Result>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.Result> metadata)
+  protected override string GetExpectation()
+  public Result_IsError_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.Result> context)
+  public System.Runtime.CompilerServices.TaskAwaiter<TException> GetAwaiter()
+  public TUnit.Assertions.Extensions.Result_IsError_Assertion<TException> Because(string message)
+
+class TUnit.Assertions.Extensions.Result_IsOk_Assertion : TUnit.Assertions.Core.Assertion<Fluent.Unions.Result>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.Result> metadata)
+  protected override string GetExpectation()
+  public Result_IsOk_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.Result> context)
+
+class TUnit.Assertions.Extensions.UnitResultSubjectTSelfTError_IsError_Assertion<TSelf, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull : TUnit.Assertions.Core.Assertion<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>> metadata)
+  protected override string GetExpectation()
+  public System.Runtime.CompilerServices.TaskAwaiter<TError> GetAwaiter()
+  public TUnit.Assertions.Extensions.UnitResultSubjectTSelfTError_IsError_Assertion<TSelf, TError> Because(string message)
+  public UnitResultSubjectTSelfTError_IsError_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>> context)
+
+class TUnit.Assertions.Extensions.UnitResultSubjectTSelfTError_IsOk_Assertion<TSelf, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull : TUnit.Assertions.Core.Assertion<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>>
+  protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>> metadata)
+  protected override string GetExpectation()
+  public UnitResultSubjectTSelfTError_IsOk_Assertion(TUnit.Assertions.Core.AssertionContext<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>> context)
+
+readonly struct Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull : interface System.IEquatable<Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError>>
+  public ResultSubject()
+  public ResultSubject(TSelf Result)
+  public TSelf Result { get; init; }
+  public bool Equals(Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> other)
+  public override bool Equals(object obj)
+  public override int GetHashCode()
+  public override string ToString()
+  public static bool operator !=(Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> left, Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> right)
+  public static bool operator ==(Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> left, Fluent.Unions.TUnit.ResultSubject<TSelf, T, TError> right)
+  public void Deconstruct(out TSelf Result)
+
+readonly struct Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull : interface System.IEquatable<Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError>>
+  public TSelf Result { get; init; }
+  public UnitResultSubject()
+  public UnitResultSubject(TSelf Result)
+  public bool Equals(Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> other)
+  public override bool Equals(object obj)
+  public override int GetHashCode()
+  public override string ToString()
+  public static bool operator !=(Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> left, Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> right)
+  public static bool operator ==(Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> left, Fluent.Unions.TUnit.UnitResultSubject<TSelf, TError> right)
+  public void Deconstruct(out TSelf Result)
+

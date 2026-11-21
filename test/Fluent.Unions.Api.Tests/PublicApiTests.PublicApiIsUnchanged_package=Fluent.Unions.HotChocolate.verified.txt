@@ -1,0 +1,3 @@
+﻿class Fluent.Unions.HotChocolate.RequestExecutorBuilderExtensions
+  public static HotChocolate.Execution.Configuration.IRequestExecutorBuilder AddFluentUnions(this HotChocolate.Execution.Configuration.IRequestExecutorBuilder builder)
+

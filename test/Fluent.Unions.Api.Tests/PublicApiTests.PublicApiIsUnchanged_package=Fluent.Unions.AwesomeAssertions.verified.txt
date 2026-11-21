@@ -1,0 +1,58 @@
+﻿class Fluent.Unions.AwesomeAssertions.AggregateErrorAssertions
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.AggregateErrorAssertions> WithInnerCount(int expected, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.AggregateErrorAssertions> WithInnerMessage(string expectedWildcardPattern, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndWhichConstraint<Fluent.Unions.AwesomeAssertions.AggregateErrorAssertions, TException> WithInner<TException>([string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.AwesomeAssertions.AggregateErrorAssertions And { get; }
+  public System.AggregateException? Subject { get; }
+  public System.Collections.Generic.IReadOnlyList<System.Exception> Inner { get; }
+
+class Fluent.Unions.AwesomeAssertions.AssertionExtensions
+  public static Fluent.Unions.AwesomeAssertions.CustomResultAssertions<TSelf, T, TError> Should<TSelf, T, TError>(this Fluent.Unions.Abstractions.IResult<TSelf, T, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
+  public static Fluent.Unions.AwesomeAssertions.OptionAssertions<T> Should<T>(this Fluent.Unions.Option<T> subject)
+  public static Fluent.Unions.AwesomeAssertions.ResultAssertions Should(this Fluent.Unions.Result subject)
+  public static Fluent.Unions.AwesomeAssertions.ResultAssertions<T> Should<T>(this Fluent.Unions.Result<T> subject)
+
+class Fluent.Unions.AwesomeAssertions.CustomResultAssertions<TSelf, T, TError> where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.CustomResultAssertions<TSelf, T, TError>> BeOkMatching(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.CustomResultAssertions<TSelf, T, TError>> BeOkWithValue(T expected, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndWhichConstraint<Fluent.Unions.AwesomeAssertions.CustomResultAssertions<TSelf, T, TError>, T> BeOk([string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndWhichConstraint<Fluent.Unions.AwesomeAssertions.CustomResultAssertions<TSelf, T, TError>, TCase> BeError<TCase>(System.Linq.Expressions.Expression<System.Func<TCase, bool>> predicate, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndWhichConstraint<Fluent.Unions.AwesomeAssertions.CustomResultAssertions<TSelf, T, TError>, TCase> BeError<TCase>([string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndWhichConstraint<Fluent.Unions.AwesomeAssertions.CustomResultAssertions<TSelf, T, TError>, TError> BeError([string because = ""], params object[] becauseArgs)
+  public TSelf Subject { get; }
+
+class Fluent.Unions.AwesomeAssertions.ErrorAssertions<TException> where TException : System.Exception
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.ErrorAssertions<TException>> WithMessage(string expectedWildcardPattern, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.ErrorAssertions<TException>> WithMessageContaining(string expected, [string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.AwesomeAssertions.ErrorAssertions<TException> And { get; }
+  public TException Which { get; }
+  public TException? Subject { get; }
+
+class Fluent.Unions.AwesomeAssertions.OptionAssertions<T>
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.OptionAssertions<T>> BeNone([string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.OptionAssertions<T>> BeSomeMatching(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.OptionAssertions<T>> BeSomeSatisfying(System.Action<T> assertion, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.OptionAssertions<T>> BeSomeWithValue(T expected, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.OptionAssertions<T>> NotBeSomeWithValue(T unexpected, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndWhichConstraint<Fluent.Unions.AwesomeAssertions.OptionAssertions<T>, T> BeSome([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.Option<T> Subject { get; }
+
+class Fluent.Unions.AwesomeAssertions.ResultAssertions
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.ResultAssertions> BeOk([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.AwesomeAssertions.AggregateErrorAssertions BeAggregateError([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.AwesomeAssertions.ErrorAssertions<System.Exception> BeError([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.AwesomeAssertions.ErrorAssertions<TException> BeError<TException>(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate, [string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.AwesomeAssertions.ErrorAssertions<TException> BeError<TException>([string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.Result Subject { get; }
+
+class Fluent.Unions.AwesomeAssertions.ResultAssertions<T>
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.ResultAssertions<T>> BeOkMatching(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.ResultAssertions<T>> BeOkSatisfying(System.Action<T> assertion, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndConstraint<Fluent.Unions.AwesomeAssertions.ResultAssertions<T>> BeOkWithValue(T expected, [string because = ""], params object[] becauseArgs)
+  public AwesomeAssertions.AndWhichConstraint<Fluent.Unions.AwesomeAssertions.ResultAssertions<T>, T> BeOk([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.AwesomeAssertions.AggregateErrorAssertions BeAggregateError([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.AwesomeAssertions.ErrorAssertions<System.Exception> BeError([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.AwesomeAssertions.ErrorAssertions<TException> BeError<TException>(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate, [string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.AwesomeAssertions.ErrorAssertions<TException> BeError<TException>([string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.Result<T> Subject { get; }
+

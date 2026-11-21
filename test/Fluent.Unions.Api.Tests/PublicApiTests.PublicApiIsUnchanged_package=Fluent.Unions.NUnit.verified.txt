@@ -1,0 +1,16 @@
+﻿class Fluent.Unions.NUnit.IsOption
+  public static Fluent.Unions.NUnit.UnionConstraint None { get; }
+  public static Fluent.Unions.NUnit.UnionConstraint Some { get; }
+  public static Fluent.Unions.NUnit.UnionConstraint SomeWith(NUnit.Framework.Constraints.IResolveConstraint expression)
+
+class Fluent.Unions.NUnit.IsResult
+  public static Fluent.Unions.NUnit.UnionConstraint Error { get; }
+  public static Fluent.Unions.NUnit.UnionConstraint ErrorOfType<TException>() where TException : System.Exception
+  public static Fluent.Unions.NUnit.UnionConstraint ErrorWith(NUnit.Framework.Constraints.IResolveConstraint expression)
+  public static Fluent.Unions.NUnit.UnionConstraint Ok { get; }
+  public static Fluent.Unions.NUnit.UnionConstraint OkWith(NUnit.Framework.Constraints.IResolveConstraint expression)
+
+class Fluent.Unions.NUnit.UnionConstraint : NUnit.Framework.Constraints.Constraint
+  public override NUnit.Framework.Constraints.ConstraintResult ApplyTo<TActual>(TActual actual)
+  public override string Description { get; }
+

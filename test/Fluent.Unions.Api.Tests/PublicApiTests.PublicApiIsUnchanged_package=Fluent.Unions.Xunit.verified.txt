@@ -1,0 +1,15 @@
+﻿class Fluent.Unions.Xunit.OptionAssert
+  public static T Some<T>(Fluent.Unions.Option<T> option)
+  public static void None<T>(Fluent.Unions.Option<T> option)
+
+class Fluent.Unions.Xunit.ResultAssert
+  public static System.Exception Error(Fluent.Unions.Result result)
+  public static System.Exception Error<T>(Fluent.Unions.Result<T> result)
+  public static T Ok<T>(Fluent.Unions.Result<T> result)
+  public static T Ok<TSelf, T, TError>(Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TError Error<TSelf, T, TError>(Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TError Error<TSelf, TError>(Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static TException Error<TException>(Fluent.Unions.Result result) where TException : System.Exception
+  public static void Ok(Fluent.Unions.Result result)
+  public static void Ok<TSelf, TError>(Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+

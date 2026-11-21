@@ -1,0 +1,24 @@
+﻿class Fluent.Unions.Orleans.OptionConverter<T> : Orleans.IConverter<Fluent.Unions.Option<T>, Fluent.Unions.Orleans.OptionSurrogate<T>>
+  public Fluent.Unions.Option<T> ConvertFromSurrogate(in Fluent.Unions.Orleans.OptionSurrogate<T> surrogate)
+  public Fluent.Unions.Orleans.OptionSurrogate<T> ConvertToSurrogate(in Fluent.Unions.Option<T> value)
+  public OptionConverter()
+
+class Fluent.Unions.Orleans.SerializerBuilderExtensions
+  public static Orleans.Serialization.ISerializerBuilder AddUnions(this Orleans.Serialization.ISerializerBuilder builder)
+
+[EditorBrowsable] class OrleansCodeGen.Fluent.Unions.Orleans.Codec_OptionSurrogate<T> : Orleans.Serialization.Codecs.IFieldCodec, Orleans.Serialization.Codecs.IFieldCodec<Fluent.Unions.Orleans.OptionSurrogate<T>>, Orleans.Serialization.Serializers.IValueSerializer, Orleans.Serialization.Serializers.IValueSerializer<Fluent.Unions.Orleans.OptionSurrogate<T>>
+  public Codec_OptionSurrogate(Orleans.Serialization.Serializers.ICodecProvider codecProvider)
+  public Fluent.Unions.Orleans.OptionSurrogate<T> ReadValue<TReaderInput>(ref Orleans.Serialization.Buffers.Reader<TReaderInput> reader, Orleans.Serialization.WireProtocol.Field field)
+  public void Deserialize<TReaderInput>(ref Orleans.Serialization.Buffers.Reader<TReaderInput> reader, scoped ref Fluent.Unions.Orleans.OptionSurrogate<T> instance)
+  public void Serialize<TBufferWriter>(ref Orleans.Serialization.Buffers.Writer<TBufferWriter> writer, scoped ref Fluent.Unions.Orleans.OptionSurrogate<T> instance) where TBufferWriter : System.Buffers.IBufferWriter<byte>
+  public void WriteField<TBufferWriter>(ref Orleans.Serialization.Buffers.Writer<TBufferWriter> writer, uint fieldIdDelta, System.Type expectedType, Fluent.Unions.Orleans.OptionSurrogate<T> value) where TBufferWriter : System.Buffers.IBufferWriter<byte>
+
+[EditorBrowsable] class OrleansCodeGen.Fluent.Unions.Orleans.Copier_OptionSurrogate<T> : Orleans.Serialization.Cloning.IDeepCopier, Orleans.Serialization.Cloning.IDeepCopier<Fluent.Unions.Orleans.OptionSurrogate<T>>
+  public Copier_OptionSurrogate(Orleans.Serialization.Serializers.ICodecProvider codecProvider)
+  public Fluent.Unions.Orleans.OptionSurrogate<T> DeepCopy(Fluent.Unions.Orleans.OptionSurrogate<T> result, Orleans.Serialization.Cloning.CopyContext context)
+
+struct Fluent.Unions.Orleans.OptionSurrogate<T>
+  public OptionSurrogate()
+  public T? Value
+  public bool HasValue
+

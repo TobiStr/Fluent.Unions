@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="10.1.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageReference Include="NUnit" Version="5.0.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.3.1" />
+    <PackageReference Include="Verify.NUnit" Version="33.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Fluent.Unions\Fluent.Unions.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.AspNetCore\Fluent.Unions.AspNetCore.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.AutoMapper\Fluent.Unions.AutoMapper.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.AwesomeAssertions\Fluent.Unions.AwesomeAssertions.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Dapper\Fluent.Unions.Dapper.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.FluentAssertions\Fluent.Unions.FluentAssertions.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.FluentValidation\Fluent.Unions.FluentValidation.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Grpc\Fluent.Unions.Grpc.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.HotChocolate\Fluent.Unions.HotChocolate.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Mapster\Fluent.Unions.Mapster.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.MediatR\Fluent.Unions.MediatR.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Mediator\Fluent.Unions.Mediator.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.MessagePack\Fluent.Unions.MessagePack.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.MongoDB\Fluent.Unions.MongoDB.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.NSwag\Fluent.Unions.NSwag.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.NUnit\Fluent.Unions.NUnit.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.NewtonsoftJson\Fluent.Unions.NewtonsoftJson.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.OpenApi\Fluent.Unions.OpenApi.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Orleans\Fluent.Unions.Orleans.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Polly\Fluent.Unions.Polly.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Refit\Fluent.Unions.Refit.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Serilog\Fluent.Unions.Serilog.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Shouldly\Fluent.Unions.Shouldly.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Swashbuckle\Fluent.Unions.Swashbuckle.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.TUnit\Fluent.Unions.TUnit.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Verify\Fluent.Unions.Verify.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Xunit\Fluent.Unions.Xunit.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+</Project>

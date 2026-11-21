@@ -1,0 +1,13 @@
+﻿class Fluent.Unions.FluentValidation.OptionRuleExtensions
+  public static FluentValidation.IRuleBuilderInitial<T, TValue> RuleForSome<T, TValue>(this FluentValidation.AbstractValidator<T> validator, System.Linq.Expressions.Expression<System.Func<T, Fluent.Unions.Option<TValue>>> expression)
+
+class Fluent.Unions.FluentValidation.ValidatorExtensions
+  public static Fluent.Unions.Result<T> Validate<T>(this Fluent.Unions.Result<T> result, FluentValidation.IValidator<T> validator)
+  public static Fluent.Unions.Result<T> ValidateToResult<T>(this FluentValidation.IValidator<T> validator, T instance)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> ValidateAsync<T>(this Fluent.Unions.Result<T> result, FluentValidation.IValidator<T> validator, [System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)])
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> ValidateToResultAsync<T>(this FluentValidation.IValidator<T> validator, T instance, [System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)])
+  public static System.Threading.Tasks.Task<TSelf> ValidateAsync<TSelf, T, TError>(this Fluent.Unions.Abstractions.IResult<TSelf, T, TError> result, FluentValidation.IValidator<T> validator, System.Func<System.Collections.Generic.IReadOnlyList<FluentValidation.Results.ValidationFailure>, TError> map, [System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)]) where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> ValidateAsync<TSelf, T, TError>(this Fluent.Unions.Abstractions.IResult<TSelf, T, TError> result, FluentValidation.IValidator<T> validator, [System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)]) where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
+  public static TSelf Validate<TSelf, T, TError>(this Fluent.Unions.Abstractions.IResult<TSelf, T, TError> result, FluentValidation.IValidator<T> validator) where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
+  public static TSelf Validate<TSelf, T, TError>(this Fluent.Unions.Abstractions.IResult<TSelf, T, TError> result, FluentValidation.IValidator<T> validator, System.Func<System.Collections.Generic.IReadOnlyList<FluentValidation.Results.ValidationFailure>, TError> map) where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
+

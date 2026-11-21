@@ -1,0 +1,23 @@
+﻿class Fluent.Unions.NewtonsoftJson.JsonSerializerSettingsExtensions
+  public static Newtonsoft.Json.JsonSerializerSettings AddFluentUnions(this Newtonsoft.Json.JsonSerializerSettings settings)
+
+class Fluent.Unions.NewtonsoftJson.OptionJsonConverter : Newtonsoft.Json.JsonConverter
+  public OptionJsonConverter()
+  public override bool CanConvert(System.Type objectType)
+  public override object? ReadJson(Newtonsoft.Json.JsonReader reader, System.Type objectType, object? existingValue, Newtonsoft.Json.JsonSerializer serializer)
+  public override void WriteJson(Newtonsoft.Json.JsonWriter writer, object? value, Newtonsoft.Json.JsonSerializer serializer)
+
+class Fluent.Unions.NewtonsoftJson.ResultJsonConverter : Newtonsoft.Json.JsonConverter
+  public ResultJsonConverter()
+  public override bool CanConvert(System.Type objectType)
+  public override object? ReadJson(Newtonsoft.Json.JsonReader reader, System.Type objectType, object? existingValue, Newtonsoft.Json.JsonSerializer serializer)
+  public override void WriteJson(Newtonsoft.Json.JsonWriter writer, object? value, Newtonsoft.Json.JsonSerializer serializer)
+
+class Fluent.Unions.NewtonsoftJson.UnionJsonConverter : Newtonsoft.Json.JsonConverter
+  public UnionJsonConverter()
+  public const string TypeProperty = "$type"
+  public const string ValueProperty = "$value"
+  public override bool CanConvert(System.Type objectType)
+  public override object? ReadJson(Newtonsoft.Json.JsonReader reader, System.Type objectType, object? existingValue, Newtonsoft.Json.JsonSerializer serializer)
+  public override void WriteJson(Newtonsoft.Json.JsonWriter writer, object? value, Newtonsoft.Json.JsonSerializer serializer)
+

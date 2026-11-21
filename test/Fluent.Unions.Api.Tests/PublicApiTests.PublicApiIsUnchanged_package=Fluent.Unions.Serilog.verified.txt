@@ -1,0 +1,7 @@
+﻿class Fluent.Unions.Serilog.LoggerDestructuringConfigurationExtensions
+  public static Serilog.LoggerConfiguration WithFluentUnions(this Serilog.Configuration.LoggerDestructuringConfiguration configuration)
+
+class Fluent.Unions.Serilog.UnionDestructuringPolicy : Serilog.Core.IDestructuringPolicy
+  public UnionDestructuringPolicy()
+  public bool TryDestructure(object value, Serilog.Core.ILogEventPropertyValueFactory propertyValueFactory, out Serilog.Events.LogEventPropertyValue? result)
+

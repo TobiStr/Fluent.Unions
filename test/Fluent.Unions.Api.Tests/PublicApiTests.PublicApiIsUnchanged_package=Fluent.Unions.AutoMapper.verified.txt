@@ -1,0 +1,3 @@
+﻿class Fluent.Unions.AutoMapper.AutoMapperConfigExtensions
+  public static AutoMapper.IMapperConfigurationExpression AddFluentUnions(this AutoMapper.IMapperConfigurationExpression configuration)
+

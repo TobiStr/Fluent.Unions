@@ -1,0 +1,9 @@
+﻿class Fluent.Unions.Dapper.OptionHandlers
+  public static void Register<T>()
+  public static void RegisterCommon()
+
+class Fluent.Unions.Dapper.OptionTypeHandler<T> : Dapper.SqlMapper.TypeHandler<Fluent.Unions.Option<T>>
+  public OptionTypeHandler()
+  public override Fluent.Unions.Option<T> Parse(object? value)
+  public override void SetValue(System.Data.IDbDataParameter parameter, Fluent.Unions.Option<T> value)
+

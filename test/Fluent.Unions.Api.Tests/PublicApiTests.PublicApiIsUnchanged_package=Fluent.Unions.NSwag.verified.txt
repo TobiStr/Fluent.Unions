@@ -1,0 +1,7 @@
+﻿class Fluent.Unions.NSwag.OpenApiDocumentGeneratorSettingsExtensions
+  public static NSwag.Generation.OpenApiDocumentGeneratorSettings AddFluentUnions(this NSwag.Generation.OpenApiDocumentGeneratorSettings settings)
+
+class Fluent.Unions.NSwag.OptionSchemaProcessor : NJsonSchema.Generation.ISchemaProcessor
+  public OptionSchemaProcessor()
+  public void Process(NJsonSchema.Generation.SchemaProcessorContext context)
+

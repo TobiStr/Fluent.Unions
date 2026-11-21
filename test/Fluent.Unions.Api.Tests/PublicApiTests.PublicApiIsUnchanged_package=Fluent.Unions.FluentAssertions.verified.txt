@@ -1,0 +1,58 @@
+﻿class Fluent.Unions.FluentAssertions.AggregateErrorAssertions
+  public Fluent.Unions.FluentAssertions.AggregateErrorAssertions And { get; }
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.AggregateErrorAssertions> WithInnerCount(int expected, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.AggregateErrorAssertions> WithInnerMessage(string expectedWildcardPattern, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndWhichConstraint<Fluent.Unions.FluentAssertions.AggregateErrorAssertions, TException> WithInner<TException>([string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public System.AggregateException? Subject { get; }
+  public System.Collections.Generic.IReadOnlyList<System.Exception> Inner { get; }
+
+class Fluent.Unions.FluentAssertions.AssertionExtensions
+  public static Fluent.Unions.FluentAssertions.CustomResultAssertions<TSelf, T, TError> Should<TSelf, T, TError>(this Fluent.Unions.Abstractions.IResult<TSelf, T, TError> subject) where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
+  public static Fluent.Unions.FluentAssertions.OptionAssertions<T> Should<T>(this Fluent.Unions.Option<T> subject)
+  public static Fluent.Unions.FluentAssertions.ResultAssertions Should(this Fluent.Unions.Result subject)
+  public static Fluent.Unions.FluentAssertions.ResultAssertions<T> Should<T>(this Fluent.Unions.Result<T> subject)
+
+class Fluent.Unions.FluentAssertions.CustomResultAssertions<TSelf, T, TError> where TSelf : struct, Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TError : notnull
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.CustomResultAssertions<TSelf, T, TError>> BeOkMatching(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.CustomResultAssertions<TSelf, T, TError>> BeOkWithValue(T expected, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndWhichConstraint<Fluent.Unions.FluentAssertions.CustomResultAssertions<TSelf, T, TError>, T> BeOk([string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndWhichConstraint<Fluent.Unions.FluentAssertions.CustomResultAssertions<TSelf, T, TError>, TCase> BeError<TCase>(System.Linq.Expressions.Expression<System.Func<TCase, bool>> predicate, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndWhichConstraint<Fluent.Unions.FluentAssertions.CustomResultAssertions<TSelf, T, TError>, TCase> BeError<TCase>([string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndWhichConstraint<Fluent.Unions.FluentAssertions.CustomResultAssertions<TSelf, T, TError>, TError> BeError([string because = ""], params object[] becauseArgs)
+  public TSelf Subject { get; }
+
+class Fluent.Unions.FluentAssertions.ErrorAssertions<TException> where TException : System.Exception
+  public Fluent.Unions.FluentAssertions.ErrorAssertions<TException> And { get; }
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.ErrorAssertions<TException>> WithMessage(string expectedWildcardPattern, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.ErrorAssertions<TException>> WithMessageContaining(string expected, [string because = ""], params object[] becauseArgs)
+  public TException Which { get; }
+  public TException? Subject { get; }
+
+class Fluent.Unions.FluentAssertions.OptionAssertions<T>
+  public Fluent.Unions.Option<T> Subject { get; }
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.OptionAssertions<T>> BeNone([string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.OptionAssertions<T>> BeSomeMatching(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.OptionAssertions<T>> BeSomeSatisfying(System.Action<T> assertion, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.OptionAssertions<T>> BeSomeWithValue(T expected, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.OptionAssertions<T>> NotBeSomeWithValue(T unexpected, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndWhichConstraint<Fluent.Unions.FluentAssertions.OptionAssertions<T>, T> BeSome([string because = ""], params object[] becauseArgs)
+
+class Fluent.Unions.FluentAssertions.ResultAssertions
+  public Fluent.Unions.FluentAssertions.AggregateErrorAssertions BeAggregateError([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.FluentAssertions.ErrorAssertions<System.Exception> BeError([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.FluentAssertions.ErrorAssertions<TException> BeError<TException>(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate, [string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.FluentAssertions.ErrorAssertions<TException> BeError<TException>([string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.Result Subject { get; }
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.ResultAssertions> BeOk([string because = ""], params object[] becauseArgs)
+
+class Fluent.Unions.FluentAssertions.ResultAssertions<T>
+  public Fluent.Unions.FluentAssertions.AggregateErrorAssertions BeAggregateError([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.FluentAssertions.ErrorAssertions<System.Exception> BeError([string because = ""], params object[] becauseArgs)
+  public Fluent.Unions.FluentAssertions.ErrorAssertions<TException> BeError<TException>(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate, [string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.FluentAssertions.ErrorAssertions<TException> BeError<TException>([string because = ""], params object[] becauseArgs) where TException : System.Exception
+  public Fluent.Unions.Result<T> Subject { get; }
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.ResultAssertions<T>> BeOkMatching(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.ResultAssertions<T>> BeOkSatisfying(System.Action<T> assertion, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndConstraint<Fluent.Unions.FluentAssertions.ResultAssertions<T>> BeOkWithValue(T expected, [string because = ""], params object[] becauseArgs)
+  public FluentAssertions.AndWhichConstraint<Fluent.Unions.FluentAssertions.ResultAssertions<T>, T> BeOk([string because = ""], params object[] becauseArgs)
+

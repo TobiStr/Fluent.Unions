@@ -1,0 +1,10 @@
+﻿class Fluent.Unions.Refit.ApiResponseExtensions
+  public static Fluent.Unions.Result ToResult(this Refit.IApiResponse response)
+  public static Fluent.Unions.Result<Fluent.Unions.Option<T>> ToOptionalResult<T>(this Refit.IApiResponse<T> response)
+  public static Fluent.Unions.Result<T> ToResult<T>(this Refit.IApiResponse<T> response)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<Fluent.Unions.Option<T>>> ToOptionalResult<T>(this System.Threading.Tasks.Task<Refit.ApiResponse<T>> response)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<Fluent.Unions.Option<T>>> ToOptionalResult<T>(this System.Threading.Tasks.Task<Refit.IApiResponse<T>> response)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> ToResult<T>(this System.Threading.Tasks.Task<Refit.ApiResponse<T>> response)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> ToResult<T>(this System.Threading.Tasks.Task<Refit.IApiResponse<T>> response)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result> ToResult(this System.Threading.Tasks.Task<Refit.IApiResponse> response)
+

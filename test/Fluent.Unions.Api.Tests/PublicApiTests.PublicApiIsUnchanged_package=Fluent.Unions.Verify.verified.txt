@@ -1,0 +1,3 @@
+﻿class Fluent.Unions.Verify.VerifyFluentUnions
+  public static void Initialize()
+

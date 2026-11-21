@@ -1,0 +1,18 @@
+﻿class Fluent.Unions.MongoDB.FluentUnionsBson
+  public static void Register()
+
+class Fluent.Unions.MongoDB.OmitNoneConvention : MongoDB.Bson.Serialization.Conventions.ConventionBase, MongoDB.Bson.Serialization.Conventions.IConvention, MongoDB.Bson.Serialization.Conventions.IMemberMapConvention
+  public OmitNoneConvention()
+  public void Apply(MongoDB.Bson.Serialization.BsonMemberMap memberMap)
+
+class Fluent.Unions.MongoDB.OptionSerializer<T> : MongoDB.Bson.Serialization.Serializers.SerializerBase<Fluent.Unions.Option<T>>
+  public OptionSerializer()
+  public OptionSerializer(MongoDB.Bson.Serialization.IBsonSerializer<T> valueSerializer)
+  public override Fluent.Unions.Option<T> Deserialize(MongoDB.Bson.Serialization.BsonDeserializationContext context, MongoDB.Bson.Serialization.BsonDeserializationArgs args)
+  public override void Serialize(MongoDB.Bson.Serialization.BsonSerializationContext context, MongoDB.Bson.Serialization.BsonSerializationArgs args, Fluent.Unions.Option<T> value)
+
+class Fluent.Unions.MongoDB.ResultSerializer<TResult> : MongoDB.Bson.Serialization.Serializers.SerializerBase<TResult>
+  public ResultSerializer()
+  public override TResult Deserialize(MongoDB.Bson.Serialization.BsonDeserializationContext context, MongoDB.Bson.Serialization.BsonDeserializationArgs args)
+  public override void Serialize(MongoDB.Bson.Serialization.BsonSerializationContext context, MongoDB.Bson.Serialization.BsonSerializationArgs args, TResult value)
+

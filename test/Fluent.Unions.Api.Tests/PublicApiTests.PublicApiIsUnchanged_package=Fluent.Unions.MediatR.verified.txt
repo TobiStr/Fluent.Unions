@@ -1,0 +1,8 @@
+﻿class Fluent.Unions.MediatR.ExceptionToResultBehavior<TRequest, TResponse> where TRequest : notnull where TResponse : struct : MediatR.IPipelineBehavior<TRequest, TResponse> where TRequest : notnull where TResponse : struct
+  public ExceptionToResultBehavior()
+  public System.Threading.Tasks.Task<TResponse> Handle(TRequest request, MediatR.RequestHandlerDelegate<TResponse> next, System.Threading.CancellationToken cancellationToken)
+
+class Fluent.Unions.MediatR.ValidationToResultBehavior<TRequest, TResponse> where TRequest : notnull where TResponse : struct : MediatR.IPipelineBehavior<TRequest, TResponse> where TRequest : notnull where TResponse : struct
+  public System.Threading.Tasks.Task<TResponse> Handle(TRequest request, MediatR.RequestHandlerDelegate<TResponse> next, System.Threading.CancellationToken cancellationToken)
+  public ValidationToResultBehavior()
+

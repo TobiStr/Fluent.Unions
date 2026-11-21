@@ -1,0 +1,7 @@
+﻿class Fluent.Unions.Swashbuckle.OptionSchemaFilter : Swashbuckle.AspNetCore.SwaggerGen.ISchemaFilter
+  public OptionSchemaFilter()
+  public void Apply(Microsoft.OpenApi.IOpenApiSchema schema, Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext context)
+
+class Fluent.Unions.Swashbuckle.SwaggerGenOptionsExtensions
+  public static Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenOptions AddFluentUnions(this Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenOptions options)
+

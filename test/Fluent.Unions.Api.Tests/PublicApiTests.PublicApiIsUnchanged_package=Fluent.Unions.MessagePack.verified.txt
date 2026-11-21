@@ -1,0 +1,12 @@
+﻿class Fluent.Unions.MessagePack.MessagePackSerializerOptionsExtensions
+  public static MessagePack.MessagePackSerializerOptions WithUnions(this MessagePack.MessagePackSerializerOptions options)
+
+class Fluent.Unions.MessagePack.OptionFormatter<T> : MessagePack.Formatters.IMessagePackFormatter, MessagePack.Formatters.IMessagePackFormatter<Fluent.Unions.Option<T>>
+  public Fluent.Unions.Option<T> Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options)
+  public OptionFormatter()
+  public void Serialize(ref MessagePack.MessagePackWriter writer, Fluent.Unions.Option<T> value, MessagePack.MessagePackSerializerOptions options)
+
+class Fluent.Unions.MessagePack.UnionsResolver : MessagePack.IFormatterResolver
+  public MessagePack.Formatters.IMessagePackFormatter<T>? GetFormatter<T>()
+  public static readonly Fluent.Unions.MessagePack.UnionsResolver Instance
+
