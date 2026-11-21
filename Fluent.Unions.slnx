@@ -3,6 +3,7 @@
     <Project Path="src/Fluent.Unions/Fluent.Unions.csproj" />
     <Project Path="src/Fluent.Unions.Analyzers/Fluent.Unions.Analyzers.csproj" />
     <Project Path="src/Fluent.Unions.Analyzers.CodeFixes/Fluent.Unions.Analyzers.CodeFixes.csproj" />
+    <Project Path="src/Fluent.Unions.Generators/Fluent.Unions.Generators.csproj" />
     <Project Path="src/Fluent.Unions.AspNetCore/Fluent.Unions.AspNetCore.csproj" />
     <Project Path="src/Fluent.Unions.FluentValidation/Fluent.Unions.FluentValidation.csproj" />
     <Project Path="src/Fluent.Unions.Polly/Fluent.Unions.Polly.csproj" />
@@ -32,6 +33,8 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Fluent.Unions.Tests/Fluent.Unions.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Api.Tests/Fluent.Unions.Api.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Generators.Tests/Fluent.Unions.Generators.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Analyzers.Tests/Fluent.Unions.Analyzers.Tests.csproj" />
     <Project Path="test/Fluent.Unions.AspNetCore.Tests/Fluent.Unions.AspNetCore.Tests.csproj" />
     <Project Path="test/Fluent.Unions.FluentValidation.Tests/Fluent.Unions.FluentValidation.Tests.csproj" />
@@ -60,5 +63,8 @@
     <Project Path="test/Fluent.Unions.Grpc.Tests/Fluent.Unions.Grpc.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Verify.Tests/Fluent.Unions.Verify.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Scenarios.Tests/Fluent.Unions.Scenarios.Tests.csproj" />
+  </Folder>
+  <Folder Name="/bench/">
+    <Project Path="bench/Fluent.Unions.Benchmarks/Fluent.Unions.Benchmarks.csproj" />
   </Folder>
 </Solution>
