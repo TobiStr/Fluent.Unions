@@ -83,7 +83,7 @@ internal static class Capture
         }
     }
 
-    private static TError ToError<TResult, TError>(Exception exception)
+    internal static TError ToError<TResult, TError>(Exception exception)
         where TResult : struct, IErrorResult<TResult, TError>
         where TError : notnull
     {

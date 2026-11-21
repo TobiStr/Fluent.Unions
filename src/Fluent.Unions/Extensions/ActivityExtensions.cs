@@ -12,11 +12,11 @@ public static class ActivityExtensions
     /// Sets the status from the result and records the exception of an error.
     /// </summary>
     public static Activity? RecordResult(this Activity? activity, Result result) =>
-        Record(activity, result.TryGetError(out var error) ? error : null);
+        global::Fluent.Unions.Core.ResultConversionCore.RecordUnitResult<Result, Exception>(activity, result);
 
     /// <inheritdoc cref="RecordResult(Activity?, Result)"/>
     public static Activity? RecordResult<T>(this Activity? activity, Result<T> result) =>
-        Record(activity, result.TryGetError(out var error) ? error : null);
+        global::Fluent.Unions.Core.ResultConversionCore.RecordResult<Result<T>, T, Exception>(activity, result);
 
     /// <summary>
     /// Sets the status from the result and records the error. An error that is not an exception is wrapped in a <see cref="ResultErrorException"/>.
@@ -37,7 +37,7 @@ public static class ActivityExtensions
         return Record(activity, result.TryGetError(out var error) ? error as Exception ?? new ResultErrorException(error) : null);
     }
 
-    private static Activity? Record(Activity? activity, Exception? error)
+    internal static Activity? Record(Activity? activity, Exception? error)
     {
         if (activity is null)
         {

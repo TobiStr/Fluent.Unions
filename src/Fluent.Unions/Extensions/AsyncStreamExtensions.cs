@@ -104,18 +104,10 @@ public static class AsyncStreamExtensions
     /// Gives an error holding a <see cref="TimeoutException"/> when the task does not finish within <paramref name="timeout"/>.
     /// The operation itself keeps running; pass it a cancellation token to stop it.
     /// </summary>
-    public static Task<Result<T>> Timeout<T>(this Task<Result<T>> task, TimeSpan timeout)
-    {
-        ArgumentNullException.ThrowIfNull(task);
-
-        return Capture.RunAsync(() => task.WaitAsync(timeout));
-    }
+    public static Task<Result<T>> Timeout<T>(this Task<Result<T>> task, TimeSpan timeout) =>
+        global::Fluent.Unions.Core.ResultConversionCore.Timeout<Result<T>, T, Exception>(task, timeout);
 
     /// <inheritdoc cref="Timeout{T}(Task{Result{T}}, TimeSpan)"/>
-    public static Task<Result> Timeout(this Task<Result> task, TimeSpan timeout)
-    {
-        ArgumentNullException.ThrowIfNull(task);
-
-        return Capture.RunAsync(() => task.WaitAsync(timeout));
-    }
+    public static Task<Result> Timeout(this Task<Result> task, TimeSpan timeout) =>
+        global::Fluent.Unions.Core.ResultConversionCore.TimeoutUnit<Result, Exception>(task, timeout);
 }

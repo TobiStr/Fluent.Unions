@@ -49,7 +49,7 @@ public sealed class Captured<T>
             Set(payload);
     }
 
-    private void Set(T payload)
+    internal void Set(T payload)
     {
         value = payload;
         HasValue = true;

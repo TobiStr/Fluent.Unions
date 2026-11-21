@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <ProjectReference Include="..\Fluent.Unions.Analyzers.CodeFixes\Fluent.Unions.Analyzers.CodeFixes.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <ProjectReference Include="..\Fluent.Unions.Generators\Fluent.Unions.Generators.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -22,7 +23,7 @@
   </PropertyGroup>
 
   <Target Name="IncludeAnalyzerInPackage">
-    <MSBuild Projects="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj;..\Fluent.Unions.Analyzers.CodeFixes\Fluent.Unions.Analyzers.CodeFixes.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+    <MSBuild Projects="..\Fluent.Unions.Analyzers\Fluent.Unions.Analyzers.csproj;..\Fluent.Unions.Analyzers.CodeFixes\Fluent.Unions.Analyzers.CodeFixes.csproj;..\Fluent.Unions.Generators\Fluent.Unions.Generators.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
       <Output TaskParameter="TargetOutputs" ItemName="AnalyzerAssembly" />
     </MSBuild>
     <ItemGroup>

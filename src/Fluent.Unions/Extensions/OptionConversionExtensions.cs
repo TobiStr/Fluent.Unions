@@ -27,31 +27,21 @@ public static class OptionConversionExtensions
     /// Keeps the value of a successful result. An error gives an option without a value.
     /// </summary>
     public static Option<T> ToOption<T>(this Result<T> result) =>
-        result.TryGetValue(out var value) ? Option<T>.Of(value) : Option<T>.NoValue;
+        global::Fluent.Unions.Core.ResultConversionCore.ToOption<Result<T>, T, Exception>(result);
 
     /// <summary>
     /// Swaps an optional result into a result of an option: no value gives ok with <see cref="None"/>,
     /// and an error stays an error.
     /// </summary>
-    public static Result<Option<T>> Transpose<T>(this Option<Result<T>> option)
-    {
-        if (!option.TryGetValue(out var inner))
-            return new Result<Option<T>>(Option<T>.NoValue);
-
-        return inner.TryGetError(out var error) ? error : new Result<Option<T>>(Option<T>.Of(inner.GetValue()));
-    }
+    public static Result<Option<T>> Transpose<T>(this Option<Result<T>> option) =>
+        global::Fluent.Unions.Core.ResultConversionCore.Transpose<Result<T>, T, Exception, Result<Option<T>>>(option);
 
     /// <summary>
     /// Swaps a result of an option into an optional result: ok with <see cref="None"/> gives no value,
     /// and an error is kept inside the option. Reverses the other <c>Transpose</c>.
     /// </summary>
-    public static Option<Result<T>> Transpose<T>(this Result<Option<T>> result)
-    {
-        if (result.TryGetError(out var error))
-            return new Option<Result<T>>(new Result<T>(error));
-
-        return result.GetValue().TryGetValue(out var value) ? new Option<Result<T>>(new Result<T>(value)) : Option<Result<T>>.NoValue;
-    }
+    public static Option<Result<T>> Transpose<T>(this Result<Option<T>> result) =>
+        global::Fluent.Unions.Core.ResultConversionCore.Transpose<Result<Option<T>>, T, Exception, Result<T>>(result);
 
     /// <summary>
     /// Turns a reference that may be <c>null</c> into a result, using <paramref name="error"/> for <c>null</c>.

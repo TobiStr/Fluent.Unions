@@ -65,11 +65,11 @@ public static class LoadableExtensions
     /// Turns a finished result into a loaded or failed state.
     /// </summary>
     public static Loadable<T> ToLoadable<T>(this Result<T> result) =>
-        result.TryGetError(out var error) ? new Loadable<T>(error) : new Loadable<T>(result.GetValue());
+        global::Fluent.Unions.Core.ResultConversionCore.ToLoadable<Result<T>, T, Exception>(result);
 
     /// <summary>
     /// Awaits the result and turns it into a loaded or failed state. A faulted task counts as failed.
     /// </summary>
     public static Task<Loadable<T>> ToLoadable<T>(this Task<Result<T>> task) =>
-        Capture.Then(Capture.Settle(task), result => result.ToLoadable());
+        global::Fluent.Unions.Core.ResultConversionCore.ToLoadable<Result<T>, T, Exception>(task);
 }
