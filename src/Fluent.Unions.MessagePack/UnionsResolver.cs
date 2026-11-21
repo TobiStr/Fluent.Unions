@@ -1,11 +1,12 @@
+using Fluent.Unions.Abstractions;
 using MessagePack;
 using MessagePack.Formatters;
 
 namespace Fluent.Unions.MessagePack;
 
 /// <summary>
-/// Resolves a formatter for <see cref="Option{T}"/>, and a formatter that refuses to serialize <see cref="Result"/>,
-/// <see cref="Result{T}"/> and <see cref="Result{T, TError}"/>, because an error would expose exception details.
+/// Resolves a formatter for <see cref="Option{T}"/>, and a formatter that refuses to serialize any result type,
+/// because an error would expose exception details.
 /// </summary>
 public sealed class UnionsResolver : IFormatterResolver
 {
@@ -29,21 +30,14 @@ public sealed class UnionsResolver : IFormatterResolver
         {
             var type = typeof(T);
 
-            if (type == typeof(Result))
+            if (ResultTypes.IsResult(type))
                 return new RejectingFormatter<T>();
 
-            if (!type.IsGenericType)
-                return null;
-
-            var definition = type.GetGenericTypeDefinition();
-
-            if (definition == typeof(Option<>))
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Option<>))
                 return (IMessagePackFormatter<T>)Activator.CreateInstance(
                     typeof(OptionFormatter<>).MakeGenericType(type.GetGenericArguments()[0]))!;
 
-            return definition == typeof(Result<>) || definition == typeof(Result<,>)
-                ? new RejectingFormatter<T>()
-                : null;
+            return null;
         }
     }
 

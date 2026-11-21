@@ -140,9 +140,11 @@ public class BehaviorTests
     }
 
     [Test]
-    public void ResultWithADataError_IsNotCovered_ExceptionsStillThrow()
+    public async Task ResultWithADataError_ExceptionBecomesTheErrorThroughFromException()
     {
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await Mediator.Send(new GetFailing(1)));
+        var result = await Mediator.Send(new GetFailing(1));
+
+        Assert.That(result.Value, Is.EqualTo(new Failure("negative")));
     }
 
     [Test]

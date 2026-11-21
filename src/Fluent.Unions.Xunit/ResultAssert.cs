@@ -1,9 +1,10 @@
+using Fluent.Unions.Abstractions;
 using Assert = global::Xunit.Assert;
 
 namespace Fluent.Unions.Xunit;
 
 /// <summary>
-/// xUnit assertions for <see cref="Result"/> and <see cref="Result{T}"/>.
+/// xUnit assertions for <see cref="Result"/>, <see cref="Result{T}"/> and custom result types.
 /// </summary>
 public static class ResultAssert
 {
@@ -58,6 +59,64 @@ public static class ResultAssert
     }
 
     /// <summary>
+    /// Asserts that a custom result type with a value is Ok and returns its value.
+    /// </summary>
+    public static T Ok<TSelf, T, TError>(IFluentResult<TSelf, T, TError> result)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        if (result.TryGetError(out var error))
+        {
+            Assert.Fail($"Expected an ok result, but it failed with {Describe(error)}");
+        }
+
+        return result.TryGetValue(out var value) ? value : default!;
+    }
+
+    /// <summary>
+    /// Asserts that a custom result type without a value is Ok.
+    /// </summary>
+    public static void Ok<TSelf, TError>(IFluentUnitResult<TSelf, TError> result)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        if (result.TryGetError(out var error))
+        {
+            Assert.Fail($"Expected an ok result, but it failed with {Describe(error)}");
+        }
+    }
+
+    /// <summary>
+    /// Asserts that a custom result type with a value is an error and returns it.
+    /// </summary>
+    public static TError Error<TSelf, T, TError>(IFluentResult<TSelf, T, TError> result)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        if (!result.TryGetError(out var error))
+        {
+            Assert.Fail($"Expected an error result, but it was ok with value {(result.TryGetValue(out var value) ? value : default)}");
+        }
+
+        return error;
+    }
+
+    /// <summary>
+    /// Asserts that a custom result type without a value is an error and returns it.
+    /// </summary>
+    public static TError Error<TSelf, TError>(IFluentUnitResult<TSelf, TError> result)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        if (!result.TryGetError(out var error))
+        {
+            Assert.Fail("Expected an error result, but it was ok");
+        }
+
+        return error;
+    }
+
+    /// <summary>
     /// Asserts that the result is an error of type <typeparamref name="TException"/> or a derived type and returns it.
     /// A <see cref="Result{T}"/> converts to <see cref="Result"/> implicitly.
     /// </summary>
@@ -79,5 +138,7 @@ public static class ResultAssert
         return typed;
     }
 
-    private static string Describe(Exception error) => $"{error.GetType().Name}: {error.Message}";
+    private static string Describe(object error) => error is Exception exception
+        ? $"{exception.GetType().Name}: {exception.Message}"
+        : $"{error.GetType().Name}: {error}";
 }

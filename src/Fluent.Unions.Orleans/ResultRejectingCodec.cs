@@ -1,4 +1,5 @@
 using System.Buffers;
+using Fluent.Unions.Abstractions;
 using Orleans.Serialization.Buffers;
 using Orleans.Serialization.Serializers;
 using Orleans.Serialization.WireProtocol;
@@ -7,10 +8,7 @@ namespace Fluent.Unions.Orleans;
 
 internal sealed class ResultRejectingCodec : IGeneralizedCodec
 {
-    public bool IsSupportedType(Type type) =>
-        type == typeof(Result)
-        || type.IsGenericType
-        && (type.GetGenericTypeDefinition() == typeof(Result<>) || type.GetGenericTypeDefinition() == typeof(Result<,>));
+    public bool IsSupportedType(Type type) => ResultTypes.IsResult(type);
 
     public void WriteField<TBufferWriter>(ref Writer<TBufferWriter> writer, uint fieldIdDelta, Type? expectedType, object? value)
         where TBufferWriter : IBufferWriter<byte> =>

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Fluent.Unions.TUnit\Fluent.Unions.TUnit.csproj" />
+    <ProjectReference Include="..\..\src\Fluent.Unions.Generators\Fluent.Unions.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

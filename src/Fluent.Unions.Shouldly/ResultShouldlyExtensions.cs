@@ -1,9 +1,10 @@
+using Fluent.Unions.Abstractions;
 using Shouldly;
 
 namespace Fluent.Unions.Shouldly;
 
 /// <summary>
-/// Shouldly assertions for <see cref="Result"/>, <see cref="Result{T}"/> and <see cref="Option{T}"/>.
+/// Shouldly assertions for <see cref="Result"/>, <see cref="Result{T}"/>, <see cref="Option{T}"/> and custom result types.
 /// </summary>
 public static class ResultShouldlyExtensions
 {
@@ -65,6 +66,60 @@ public static class ResultShouldlyExtensions
     }
 
     /// <summary>
+    /// Asserts that a custom result type with a value is Ok and returns its value.
+    /// </summary>
+    public static T ShouldBeOk<TSelf, T, TError>(this IFluentResult<TSelf, T, TError> result, string? customMessage = null)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        if (result.TryGetError(out var error))
+        {
+            throw Fail($"Expected an ok result, but it failed with {Describe(error)}", customMessage);
+        }
+
+        return result.TryGetValue(out var value) ? value : default!;
+    }
+
+    /// <summary>
+    /// Asserts that a custom result type without a value is Ok.
+    /// </summary>
+    public static TSelf ShouldBeOk<TSelf, TError>(this IFluentUnitResult<TSelf, TError> result, string? customMessage = null)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        if (result.TryGetError(out var error))
+        {
+            throw Fail($"Expected an ok result, but it failed with {Describe(error)}", customMessage);
+        }
+
+        return (TSelf)result;
+    }
+
+    /// <summary>
+    /// Asserts that a custom result type with a value is an error and returns it.
+    /// </summary>
+    public static TError ShouldBeError<TSelf, T, TError>(this IFluentResult<TSelf, T, TError> result, string? customMessage = null)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        return result.TryGetError(out var error)
+            ? error
+            : throw Fail($"Expected an error result, but it was ok with value {(result.TryGetValue(out var value) ? value : default)}", customMessage);
+    }
+
+    /// <summary>
+    /// Asserts that a custom result type without a value is an error and returns it.
+    /// </summary>
+    public static TError ShouldBeError<TSelf, TError>(this IFluentUnitResult<TSelf, TError> result, string? customMessage = null)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        return result.TryGetError(out var error)
+            ? error
+            : throw Fail("Expected an error result, but it was ok", customMessage);
+    }
+
+    /// <summary>
     /// Asserts that the option has a value and returns it.
     /// </summary>
     public static T ShouldBeSome<T>(this Option<T> option, string? customMessage = null)
@@ -85,7 +140,9 @@ public static class ResultShouldlyExtensions
         }
     }
 
-    private static string Describe(Exception error) => $"{error.GetType().Name}: {error.Message}";
+    private static string Describe(object error) => error is Exception exception
+        ? $"{exception.GetType().Name}: {exception.Message}"
+        : $"{error.GetType().Name}: {error}";
 
     private static ShouldAssertException Fail(string message, string? customMessage)
     {

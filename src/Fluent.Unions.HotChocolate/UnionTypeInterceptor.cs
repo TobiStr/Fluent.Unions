@@ -1,3 +1,4 @@
+using Fluent.Unions.Abstractions;
 using HotChocolate.Configuration;
 using HotChocolate.Internal;
 using HotChocolate.Resolvers;
@@ -44,14 +45,12 @@ internal sealed class UnionTypeInterceptor : TypeInterceptor
             return null;
         }
 
-        var definition = type.Type.GetGenericTypeDefinition();
-
-        if (definition == typeof(Result<>))
+        if (ResultTypes.ValueType(type.Type) is not null)
         {
             return new Kind(false, UnionFieldMiddleware.UnwrapResult);
         }
 
-        return definition == typeof(Option<>) ? new Kind(true, UnionFieldMiddleware.UnwrapOption) : null;
+        return type.Type.GetGenericTypeDefinition() == typeof(Option<>) ? new Kind(true, UnionFieldMiddleware.UnwrapOption) : null;
     }
 
     private readonly record struct Kind(bool IsNullable, FieldMiddleware Middleware);

@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Fluent.Unions.Abstractions;
 using NUnit.Framework.Constraints;
 
 namespace Fluent.Unions.NUnit;
@@ -25,9 +26,9 @@ internal readonly record struct UnionState(UnionKind Kind, object? Payload)
         var definition = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
         var payload = union.Value;
 
-        if (definition == typeof(Result) || definition == typeof(Result<>))
+        if (ResultTypes.ErrorType(type) is { } errorType)
         {
-            return payload is null or Exception ? new UnionState(UnionKind.Error, payload) : new UnionState(UnionKind.Ok, payload);
+            return payload is null || errorType.IsInstanceOfType(payload) ? new UnionState(UnionKind.Error, payload) : new UnionState(UnionKind.Ok, payload);
         }
 
         if (definition == typeof(Option<>))
@@ -51,6 +52,9 @@ internal readonly record struct UnionState(UnionKind Kind, object? Payload)
                 break;
             case { Kind: UnionKind.Error, Payload: Exception error }:
                 writer.Write($"failed with {error.GetType().Name}: {error.Message}");
+                break;
+            case { Kind: UnionKind.Error, Payload: { } error }:
+                writer.Write($"failed with {error.GetType().Name}: {error}");
                 break;
             case { Kind: UnionKind.Error }:
                 writer.Write("a default result, which is an error");

@@ -1,4 +1,3 @@
-using Fluent.Unions.Abstractions;
 using Mediator;
 
 namespace Fluent.Unions.Mediator;
@@ -8,7 +7,7 @@ namespace Fluent.Unions.Mediator;
 /// </summary>
 public sealed class ExceptionToResultBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
     where TMessage : IMessage
-    where TResponse : struct, IErrorResult<TResponse, Exception>
+    where TResponse : struct
 {
     /// <inheritdoc />
     public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)
@@ -17,9 +16,9 @@ public sealed class ExceptionToResultBehavior<TMessage, TResponse> : IPipelineBe
         {
             return await next(message, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (exception is not OperationCanceledException && ExceptionResult<TResponse>.IsResult)
         {
-            return TResponse.FromError(exception);
+            return ExceptionResult<TResponse>.Create(exception);
         }
     }
 }

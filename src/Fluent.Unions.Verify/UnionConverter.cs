@@ -1,23 +1,23 @@
 using System.Runtime.CompilerServices;
 using Argon;
+using Fluent.Unions.Abstractions;
 
 namespace Fluent.Unions.Verify;
 
 internal sealed class UnionConverter : WriteOnlyJsonConverter
 {
     public override bool CanConvert(Type type) =>
-        type == typeof(Result)
+        ResultTypes.IsResult(type)
         || type.IsGenericType
         && type.GetGenericTypeDefinition() is var definition
-        && (definition == typeof(Result<>) || definition == typeof(Result<,>)
-            || definition == typeof(Option<>) || definition == typeof(Loadable<>));
+        && (definition == typeof(Option<>) || definition == typeof(Loadable<>));
 
     public override void Write(VerifyJsonWriter writer, object value)
     {
         var type = value.GetType();
         var union = (IUnion)value;
 
-        if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(Option<>) && type.GetGenericTypeDefinition() != typeof(Loadable<>))
+        if (ResultTypes.IsResult(type))
             WriteResult(writer, value, union);
         else if (type.GetGenericTypeDefinition() == typeof(Option<>))
             WriteOption(writer, union);
@@ -31,7 +31,7 @@ internal sealed class UnionConverter : WriteOnlyJsonConverter
 
         if ((bool)type.GetProperty("IsSuccess")!.GetValue(result)!)
         {
-            if (type == typeof(Result))
+            if (ResultTypes.ValueType(type) is null)
             {
                 writer.WriteValue("Ok");
                 return;

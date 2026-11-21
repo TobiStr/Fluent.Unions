@@ -1,0 +1,6 @@
+﻿{
+  Error: {
+    Type: DomainException,
+    Message: Result<Int32> holds neither a value nor an error. It is default, or it was created from null; use Option<T> for a value that may be missing.
+  }
+}

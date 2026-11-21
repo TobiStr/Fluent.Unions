@@ -28,25 +28,19 @@ public sealed class ResultEndpointFilter : IEndpointFilter
 
     private static object? ToHttpResult(object? returned) => returned switch
     {
-        Result result => result.ToHttpResult(),
-        IUnion union when Is(returned, typeof(Result<>)) => union.Value switch
-        {
-            Exception error => new ErrorHttpResult(error),
-            null => new ErrorHttpResult(DefaultResult(returned.GetType())),
-            var value => TypedResults.Ok(value)
-        },
         IUnion union when Is(returned, typeof(Option<>)) => union.Value is null or None
             ? TypedResults.NotFound()
             : TypedResults.Ok(union.Value),
-        not null when ShapeOf(returned.GetType()) is { } shape => FromCustomResult(returned, shape),
+        not null when ShapeOf(returned.GetType()) is { } shape => FromResult(returned, shape),
         _ => returned
     };
 
-    private static object FromCustomResult(object returned, ResultShape shape) => shape.Value.GetValue(returned) switch
+    private static object FromResult(object returned, ResultShape shape) => shape.Value.GetValue(returned) switch
     {
         null => new ErrorHttpResult(DefaultResult(returned.GetType())),
         Exception error when shape.ErrorType.IsInstanceOfType(error) => new ErrorHttpResult(error),
         { } error when shape.ErrorType.IsInstanceOfType(error) => new ErrorHttpResult(new ResultErrorException(error)),
+        Ok when shape.ValueType is null => TypedResults.NoContent(),
         var value => TypedResults.Ok(value)
     };
 
@@ -54,25 +48,14 @@ public sealed class ResultEndpointFilter : IEndpointFilter
         new($"The endpoint returned a default {type.Name} that holds neither a value nor an error.");
 
     internal static ResultShape? ShapeOf(Type type) => Shapes.GetOrAdd(type, static candidate =>
-    {
-        if (!candidate.IsValueType)
-            return null;
+        ResultTypes.ErrorType(candidate) is { } errorType
+            ? new ResultShape(
+                ResultTypes.ValueType(candidate),
+                errorType,
+                typeof(IErrorResult<,>).MakeGenericType(candidate, errorType).GetProperty(nameof(IErrorResult<,>.Value))!)
+            : null);
 
-        foreach (var contract in candidate.GetInterfaces())
-        {
-            if (!contract.IsGenericType || contract.GetGenericTypeDefinition() != typeof(IResult<,,>))
-                continue;
-
-            var arguments = contract.GetGenericArguments();
-            var errorResult = typeof(IErrorResult<,>).MakeGenericType(arguments[0], arguments[2]);
-
-            return new ResultShape(arguments[1], arguments[2], errorResult.GetProperty(nameof(IErrorResult<,>.Value))!);
-        }
-
-        return null;
-    });
-
-    internal sealed record ResultShape(Type ValueType, Type ErrorType, PropertyInfo Value);
+    internal sealed record ResultShape(Type? ValueType, Type ErrorType, PropertyInfo Value);
 
     internal static bool Is(object value, Type genericDefinition) => Is(value.GetType(), genericDefinition);
 
@@ -109,24 +92,16 @@ public static class ResultEndpointFilterExtensions
 
     private static void AddResponseMetadata(IList<object> metadata, Type returnType)
     {
-        if (returnType == typeof(Result))
-        {
-            metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status204NoContent, typeof(void)));
-            AddErrorMetadata(metadata);
-        }
-        else if (ResultEndpointFilter.Is(returnType, typeof(Result<>)))
-        {
-            metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status200OK, returnType.GetGenericArguments()[0], Json));
-            AddErrorMetadata(metadata);
-        }
-        else if (ResultEndpointFilter.Is(returnType, typeof(Option<>)))
+        if (ResultEndpointFilter.Is(returnType, typeof(Option<>)))
         {
             metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status200OK, returnType.GetGenericArguments()[0], Json));
             metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status404NotFound, typeof(void)));
         }
         else if (ResultEndpointFilter.ShapeOf(returnType) is { } shape)
         {
-            metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status200OK, shape.ValueType, Json));
+            metadata.Add(shape.ValueType is null
+                ? new ProducesResponseTypeMetadata(StatusCodes.Status204NoContent, typeof(void))
+                : new ProducesResponseTypeMetadata(StatusCodes.Status200OK, shape.ValueType, Json));
             AddErrorMetadata(metadata);
         }
     }

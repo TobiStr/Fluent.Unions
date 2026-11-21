@@ -56,6 +56,14 @@ public static class HttpResultExtensions
         return result.Match(value => (IResult)TypedResults.Ok(value), onError);
     }
 
+    /// <summary>
+    /// Gives 200 with the value, or ProblemDetails for the exception error of a custom result.
+    /// </summary>
+    public static IResult ToHttpResult<TSelf, T, TError>(this IResult<TSelf, T, TError> result)
+        where TSelf : struct, IResult<TSelf, T, TError>
+        where TError : Exception =>
+        result.ToHttpResult(error => new ErrorHttpResult(error));
+
     /// <inheritdoc cref="ToHttpResult{T}(Result{T})"/>
     public static async Task<IResult> ToHttpResult<T>(this Task<Result<T>> task) =>
         (await Settle(task).ConfigureAwait(false)).ToHttpResult();

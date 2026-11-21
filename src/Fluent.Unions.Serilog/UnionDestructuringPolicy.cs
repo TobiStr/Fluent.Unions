@@ -1,13 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Fluent.Unions.Abstractions;
 using Serilog.Core;
 using Serilog.Events;
 
 namespace Fluent.Unions.Serilog;
 
 /// <summary>
-/// Destructures <see cref="Result"/>, <see cref="Result{T}"/>, <see cref="Result{T, TError}"/>,
-/// <see cref="Option{T}"/> and <see cref="Loadable{T}"/> into structured log values.
+/// Destructures every result type, <see cref="Option{T}"/> and <see cref="Loadable{T}"/> into structured log values.
 /// </summary>
 public sealed class UnionDestructuringPolicy : IDestructuringPolicy
 {
@@ -26,9 +26,16 @@ public sealed class UnionDestructuringPolicy : IDestructuringPolicy
         }
 
         var type = value.GetType();
-        if (type == typeof(Result))
+        if (ResultTypes.ErrorType(type) is { } errorType)
         {
-            result = union.Value is Ok ? new ScalarValue("Ok") : Error(union.Value ?? GetError(value), propertyValueFactory);
+            if (ResultTypes.ValueType(type) is null && union.Value is Ok)
+            {
+                result = new ScalarValue("Ok");
+                return true;
+            }
+
+            var inner = union.Value ?? GetError(value);
+            result = errorType.IsInstanceOfType(inner) ? Error(inner, propertyValueFactory) : propertyValueFactory.CreatePropertyValue(inner, true);
             return true;
         }
 
@@ -53,14 +60,6 @@ public sealed class UnionDestructuringPolicy : IDestructuringPolicy
                 Exception error => Error(error, propertyValueFactory),
                 var loaded => propertyValueFactory.CreatePropertyValue(loaded, true),
             };
-            return true;
-        }
-
-        if (definition == typeof(Result<>) || definition == typeof(Result<,>))
-        {
-            var inner = union.Value ?? GetError(value);
-            var errorType = definition == typeof(Result<>) ? typeof(Exception) : type.GetGenericArguments()[1];
-            result = errorType.IsInstanceOfType(inner) ? Error(inner, propertyValueFactory) : propertyValueFactory.CreatePropertyValue(inner, true);
             return true;
         }
 

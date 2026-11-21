@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Fluent.Unions.Abstractions;
 using MediatR;
 
 namespace Fluent.Unions.MediatR;
@@ -10,16 +9,19 @@ namespace Fluent.Unions.MediatR;
 /// </summary>
 public sealed class ValidationToResultBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
-    where TResponse : struct, IErrorResult<TResponse, Exception>
+    where TResponse : struct
 {
     /// <inheritdoc />
     public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
+        if (!ExceptionResult<TResponse>.IsResult)
+            return next(cancellationToken);
+
         var results = new List<ValidationResult>();
 
         return Validator.TryValidateObject(request, new ValidationContext(request), results, validateAllProperties: true)
             ? next(cancellationToken)
-            : Task.FromResult(TResponse.FromError(new ValidationErrors(ToErrors(results))));
+            : Task.FromResult(ExceptionResult<TResponse>.Create(new ValidationErrors(ToErrors(results))));
     }
 
     private static IEnumerable<ValidationError> ToErrors(List<ValidationResult> results)

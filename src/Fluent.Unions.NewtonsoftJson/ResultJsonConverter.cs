@@ -1,21 +1,17 @@
+using Fluent.Unions.Abstractions;
 using Newtonsoft.Json;
 
 namespace Fluent.Unions.NewtonsoftJson;
 
 /// <summary>
-/// Refuses to serialize <see cref="Result"/> and <see cref="Result{T}"/>, because an error would expose exception details
-/// such as the stack trace. Convert a result before serializing it.
+/// Refuses to serialize every result type, because an error would expose exception details such as the stack trace. Convert a result before serializing it.
 /// </summary>
 public sealed class ResultJsonConverter : JsonConverter
 {
     /// <inheritdoc />
     public override bool CanConvert(Type objectType)
     {
-        var resultType = Nullable.GetUnderlyingType(objectType) ?? objectType;
-
-        return resultType == typeof(Result)
-            || resultType.IsGenericType
-            && (resultType.GetGenericTypeDefinition() == typeof(Result<>) || resultType.GetGenericTypeDefinition() == typeof(Result<,>));
+        return ResultTypes.IsResult(Nullable.GetUnderlyingType(objectType) ?? objectType);
     }
 
     /// <inheritdoc />

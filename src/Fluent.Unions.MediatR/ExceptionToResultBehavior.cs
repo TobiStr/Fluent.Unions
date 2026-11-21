@@ -1,4 +1,3 @@
-using Fluent.Unions.Abstractions;
 using MediatR;
 
 namespace Fluent.Unions.MediatR;
@@ -8,7 +7,7 @@ namespace Fluent.Unions.MediatR;
 /// </summary>
 public sealed class ExceptionToResultBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
-    where TResponse : struct, IErrorResult<TResponse, Exception>
+    where TResponse : struct
 {
     /// <inheritdoc />
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
@@ -17,9 +16,9 @@ public sealed class ExceptionToResultBehavior<TRequest, TResponse> : IPipelineBe
         {
             return await next(cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (exception is not OperationCanceledException && ExceptionResult<TResponse>.IsResult)
         {
-            return TResponse.FromError(exception);
+            return ExceptionResult<TResponse>.Create(exception);
         }
     }
 }
