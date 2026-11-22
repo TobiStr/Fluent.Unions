@@ -125,9 +125,9 @@ public void EveryShopExceptionIsACaseOfShopError()
 
 | Part | Members |
 | --- | --- |
-| The union | Constructors for the value and the error, implicit conversions, `Value`, `IsSuccess`, `IsError`, `TryGetValue`, `TryGetError`, `GetValue`, `GetError`, `Deconstruct`, `Ok(value)`, `Error(error)` |
-| `Result` without a value | The same members with `Ok` as the success case, plus `Result.From`, `Try`, `TryAsync`, `WhenAll`, `Retry`, `RetryAsync`, `CombineAll` and `CombineAllAsync` |
-| Operators | Every operator of the default type: `Select`, `Chain`, `Ensure`, `Validate`, `Zip`, `ChainAppend`, `Do`, `OnErrorDo`, `Tap`, `TapError`, `TapAwait`, `Finally`, `Out`, `Catch`, `MapError`, `Match`, `GetValueOrDefault`, `Check`, `Combine`, `CombineAll`, `Partition`, `ToOption`, `ToLoadable`, `Transpose`, `Unwrap`, `WithValue`, `DiscardValue`, query syntax, every `Task` overload and every `...Await` operator |
+| The union | Constructors for the value and the error, implicit conversions, `Value`, `IsSuccess`, `IsError`, `TryGetValue`, `TryGetError`, `GetValue`, `GetError`, `MapError`, `Deconstruct`, `ToString`, `Ok(value)`, `Error(error)`, and an implicit conversion to `Result` that drops the value |
+| `Result` without a value | The same members without `GetValue` and `Deconstruct`, with the static property `Ok` as the success case, plus `Result.From`, `Try`, `TryAsync`, `WhenAll`, `Retry`, `RetryAsync`, `CombineAll` and `CombineAllAsync` |
+| Operators | Every operator of the default type: `Select`, `Chain`, `Ensure`, `Validate`, `Zip`, `ChainAppend`, `Do`, `OnErrorDo`, `Tap`, `TapError`, `TapAwait`, `Finally`, `Out`, `Catch`, `MapError`, `Match`, `GetValueOrDefault`, `Check`, `Combine`, `CombineAll`, `Partition`, `Values`, `Errors`, `ToOption`, `ToLoadable`, `Transpose`, `Unwrap`, `WithValue`, `DiscardValue`, `ValidateAnnotations`, `Timeout`, `RecordResult`, query syntax, every `Task` overload and every `...Await` operator |
 
 Type inference works as with the default type, so no operator needs explicit type arguments:
 
@@ -241,12 +241,16 @@ The default `Result<T>` uses the same layout and operators. See [`bench/results`
 
 ## Diagnostics
 
+`FLU0101`, `FLU0102` and `FLU0105` are errors, and the generator writes nothing for the type until they are fixed.
+
 | Rule | Meaning |
 | --- | --- |
-| `FLU0101` | The declaration is not supported. The message names the reason: not a `readonly partial struct`, a record struct, a ref struct, a `file` type, a nested type, more than one type parameter, a constrained type parameter, an error type that is less accessible than the result, a name that the generator uses for a member, or a mismatch between `Result<T>` and its value-less companion. |
-| `FLU0102` | The error type cannot represent an unexpected exception: implement `IFromException<TError>` for the error type itself, or declare an accessible `public static TError FromException(Exception exception)` on the struct. |
-| `FLU0103` | A case of the error union gets no conversion to the result. The message names the reason: an interface, `object` or `ValueType`, or a case that is less accessible than the result. |
-| `FLU0004` | `Result<X>` where `X` is the error type or one of its cases: a value of `X` would become an error. |
+| [`FLU0101`](../analyzer/README.md#flu0101) | The declaration is not supported. The message names the reason: not a `readonly partial struct`, a record struct, a ref struct, a `file` type, a nested type, more than one type parameter, a constrained type parameter or one that allows ref structs, an error type that is less accessible than the result, a name that the generator uses for a member, a value-less struct without a generic one next to it, or a mismatch between `Result<T>` and its value-less companion. |
+| [`FLU0102`](../analyzer/README.md#flu0102) | The error type cannot represent an unexpected exception: implement `IFromException<TError>` for the error type itself, or declare a `public` or `internal` `static TError FromException(Exception exception)` on the struct. |
+| [`FLU0103`](../analyzer/README.md#flu0103) | Info: a case of the error union gets no conversion to the result. The message names the reason: an interface, `object` or `ValueType`, a type that is neither a class nor a struct, or a case that is less accessible than the result. |
+| [`FLU0104`](../analyzer/README.md#flu0104) | Warning: `Capture = ExceptionCapture.Declared` has no effect, because the error type is `Exception`. |
+| [`FLU0105`](../analyzer/README.md#flu0105) | A type in `Propagate` is not an exception. |
+| [`FLU0004`](../analyzer/README.md#flu0004) | `Result<X>` where `X` is the error type or one of its cases: a value of `X` would become an error. |
 
 The other analyzers, such as `FLU0001` for an ignored result and `FLU0010` for an unchecked `GetValue`, treat your type like the default one.
 

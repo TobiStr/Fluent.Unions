@@ -12,7 +12,7 @@ This folder has one page, this one. Each rule has its own section below, and the
 | --- | --- | --- | --- |
 | [FLU0001](#flu0001) | Warning | A result that is not used | |
 | [FLU0002](#flu0002) | Warning | An async lambda passed to a synchronous operator | Use the `Await` or `Async` operator |
-| [FLU0003](#flu0003) | Warning | An async lambda that becomes `async void` | Use `DoAwait` |
+| [FLU0003](#flu0003) | Warning | An async lambda that becomes `async void` | Use `DoAwait` or `TapAwait` |
 | [FLU0004](#flu0004) | Error | A type argument that overlaps another case, such as `Result<Exception>` | |
 | [FLU0005](#flu0005) | Error | A nullable type argument, such as `Result<string?>` | |
 | [FLU0006](#flu0006) | Error | `Select` that returns a nested result | Use `Chain` |
@@ -119,7 +119,7 @@ result.Do(async o => await SaveAsync(o));
 // warning FLU0003: The async lambda passed to 'Do' is async void; use 'DoAwait'
 ```
 
-The code fix switches `Do` to `DoAwait`, which awaits the lambda. When an operator has no awaiting counterpart, await the work outside the chain instead.
+The code fix switches `Do` to `DoAwait` and `Tap` to `TapAwait`, which await the lambda. When an operator has no awaiting counterpart, the message says to await the work outside the chain instead, and there is no code fix.
 
 <a id="flu0004"></a>
 
@@ -238,7 +238,7 @@ public union CheckoutError(CartEmpty, Unexpected) : IFromException<CheckoutError
 }
 ```
 
-Map every exception to a case, such as `Unexpected`. See [Custom error types](../errors/custom-error-types.md#the-three-static-members) for the contract.
+Map every exception to a case, such as `Unexpected`. See [Unexpected exceptions](../errors/custom-error-types.md#unexpected-exceptions) for the contract and what happens when it is broken.
 
 <a id="flu0010"></a>
 
@@ -321,7 +321,7 @@ A chain that contains `OnErrorDo`, `Do(onSuccess, onError)` or `Catch` before `T
 
 Every rule above treats a type declared with `[FluentResult<TError>]` like the library's `Result<T>`. `FLU0004` also reports a value type that is the error type or one of its union cases, such as `Outcome<CartEmpty>`, because a value of that type would become an error.
 
-The generator adds three rules:
+The generator reports five rules of its own. While a declaration has one of the errors, the generator writes nothing for it.
 
 <a id="flu0101"></a>
 
@@ -335,30 +335,44 @@ The message names the reason. The type must be:
 - named differently from the members the generator adds, such as `Ok` or `Error`;
 - no less accessible than its error type: a public result needs a public error type.
 
+A declared value-less companion must also match `Result<T>`: same name, namespace, error type, `Capture` and `Propagate`.
+
 ```csharp
 [FluentResult<DomainException>]
 public partial struct Result<T>;   // error FLU0101: 'Result' is not a supported result declaration: it must be 'readonly'
 ```
 
-A struct without a type parameter is the value-less companion. It needs a generic struct with the same name, namespace and error type next to it, and both must be declared with `[FluentResult]`. Without a declared companion, the generator writes one.
+A struct without a type parameter is the value-less companion. It needs a generic struct with the same name next to it, and both must be declared with `[FluentResult]`. Without a declared companion, the generator writes one.
 
 <a id="flu0102"></a>
 
 ### FLU0102: No exception mapping
 
-The error type must implement `IFromException<TError>` for itself, or the struct must declare a `public` or `internal` `static TError FromException(Exception exception)`. A method with another parameter or return type, a private method and an `IFromException<Other>` of another type do not count. Without a mapping, an exception thrown inside a step would have nowhere to go.
+The error type must implement `IFromException<TError>` for itself, or the struct must declare a `public` or `internal` `static TError FromException(Exception exception)`. A method with another parameter or return type, a private method and an `IFromException<Other>` of another type do not count. An error type of `Exception` needs no mapping. Without a mapping, an exception thrown inside a step would have nowhere to go.
+
+```csharp
+[FluentResult<string>]
+public readonly partial struct Result<T>;
+// error FLU0102: The error type of 'Result' must implement IFromException<TError>, or 'Result' must declare an accessible 'public static TError FromException(Exception exception)'
+```
 
 <a id="flu0103"></a>
 
 ### FLU0103: Case without a conversion
 
-A case of the error union gets no conversion to the result when C# does not allow one: an interface, `object` or `System.ValueType`, or a type that is less accessible than the result, because conversion operators are public. The message names the reason. Return the case through `Error(...)` instead.
+A case of the error union gets no conversion to the result when C# does not allow one: an interface, `object` or `System.ValueType`, a type that is neither a class nor a struct, such as an enum, or a type that is less accessible than the result. The message names the reason. Return the case through `Error(...)` instead. The rule only runs while `CaseConversions` is on, which is the default.
 
 <a id="flu0104"></a>
 
 ### FLU0104: Declared capture has no effect
 
 `Capture = ExceptionCapture.Declared` captures only exceptions that the error type declares. With `Exception` as the error type, every exception is declared, so the setting changes nothing. Remove it, or use `Propagate` to let chosen exceptions escape. See [Capture policy](../errors/custom-error-types.md#capture-policy).
+
+```csharp
+[FluentResult<Exception>(Capture = ExceptionCapture.Declared)]
+public readonly partial struct Result<T>;
+// warning FLU0104: 'Result' captures only declared exceptions, but its error type 'System.Exception' declares every exception
+```
 
 <a id="flu0105"></a>
 
@@ -367,8 +381,9 @@ A case of the error union gets no conversion to the result when C# does not allo
 Every type in `Propagate` must derive from `Exception`, because only exceptions are thrown:
 
 ```csharp
-[FluentResult<DomainException>(Propagate = [typeof(string)])] // error FLU0105
+[FluentResult<DomainException>(Propagate = [typeof(string)])]
 public readonly partial struct Result<T>;
+// error FLU0105: 'string' in Propagate of 'Result' is not an exception type
 ```
 
 ---

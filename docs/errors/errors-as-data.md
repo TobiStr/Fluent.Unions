@@ -43,7 +43,7 @@ static Outcome<Order> Pay(Cart cart) =>
     cart.Items > 5 ? new PaymentDeclined("Limit exceeded") : new Order(cart.CustomerId, cart.Items);
 ```
 
-Set `CaseConversions = false` on the attribute if you prefer to write `(CheckoutError)new CustomerNotFound(id)`. A case that is an interface gets no conversion and is reported as `FLU0103`.
+Set `CaseConversions = false` on the attribute if you prefer to write `(CheckoutError)new CustomerNotFound(id)`. A case that C# cannot convert, such as an interface, an enum or a case that is less accessible than the result, gets no conversion and is reported as [`FLU0103`](../analyzer/README.md#flu0103).
 
 ## Chaining
 

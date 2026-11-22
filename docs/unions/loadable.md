@@ -36,18 +36,19 @@ order = new TimeoutException("The shop did not answer.");
 | `Match(onNotLoaded, onLoading, onLoaded, onError)` | One callback per state, in that order. Returns a value. |
 | `GetValueOrDefault(fallback)` | The loaded value, or the fallback in every other state. |
 | `ToOption()` | The loaded value as `Option<T>`, or `None`. |
-| `result.ToLoadable()` | From a `Result<T>`: loaded for a value, failed for an error. |
+| `result.ToLoadable()` | From a `Result<T>` or your own result type: loaded for a value, failed for an error. An error that is not an exception is held as a `ResultErrorException`. |
 | `await task.ToLoadable()` | From a `Task<Result<T>>`: the same, and a faulted task counts as failed. |
 
 ```csharp
+Loadable<Order> loaded = new Order(Guid.NewGuid(), "A-1");
 Loadable<string> number = loaded.Select(o => o.Number);         // "A-1"
 Loadable<Order> loading = Loadable.Loading;
 Loadable<string> still = loading.Select(o => o.Number);        // still loading
 string text = number.GetValueOrDefault("-");                     // "A-1"
 Option<string> maybe = number.ToOption();                        // "A-1"
 
-if (loaded.TryGetValue(out var o))
-    Console.WriteLine(o.Number);
+if (loaded.TryGetValue(out var order))
+    Console.WriteLine(order.Number);
 ```
 
 `ToLoadable` is the bridge from the rest of the library. An operation that returns a `Result<T>` becomes a `Loadable<T>` once it finishes. There is no overload for a bare `Task<T>`. Wrap it in `Result.TryAsync` first.
@@ -91,7 +92,7 @@ Set the state to loading before the call and replace it with the outcome when th
 
 Blazor re-renders after the first `await` inside an event handler or `OnInitializedAsync`, so the loading state shows as soon as the call is pending. In other places, call `StateHasChanged()` after changing the field. `OrderService.LoadOrderAsync` returns a `Task<Result<Order>>`.
 
-The `NotLoaded or null` arm covers the `NotLoaded` case and the `default` value. Leave out `or null` and the compiler warns that the switch is not exhaustive.
+The `NotLoaded or null` arm covers the `NotLoaded` case and the `default` value. Leave out `or null` and the switch still compiles without a warning, but a `default` value throws `SwitchExpressionException`.
 
 The same view with `Match` needs no `switch`, and cannot forget a state because each callback is required:
 
@@ -142,7 +143,7 @@ string text = loaded switch
 };
 ```
 
-Without `or null`, a `default` value would not match any arm.
+Without `or null`, a `default` value matches no arm and the switch throws `SwitchExpressionException`. The compiler does not warn about it.
 
 ## Pitfalls
 

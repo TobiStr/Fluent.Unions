@@ -266,7 +266,7 @@ Pitfalls:
 
 - **A missing property is an empty union.** `{ "Subtotal": 100 }` leaves `Method` as `default`, and a `switch` without a `null` arm would throw. The `null` arm turns it into a validation error.
 - **Deserializing is not validating.** `Read` only checks the shape. Run `Check` before you trust a value, and keep both steps in one `Chain`.
-- **The case name is the type name.** Renaming `Voucher` breaks stored and sent JSON. Treat case type names as part of the contract.
+- **The case name is the type name.** Renaming `Voucher` breaks stored and sent JSON. Treat case names as part of the contract, and pin them with [`[UnionCaseName]`](../serialization/README.md#stable-case-names) before a rename.
 
 ## Operations with several outcomes
 
@@ -315,7 +315,7 @@ Add a fourth case, `Blocked`, and the `switch` stops compiling cleanly:
 error CS8509: The switch expression does not handle all possible values of its input type (it is not exhaustive). For example, the pattern 'Blocked' is not covered.
 ```
 
-CS8509 is a warning by default. The test project turns it into an error with `<WarningsAsErrors>CS8509</WarningsAsErrors>`. The compiler reported this for the sample with a fourth case added. The text above is the English wording of that message, which was observed in German.
+CS8509 is a warning by default. The test project turns it into an error with `<WarningsAsErrors>CS8509</WarningsAsErrors>`.
 
 Pitfalls:
 

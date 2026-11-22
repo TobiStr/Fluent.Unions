@@ -35,7 +35,7 @@ JsonSerializer.Serialize(new CustomerDto("Ada", "Countess"));  // {"Name":"Ada",
 - A missing property reads as a `default` option, which holds no value.
 - `WhenWritingNull` does not omit `None`. `WhenWritingDefault` omits every option without a value, because `None` equals `default`.
 - `Option<Option<T>>` is not a round-trip type: it loses the difference between its levels.
-- `Result` and `Result<T>` throw `NotSupportedException` in both directions.
+- `Result`, `Result<T>` and your own result types throw `NotSupportedException` in both directions.
 - The factories use reflection. Trimmed and native AOT apps register the generic converters, see [AOT and trimming](#aot-and-trimming).
 
 ## Options
@@ -98,7 +98,7 @@ public partial class AppJsonContext : JsonSerializerContext;
 
 ## Results refuse to serialize
 
-`JsonSerializer` throws `NotSupportedException` for `Result` and `Result<T>`, when writing and when reading. `ResultJsonConverter` refuses every result type, so the same holds for your own [result type](../errors/custom-error-types.md) declared with `[FluentResult<TError>]`, like the default type. Integration authors can recognize result types with `Fluent.Unions.Abstractions.ResultTypes` (`IsResult(Type)`, `ErrorType(Type)`, `ValueType(Type)`). Without that, an error would be written with its message, stack trace and target site, which leaks internals to clients.
+`JsonSerializer` throws `NotSupportedException` for `Result` and `Result<T>`, when writing and when reading. Without that, an error would be written with its message, stack trace and target site, which leaks internals to clients. `ResultJsonConverter` refuses every result type, and the generator applies it to your own [result type](../errors/custom-error-types.md) declared with `[FluentResult<TError>]`, so the same holds for it. Integration authors can recognize result types with `Fluent.Unions.Abstractions.ResultTypes` (`IsResult(Type)`, `ErrorType(Type)`, `ValueType(Type)`).
 
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");
@@ -113,8 +113,7 @@ record OrderResponse(Order? Order, string? Error);
 
 OrderResponse response = LoadOrder(id).Match(
     order => new OrderResponse(order, null),
-    error => new OrderResponse(null, "The order could not be loaded."),
-    () => new OrderResponse(null, "Not found."));
+    error => new OrderResponse(null, "The order could not be loaded."));
 ```
 
 Other ways out are `GetValueOrDefault()` and `ToOption()`. In ASP.NET Core, use `ToHttpResult()`, which writes the value or ProblemDetails. See [ASP.NET Core](../aspnetcore/README.md).
@@ -170,7 +169,7 @@ To rename a case type safely, add `[UnionCaseName(typeof(Round), "Circle")]` bef
 
 Every name and alias must be unique within the union. A clash, an empty name, a type that is not a case, or two attributes for one case throw `InvalidOperationException` when the converter is created. The Newtonsoft.Json converter reads the same attribute.
 
-The constants `UnionJsonConverter.TypeProperty` and `UnionJsonConverter.ValueProperty` hold the two property names. See [your own unions](../unions/README.md) for `Is` and `As`.
+The constants `UnionJsonConverter.TypeProperty` and `UnionJsonConverter.ValueProperty` hold the two property names. See [Is and As](../unions/your-own-unions.md#is-and-as) for reading one case.
 
 ## AOT and trimming
 
@@ -187,7 +186,7 @@ Register `OptionJsonConverter<T>` for each value type of an option and apply `Un
 ## See also
 
 - [Option conversions](../option/conversions.md)
-- [Your own unions](../unions/README.md)
+- [Your own unions](../unions/your-own-unions.md)
 - [ASP.NET Core](../aspnetcore/README.md)
 
 ---

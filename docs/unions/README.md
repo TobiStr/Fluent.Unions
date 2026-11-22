@@ -46,7 +46,7 @@ For "a value or an error" use [`Result<T>`](../errors/README.md). For "a value o
 ## Rules
 
 - **`switch` exhaustiveness is a warning.** Omitting a case gives CS8509. Add `<WarningsAsErrors>CS8509</WarningsAsErrors>` to make it fail the build.
-- **A `default` union holds nothing.** `switch` over it throws at runtime unless an arm matches `null`. `Option<T>` and `Loadable<T>` treat `default` as `None` and `NotLoaded`, so their arms need `or null`, for example `NotLoaded or null`. A `default` result counts as an error.
+- **A `default` union holds nothing.** `switch` over it throws at runtime unless an arm matches `null`. The compiler does not warn about a missing `null` arm. `Option<T>` and `Loadable<T>` treat `default` as `None` and `NotLoaded`, so their arms need `or null`, for example `NotLoaded or null`. A `default` result counts as an error.
 - **Unions are structs.** The helpers take an `IUnion`, so a union value is boxed for each call.
 - **Plain JSON loses the case.** Without `UnionJsonConverter`, `System.Text.Json` writes only the value, which cannot be read back when cases look alike.
 

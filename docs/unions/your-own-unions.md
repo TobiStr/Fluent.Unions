@@ -24,7 +24,7 @@ string description = method switch
 // "Card ending 4242"
 ```
 
-The held case is available as `method.Value`, typed `object?`. It is `null` only for a `default` union. A union is a struct, and `default` holds nothing: a `switch` over it throws `SwitchExpressionException` unless an arm matches `null`.
+The held case is available as `method.Value`, typed `object?`. It is `null` only for a `default` union. A union is a struct, and `default` holds nothing: a `switch` over it throws `SwitchExpressionException` unless an arm matches `null`. The compiler does not warn about a missing `null` arm.
 
 Cases may be any type, not only records. Use records when each case carries data, because their `ToString` and equality are useful in logs and tests.
 
@@ -86,7 +86,7 @@ var method = JsonSerializer.Deserialize<PaymentMethod>("""{ "$value": { "Code": 
 
 - **Order does not matter when reading.** `$type` and `$value` may come in either order, as in the example above. The converter always writes `$type` first.
 - **An empty union is `null`.** A `default` union writes `null`, and `null` reads as a `default` union.
-- **Case names come from the type name.** `$type` is the name of the case type without its namespace, so an `int` case is `"Int32"`.
+- **Case names come from the type name.** By default, `$type` is the name of the case type without its namespace, so an `int` case is `"Int32"`. `[UnionCaseName]` sets another name.
 - **Unknown or missing `$type` throws `JsonException`.** `{"$type":"Cash","$value":{}}` fails with `'Cash' is not a case of PaymentMethod.`. A missing `$type`, or `{"$type":null}`, fails with `A PaymentMethod needs a '$type' property.`.
 - **A missing `$value` throws `JsonException`,** and so does a `$value` that would give an empty union.
 - **Case names must be unique.** Two cases with the same type name, from different namespaces or closed generics such as `List<int>` and `List<string>`, cannot be told apart. The first serialization throws an `InvalidOperationException` ("has several cases named 'Card'") that names both types. Give the cases distinct names with `[UnionCaseName]`, see [Stable case names](../serialization/README.md#stable-case-names).

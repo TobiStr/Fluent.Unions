@@ -14,6 +14,7 @@ This folder has one page. The topics are below.
 
 ```csharp
 using System.Diagnostics;
+using Fluent.Unions;
 
 var source = new ActivitySource("Shop.Checkout");
 
@@ -36,16 +37,18 @@ activity.RecordResult(order);
 | --- | --- | --- | --- |
 | value or `Result.Ok` | `Ok` | | no |
 | error | `Error` | the exception message | yes, through `AddException` |
-| Your own result type, error that is an exception | `Error` | the exception message | yes |
+| Your own result type, error that is an exception, or an exception case of an error union | `Error` | the exception message | yes |
 | Your own result type, error that is not an exception | `Error` | the message of a `ResultErrorException` holding the error | yes, as `ResultErrorException` |
-| `default` result | `Error` | the message of the `InvalidOperationException` it holds | yes |
+| `default` result | `Error` | the message of its error: the `InvalidOperationException` that says the result is empty, or for your own type, what `FromException` makes of it | yes |
 | `null` activity | nothing | | no |
 
-`RecordResult` has overloads for `Result` and `Result<T>`. Your own [result type](../errors/custom-error-types.md) gets a generated `RecordResult` operator, so `activity.RecordResult(result)` works the same. An error that is not an exception is recorded as a `ResultErrorException`.
+`RecordResult` has overloads for `Result` and `Result<T>`. Your own [result type](../errors/custom-error-types.md) and its value-less companion get a generated `RecordResult` operator in the namespace of the type, so `activity.RecordResult(result)` works the same. An error that is not an exception is recorded as a `ResultErrorException`.
 
 ## When to use
 
 - Your operations return results and you want the span status to follow without a `try`/`catch`.
 - You want failed spans to carry the exception type and message in tracing tools.
+
+---
 
 Back to index: [Docs index](../README.md)
