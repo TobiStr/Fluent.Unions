@@ -21,9 +21,9 @@ using Fluent.Unions;
 using Fluent.Unions.NewtonsoftJson;
 using Newtonsoft.Json;
 
-var settings = new JsonSerializerSettings().AddFluentUnions();
-
 public record CustomerDto(string Name, Option<string> Nickname);
+
+var settings = new JsonSerializerSettings().AddFluentUnions();
 
 JsonConvert.SerializeObject(new CustomerDto("Ada", Option.None), settings); // {"Name":"Ada","Nickname":null}
 JsonConvert.SerializeObject(new CustomerDto("Ada", "Countess"), settings);  // {"Name":"Ada","Nickname":"Countess"}
@@ -36,4 +36,9 @@ Your own unions are written with `$type` and `$value`. Apply the converter with 
 public union Shape(Circle, Square);
 ```
 
-Every result type throws `NotSupportedException` when written or read: `Result`, `Result<T>` and your own types declared with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md). Convert them first. See the [documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/newtonsoft-json/README.md).
+Every result type throws `NotSupportedException` when written or read: `Result`, `Result<T>` and your own types declared with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md). Convert them first.
+
+The converters use reflection and are not supported in trimmed or native AOT apps. `AddFluentUnions()` carries `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]`, so the analyzers warn where it is called. See [AOT and trimming](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/aot-and-trimming.md).
+
+See the [documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/newtonsoft-json/README.md).
+>>>>

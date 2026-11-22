@@ -50,7 +50,6 @@ The surrogate is stored in grain state, so keep its field ids as they are in you
 
 `Result` and `Result<T>` throw `NotSupportedException` when serialized, in a grain call and in grain state. Your own [result type](../errors/custom-error-types.md) is refused like the default type.
 
-
 ```csharp
 Result<int> error = new InvalidOperationException("Secret");
 
@@ -81,7 +80,7 @@ The Orleans code generator never sees `Option<T>`: it generates the serializer o
 - `Option<T>` needs no attribute on your types. `Option<Option<T>>` keeps both levels, unlike the JSON, MessagePack and MongoDB integrations.
 - Results throw. Convert them before the grain returns.
 - A local call within a silo copies its arguments and result instead of serializing them. `Result` and `Result<T>` throw `NotSupportedException` there as well. A result type you declare is not covered by the copier, because Orleans treats it as a plain struct and copies it locally, so only serialization (a remote call, persisted state) refuses it.
-- Your own C# 15 unions are not covered. AOT and trimming have not been investigated or tested.
+- Your own C# 15 unions are not covered. AOT and trimming are not verified, see [AOT and trimming](../getting-started/aot-and-trimming.md).
 
 ## See also
 

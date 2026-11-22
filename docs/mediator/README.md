@@ -63,7 +63,7 @@ Check the MediatR license against your project before you use that package. Medi
 
 MediatR names the first type parameter `TRequest`. Both classes are sealed and have no options.
 
-`ValidationToResultBehavior` uses `System.ComponentModel.DataAnnotations`: the attributes on the request's properties and `IValidatableObject`. Each failed member becomes one `ValidationError` with its `MemberName`. A failure without a member has a `null` member name. The handler does not run for an invalid request. A request without rules passes. On a record, write `[property: Required]`, or the attribute lands on the constructor parameter and is ignored.
+`ValidationToResultBehavior` uses `System.ComponentModel.DataAnnotations`: the attributes on the request's properties and `IValidatableObject`. Each failed member becomes one `ValidationError` with its `MemberName`. A failure without a member has a `null` member name. The handler does not run for an invalid request. A request without rules passes. Only the request's own properties are validated, not the properties of nested objects. On a record, write `[property: Required]`, or the attribute lands on the constructor parameter and is ignored.
 
 ## With your own result type
 

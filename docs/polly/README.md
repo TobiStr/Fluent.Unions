@@ -43,7 +43,7 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 | the operation returns an Ok result | that result |
 | the operation returns an error result | that result, after the strategies ran |
 | the operation or a strategy throws | error holding the exception |
-| the token is cancelled | `OperationCanceledException` is thrown |
+| an `OperationCanceledException` escapes, for example because the token is cancelled | the exception is rethrown |
 
 | Member | On |
 | --- | --- |
@@ -52,7 +52,7 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 | `ExecuteResultAsync(operation, cancellationToken)` | `ResiliencePipeline<Result<T>>` and `ResiliencePipeline` |
 | `ToResult()` | `Outcome<Result<T>>` |
 
-`ToResult` converts the outcome that Polly passes to callbacks such as `OnRetry`: an exception becomes an error, and an outcome without a value is empty.
+`ToResult` converts the outcome that Polly passes to callbacks such as `OnRetry`: an exception becomes an error, an `OperationCanceledException` is rethrown, and an outcome without a value is empty.
 
 ## With your own result type
 
@@ -80,7 +80,7 @@ CallResult<Payment> payment = await pipeline
 | `ExecuteResultAsync<TResult, TError>(operation, cancellationToken)` | `ResiliencePipeline<TResult>` and `ResiliencePipeline` |
 | `ToResult<TResult, TError>()` | `Outcome<TResult>` |
 
-`TResult` must be a struct that implements `IErrorResult<TResult, TError>`, which `IResult<TSelf, T, TError>` extends. Empty is never handled. An exception that escapes the pipeline, including `OperationCanceledException`, becomes `TResult.FromError(TResult.FromException(exception))`. An exception that the [capture policy](../errors/custom-error-types.md#capture-policy) of `TResult` excludes is rethrown with its original stack trace. The overloads for `Result<T>` stay in use for `Result<T>` and need no type arguments.
+`TResult` must be a struct that implements `IErrorResult<TResult, TError>`, which `IResult<TSelf, T, TError>` extends. Empty is never handled. An exception that escapes the pipeline becomes `TResult.FromError(TResult.FromException(exception))`. An `OperationCanceledException`, and an exception that the [capture policy](../errors/custom-error-types.md#capture-policy) of `TResult` excludes, are rethrown with their original stack trace. `ToResult<TResult, TError>()` follows the same rules. The overloads for `Result<T>` stay in use for `Result<T>` and need no type arguments.
 
 ## When to use
 
@@ -91,9 +91,9 @@ CallResult<Payment> payment = await pipeline
 ## Rules
 
 - **Only the result state is read.** `HandleError` looks at the error in the result. Thrown exceptions stay with Polly's `Handle<TException>()`, which you can add to the same builder.
-- **Cancellation is not an error.** A cancelled token throws `OperationCanceledException`, as everywhere in .NET.
+- **Cancellation is not an error.** A cancelled token throws `OperationCanceledException`, as everywhere in .NET. This holds for every `OperationCanceledException` that escapes the pipeline, including a `TaskCanceledException` from an `HttpClient` timeout.
 - **The predicate is a lambda.** `HandleError(error => error is TimeoutException)` takes a `Func<Exception, bool>`. For a custom type it takes a `Func<TError, bool>`.
-- **Exceptions are captured.** `ExecuteResultAsync` does not throw for an operation or strategy failure, except for cancellation. Use `ToResult` on an `Outcome` for the same rule in your own callbacks.
+- **Exceptions are captured.** `ExecuteResultAsync` does not throw for an operation or strategy failure, except for cancellation and, for your own result type, exceptions that its capture policy excludes. Use `ToResult` on an `Outcome` for the same rule in your own callbacks.
 - **No sync form yet.** Only the async `ExecuteResultAsync` exists.
 
 ---

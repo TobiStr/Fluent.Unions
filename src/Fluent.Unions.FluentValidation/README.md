@@ -14,7 +14,7 @@ dotnet add package Fluent.Unions.FluentValidation
 
 ## Usage
 
-Validate an instance. Every failure ends up in one `ValidationErrors` with one `ValidationError` per failure, named after its property. A validator that throws gives the exception as the error.
+Validate an instance. Every failure ends up in one `ValidationErrors` with one `ValidationError` per failure, named after its property. A validator that throws gives the exception as the error. Cancellation propagates.
 
 ```csharp
 using FluentValidation;
@@ -35,7 +35,7 @@ Result<PlaceOrder> checkedCommand = await parsed.ValidateAsync(validator, cancel
 
 ### With your own result type
 
-`Validate(validator)` works on your own result type without type arguments. `ValidateToResult` returns the default `Fluent.Unions.Result<T>`, so start with `Result.From(value).Validate(validator)` instead. Without `map`, a failure goes through `FromException`. With `map`, an error type that is data gets every failure. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+`Validate(validator)` and `ValidateAsync` work on a result type declared with `[FluentResult<TError>]` without type arguments. `ValidateToResult` returns the default `Fluent.Unions.Result<T>`, so start with the `From` of your type instead. Without `map`, a failure goes through `FromException`. With `map`, an error type that is data gets every failure. An exception that the capture policy of your type excludes propagates. The example uses `[FluentResult<DomainException>] public readonly partial struct Result<T>;`. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ```csharp
 Result<PlaceOrder> validated = Result.From(new PlaceOrder(Guid.Empty, 0)).Validate(validator);

@@ -80,7 +80,7 @@ Use the response shapes above when you need the 404 as `None` or want the status
 
 ## With your own result type
 
-`ToResult()` produces the default `Fluent.Unions.Result<T>`, not a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). Wrap the call in your own `Result.TryAsync(...)`, or convert with `Match`:
+`ToResult()` produces the default `Fluent.Unions.Result<T>`, not a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). Declare the method as `Task<User>` and wrap the call in your own `Result.TryAsync(...)`, which turns the thrown `ApiException` or `ApiRequestException` into your error. Or convert the default result with `Match`:
 
 ```csharp
 Shop.Result<User> mine = (await api.GetUser(7).ToResult())

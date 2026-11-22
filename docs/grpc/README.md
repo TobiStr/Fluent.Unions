@@ -51,7 +51,7 @@ var message = result.Match(
     error => error is RpcException { StatusCode: StatusCode.DeadlineExceeded } ? "Too slow." : "Failed.");
 ```
 
-The error carries only the status code, so returning it to your own caller does not leak the message or trailers of the downstream service. Log or inspect the original through `((RpcException)error.Status.DebugException!)`. A deadline gives `DeadlineExceeded`, which is an error. Only `Cancelled` is thrown, because it means the caller or the server cancelled the call.
+The error carries only the status code, so returning it to your own caller does not leak the message or trailers of the downstream service. Log or inspect the original through `((RpcException)error).Status.DebugException`. A deadline gives `DeadlineExceeded`, which is an error. Only `Cancelled` is thrown, because it means the caller or the server cancelled the call.
 
 For a call with a streaming response, read `call.ResponseStream` as usual: an `RpcException` comes out of `MoveNext`. `ToResult()` does not cover it.
 
@@ -94,7 +94,7 @@ Only the status code and a message are sent. A validation error is written as `N
 
 ## With your own result type
 
-`ToResult()` produces the default `Fluent.Unions.Result<T>`, not a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). Wrap the call in your own `Result.TryAsync(...)`, or convert with `Match`:
+`ToResult()` produces the default `Fluent.Unions.Result<T>`, not a type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). Convert with `Match` to keep the behavior of `ToResult()`. Your own `Result.TryAsync` over the `ResponseAsync` of the call is different: it keeps the original `RpcException`, with its detail and trailers, and does not throw for `Cancelled`.
 
 ```csharp
 Shop.Result<UserReply> mine = (await client.GetUserAsync(request).ToResult())

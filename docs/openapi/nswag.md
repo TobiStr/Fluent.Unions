@@ -43,7 +43,7 @@ The null branch is `nullable: true` with `enum: [null]`, because an OpenAPI 3.0 
 
 - **Nullable and not required.** NSwag does not mark an option property as required, and the processor does not add it to `required`.
 - **No Swagger 2.** A Swagger 2 document (`AddSwaggerDocument`) cannot describe a nullable reference. The processor throws a `NotSupportedException` when it meets an `Option<T>` there, instead of writing a schema that loses the null.
-- **Only `Option<T>` is changed.** `Result` types, and an option used as a route or query parameter, are not described yet.
+- **Only `Option<T>` is changed.** An option used as a route or query parameter is not described yet. The responses of an endpoint that returns a result come from [`WithResultMapping`](../aspnetcore/endpoint-filter.md#openapi) in Fluent.Unions.AspNetCore.
 - **Why a processor.** NJsonSchema maps a single closed type through an `ITypeMapper`, so it cannot match every `Option<T>`. A schema processor sees each one.
 - **Package version.** It builds on `NSwag.Generation` 14.8.0 and NJsonSchema 11.6.2 (MIT).
 

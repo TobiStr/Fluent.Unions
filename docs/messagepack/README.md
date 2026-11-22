@@ -27,7 +27,7 @@ Option<int> back = MessagePackSerializer.Deserialize<Option<int>>(bytes, options
 MessagePackSerializer.Serialize<Option<int>>(Option.None, options); // a single nil byte
 ```
 
-`WithFluentUnions()` returns options that ask `UnionsResolver` first and then the resolver the options already had. Options that already have it are returned unchanged. Without it, MessagePack does not know `Option<T>`.
+`WithFluentUnions()` returns options that ask `UnionsResolver` first and then the resolver the options already had. Calling it again on the options it returned gives them back unchanged. Without `UnionsResolver`, MessagePack does not know `Option<T>`.
 
 ## Options
 
@@ -89,7 +89,9 @@ Convert a result before serializing it, for example with `Match`, `GetValueOrDef
 - `UnionsResolver` needs to be in the options. `WithFluentUnions()` is the shortest way, or add `UnionsResolver.Instance` to a `CompositeResolver` yourself.
 - `Option<T>` in a `[MessagePackObject]` type needs one of the two source generator workarounds above.
 - `Option<Option<T>>` loses the difference between its levels: `None` and `Some(None)` are both written as nil. Flatten it with `Unwrap()` first.
-- `UnionsResolver` creates formatters through reflection (`MakeGenericType`), so it does not work in trimmed or native AOT apps. `WithFluentUnions()` carries `RequiresUnreferencedCode` and `RequiresDynamicCode`. Register `OptionFormatter<T>` yourself there. See [AOT and trimming](../getting-started/aot-and-trimming.md).
+- `UnionsResolver` creates formatters through reflection (`MakeGenericType`), so it does not work in trimmed or native AOT apps. `WithFluentUnions()` carries `RequiresUnreferencedCode` and `RequiresDynamicCode`. Register `OptionFormatter<T>` for each `T` yourself there, for example with `CompositeResolver.Create`. `UnionsResolver` is also what refuses results, so without it keep results out of what you serialize. See [AOT and trimming](../getting-started/aot-and-trimming.md).
+>>>>
+
 - Your own C# 15 unions are not covered. MessagePack's own `[Union]` attribute is for class hierarchies, and has not been tried with `union` types.
 
 ## See also

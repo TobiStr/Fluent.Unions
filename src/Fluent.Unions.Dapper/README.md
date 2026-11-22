@@ -28,7 +28,7 @@ Use an option as a parameter and as a column.
 
 ```csharp
 connection.Execute("UPDATE person SET age = @age WHERE id = @id", new { id, age = Option.Some(30) });
-// age = Option.None writes NULL
+// age = (Option<int>)Option.None writes NULL
 
 public class PersonRow
 {

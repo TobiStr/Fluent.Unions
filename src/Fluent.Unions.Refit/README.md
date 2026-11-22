@@ -42,7 +42,7 @@ Cancellation and timeouts are thrown, never turned into an error. `Task<ApiRespo
 
 ### With your own result type
 
-`ToResult()` and `ToOptionalResult()` produce the default `Fluent.Unions.Result<T>`. To get your own type, wrap the call in your own `Result.TryAsync(...)`, or convert with `Match`. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+`ToResult()` and `ToOptionalResult()` produce the default `Fluent.Unions.Result<T>`. To get your own type, declare the method as `Task<User>` and wrap the call in your own `Result.TryAsync(...)`, or convert the default result with `Match`. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ```csharp
 Shop.Result<User> mine = user.Match(value => (Shop.Result<User>)value, error => DomainException.FromException(error));

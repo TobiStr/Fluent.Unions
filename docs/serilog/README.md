@@ -50,7 +50,7 @@ The shape matches the JSON of [options](../serialization/README.md#options): a v
 | `Loadable<T>` with a value | the value, destructured |
 | `Loadable<T>` faulted | `{ Error: { Type, Message } }` |
 
-`Type` is the full name of the exception type and `Message` is its message. A `default` result is an error, so it logs the uninitialized error. Values nest: an option property of a destructured object, or an option in an array, logs as its value or `null`.
+`Type` is the full name of the exception type and `Message` is its message. A `default` result is an error, so it logs the error that the result type uses for an uninitialized result. Values nest: an option property of a destructured object, or an option in an array, logs as its value or `null`.
 
 An error that is not an exception, such as a record of an error union, is destructured like any other object, so its properties are logged: `{ Error: { Id: "42" } }`.
 
@@ -77,10 +77,10 @@ if (order.TryGetError(out var error))
 ## Rules
 
 - **Destructure with `@`.** `{Order}` renders with `ToString()`, which is the value, or `{ExceptionType}: {Message}` for an error, without the stack trace. Serilog applies destructuring policies only for `{@Order}`, so prefer `{@Order}` to get structured properties.
-- **Only the five types and result types are handled.** Other values, including your own unions, are left to Serilog and other policies.
+- **Only result types, `Option<T>` and `Loadable<T>` are handled.** Other values, including your own unions, are left to Serilog and other policies.
 - **No `null` values.** An option or result never holds `null`. A `null` in the log means an option with no value.
 - **An error and a value can look alike.** A value that is a structure with only an `Error` property is indistinguishable from an error in the log. Use `Match` and log the cases yourself when that matters.
-- **Reflection for the generic types.** The policy reads the union through `IUnion` and the generic type definition. AOT and trimming have not been tested.
+- **Reflection for the generic types.** The policy reads the union through `IUnion` and the generic type definition. AOT and trimming are not verified, see [AOT and trimming](../getting-started/aot-and-trimming.md).
 - **Call `WithFluentUnions` once.** It adds the policy to the logger configuration.
 
 ---

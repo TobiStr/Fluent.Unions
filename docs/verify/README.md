@@ -111,9 +111,11 @@ See the [Verify maintenance fee](https://github.com/VerifyTests/Verify/blob/main
 ## Rules
 
 - **Call `Initialize` before the first snapshot.** A module initializer in the test project does it once for all tests.
-- **Write-only.** The converters only write snapshots. Verify never reads a result back.
+- **Write-only.** The converter only writes snapshots. Verify never reads a result back.
 - **No stack traces.** Exceptions show their type and message.
-- **Only result types and the core types.** Your own unions are written by Verify's default rules, except a union that is the error of your own result type, which is unwrapped to its case.
+- **Only result types and the core types.** Your own unions are written by Verify's default rules. The exception is a union held directly as the value or error of a result, option or loadable, such as the error union of your own result type: it is unwrapped to its case.
+>>>>
+
 - **Verify.NUnit needs NUnit 5.** `Verify.NUnit` 33.7.1 requires NUnit 5.0.0 or later.
 - **Name clash.** Inside a namespace that starts with `Fluent.Unions.Verify`, write `Verifier.Verify(...)` instead of `Verify(...)`, because the namespace hides the method.
 

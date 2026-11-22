@@ -12,7 +12,10 @@ This folder has one page. The topics are below.
 - [Options](#options): value or `null`, in properties, collections and dictionaries.
 - [Results](#results-refuse-to-serialize): why they throw.
 - [Your own unions](#your-own-unions): `UnionJsonConverter` with `$type` and `$value`.
+- [AOT and trimming](#aot-and-trimming): not supported.
 - [Rules](#rules) and [Pitfalls](#pitfalls)
+>>>>
+
 
 ## Quick example
 

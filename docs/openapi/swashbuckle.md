@@ -41,7 +41,7 @@ Nullable is written the way the document version says: `nullable: true` in an Op
 ## Rules
 
 - **Nullable and not required.** Swashbuckle does not mark a struct property as required, so an option property is not in `required`, and a client treats it as optional and nullable.
-- **Only `Option<T>` is changed.** `Result` types, and an option used as a route or query parameter, are not described yet.
+- **Only `Option<T>` is changed.** An option used as a route or query parameter is not described yet. The responses of an endpoint that returns a result come from [`WithResultMapping`](../aspnetcore/endpoint-filter.md#openapi) in Fluent.Unions.AspNetCore.
 - **Swashbuckle only.** For `Microsoft.AspNetCore.OpenApi` use `Fluent.Unions.OpenApi`, for NSwag see the [NSwag page](nswag.md).
 - **Package version.** It builds on `Swashbuckle.AspNetCore.SwaggerGen` 11.0.1 (MIT), which uses the `Microsoft.OpenApi` 3.x model.
 

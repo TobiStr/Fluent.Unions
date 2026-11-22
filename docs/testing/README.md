@@ -1,6 +1,6 @@
 # Testing
 
-The packages `Fluent.Unions.Shouldly`, `Fluent.Unions.TUnit`, `Fluent.Unions.NUnit` and `Fluent.Unions.Xunit` add assertions for `Result`, `Result<T>` and `Option<T>` to Shouldly, TUnit, NUnit and xUnit v3. Each package offers the same vocabulary in the style of its host library, and a failure message names the actual state. For AwesomeAssertions see [AwesomeAssertions](../awesome-assertions/README.md).
+The packages `Fluent.Unions.Shouldly`, `Fluent.Unions.TUnit`, `Fluent.Unions.NUnit` and `Fluent.Unions.Xunit` add assertions for `Result`, `Result<T>` and `Option<T>` to Shouldly, TUnit, NUnit and xUnit v3. Each package offers the same vocabulary in the style of its host library, and a failure message names the actual state. For AwesomeAssertions and FluentAssertions see [AwesomeAssertions](../awesome-assertions/README.md) and [FluentAssertions](../fluent-assertions/README.md).
 
 ## In this section
 
@@ -59,7 +59,12 @@ removed.ShouldBeError<NotFoundException>();
 // passes when the error is a NotFoundException or a derived type
 ```
 
-`ShouldBeError<TException>()` exists on `Result` only. A C# method cannot infer the value type and name the exception type at once. On a `Result<T>` use `ShouldBeError()` with Shouldly's `ShouldBeOfType` or `ShouldBeAssignableTo`.
+On a `Result<T>`, `ShouldBeError<TException>()` binds to the overload for any result type (an extension on `IUnion`). It passes for the same exception type or a derived type and returns it, like the overload on `Result`.
+
+```csharp
+Result<Order> missing = await orders.FindAsync(unknownId);
+missing.ShouldBeError<NotFoundException>().Message.ShouldContain("was not found");
+```
 
 ## TUnit
 
@@ -78,7 +83,7 @@ await Assert.That(customer.Nickname).IsNone();
 // passes when the customer has no nickname
 ```
 
-A chained `And` continues on the result itself and not on the returned value. Await the assertion to get the value, then assert on it. As with Shouldly, `IsError<TException>()` exists on `Result` only. On a `Result<T>`, `IsError()` returns the exception, which you check with `IsTypeOf`.
+A chained `And` continues on the result itself and not on the returned value. Await the assertion to get the value, then assert on it. `IsError<TException>()` exists on `Result` only. On a `Result<T>`, await `IsError()` and check the returned exception with `IsTypeOf`, or assign the result to a `Result` variable first.
 
 The package depends on `TUnit.Assertions` only, so the assertions also run in a test project of another framework. A TUnit test project needs the Microsoft.Testing.Platform runner mode of `dotnet test` on .NET 10 SDK and later, which is set in `global.json`.
 
@@ -150,7 +155,9 @@ NUnit prints `Expected: an ok result` and `But was: failed with TimeoutException
 
 - You test code that returns `Result`, `Result<T>` or `Option<T>` and want a failure to say which state it was, instead of `IsSuccess` being false.
 - You want the value or the exception back to keep asserting on it.
-- You use AwesomeAssertions. Then see [AwesomeAssertions](../awesome-assertions/README.md).
+- You use AwesomeAssertions or FluentAssertions. Then see [AwesomeAssertions](../awesome-assertions/README.md) or [FluentAssertions](../fluent-assertions/README.md).
+>>>>
+
 
 ## Rules
 

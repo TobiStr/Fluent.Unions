@@ -46,8 +46,9 @@ nickname.Should().BeSomeWithValue("ada");
 | `BeError<TException>()` | the error is a `TException` or a derived type | both |
 | `BeError<TException>(predicate)` | the error is a `TException` and the predicate is true | both |
 | `BeAggregateError()` | the error is an `AggregateException` | both |
-
 | `BeOkWithValue(value)` | the result is Ok and holds an equal value | `Result<T>` |
+>>>>
+
 | `BeOkMatching(predicate)` | the result is Ok and the value matches the predicate | `Result<T>` |
 | `BeOkSatisfying(assertion)` | the result is Ok and the assertion runs on the value | `Result<T>` |
 
@@ -102,7 +103,7 @@ An error that is not an exception is named in a failure message by the type of i
 | `WithMessage(pattern)` | the message matches the pattern. `*` and `?` are wildcards and case is ignored. |
 | `WithMessageContaining(text)` | the message contains the text, ignoring case |
 
-`AggregateErrorAssertions` works on the flattened inner exceptions, so it fits the output of `Validate` and `CombineAll`.
+`AggregateErrorAssertions` works on the flattened inner exceptions. `Validate`, `CombineAll` and `Combine` produce an `AggregateException` when at least one failure is not a `ValidationError`. When every failure is a `ValidationError`, they produce `ValidationErrors` instead, so use `BeError<ValidationErrors>()` and read `Which.Errors`.
 
 | Method | Passes when |
 | --- | --- |
@@ -114,13 +115,19 @@ An error that is not an exception is named in a failure message by the type of i
 Result<Customer> registered = Result<Customer>.Ok(new Customer("", "not-an-email"))
     .Validate(c => c.Name.EnsureNotEmpty(), c => c.Email.EnsureMatchesEmail());
 
-registered.Should().BeAggregateError().WithInnerCount(2);
+registered.Should().BeError<ValidationErrors>().Which.Errors.Should().HaveCount(2);
 // passes when both rules failed
+
+Result<Customer> checkedOnline = Result<Customer>.Ok(new Customer("", "ada@example.com"))
+    .Validate(c => c.Name.EnsureNotEmpty(), c => emailService.Verify(c.Email));
+
+checkedOnline.Should().BeAggregateError().WithInner<ValidationError>();
+// passes when the name rule failed and the email service returned an error that is not a ValidationError
 ```
 
 ## When to use
 
-- You test code that returns `Result`, `Result<T>` or `Option<T>` and want the failure message to name the actual state instead of `Value is Exception` checks.
+- You test code that returns `Result`, `Result<T>`, `Option<T>` or your own result type and want the failure message to name the actual state instead of `Value is Exception` checks.
 - You already use FluentAssertions. For NUnit constraints alone, `Assert.That(result.IsSuccess, Is.True)` still works.
 
 ## Rules
@@ -128,7 +135,9 @@ registered.Should().BeAggregateError().WithInnerCount(2);
 - **`default` is an error.** A `default` result passes `BeError()` and fails `BeOk()`, like everywhere else in the library.
 - **The message names the state.** A failure shows whether the result was Ok or an error, with the exception type and message.
 - **None includes `default`.** `BeNone()` passes for `default(Option<T>)`, and `BeSome()` fails for it.
-- **Predicates are expressions.** `BeOkMatching` and `BeError<TException>(predicate)` take an `Expression<Func<..>>`, so the failure message shows the condition.
+- **Predicates are expressions.** `BeOkMatching`, `BeSomeMatching`, `BeError<TException>(predicate)` and `BeError<TCase>(predicate)` take an `Expression<Func<..>>`, so the failure message shows the condition.
+>>>>
+
 - **Not covered yet.** `Loadable<T>` has no assertions.
 
 ---

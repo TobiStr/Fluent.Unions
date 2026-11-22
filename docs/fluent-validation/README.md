@@ -50,7 +50,7 @@ An endpoint that returns the first result with `ToHttpResult()` answers 400 with
 | `Result<T>` with an error | the same error, the validator is not called |
 | `null` instance | `ArgumentNullException` |
 
-The aggregate is always flattened, also for a single failure, the same as `Validate`. Each inner exception carries the failure in its `Errors`, so `PropertyName`, `ErrorCode`, `AttemptedValue` and `Severity` stay available.
+The error is always a `ValidationErrors`, also for a single failure, the same as `Validate`. Each `ValidationError` keeps the failure's `ErrorMessage`, and its `PropertyName` as `MemberName`. A rule on the whole object has no property name and gives a `null` member name. `ErrorCode`, `AttemptedValue` and `Severity` are not kept. To use them, take the `map` overload on your own result type, which receives every `ValidationFailure`.
 
 | Member | On |
 | --- | --- |
@@ -61,7 +61,7 @@ The aggregate is always flattened, also for a single failure, the same as `Valid
 
 ## With your own result type
 
-`Validate(validator)` and `ValidateAsync` work on a result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)), without explicit type arguments. They return your own type and call the validator only for a value. `ValidateToResult` always returns the default `Fluent.Unions.Result<T>`. With your own type, start with `Result.From(value).Validate(validator)`.
+`Validate(validator)` and `ValidateAsync` work on a result type declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)), without explicit type arguments. They return your own type and call the validator only for a value. `ValidateToResult` always returns the default `Fluent.Unions.Result<T>`. With your own type, start with the `From` of its value-less companion, for example `CheckoutResult.From(value).Validate(validator)`.
 
 | Member | A failure becomes |
 | --- | --- |
@@ -107,6 +107,7 @@ public class UpdateProfileValidator : AbstractValidator<UpdateProfile>
 
 - **Call it with `this.`** It is an extension method on `AbstractValidator<T>`, so C# needs the receiver inside the constructor.
 - **Failures are named after the property.** A nested property such as `p => p.Address.Street` gives `Address.Street`, as `RuleFor` does.
+- **Select a property.** An expression that is not a property access, such as a method call, throws `ArgumentException`.
 - **Every validator in the chain is skipped for `None`**, including ones added after `When` or `WithMessage`.
 - **To require a value**, add a separate rule: `RuleFor(p => p.Nickname).Must(n => n.HasValue)`.
 

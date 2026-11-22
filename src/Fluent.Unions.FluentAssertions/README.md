@@ -40,11 +40,14 @@ Option<string> nickname = customer.Nickname;
 nickname.Should().BeSomeWithValue("ada");
 ```
 
-Assert on the inner exceptions of an aggregate error, such as the output of `Validate`.
+Assert on failed validation rules. `Validate` returns `ValidationErrors` when every failure is a `ValidationError`, and an `AggregateException` when one is not.
 
 ```csharp
-registered.Should().BeAggregateError().WithInnerCount(2);
+registered.Should().BeError<ValidationErrors>().Which.Errors.Should().HaveCount(2);
+checkedOnline.Should().BeAggregateError().WithInnerCount(2);
 ```
+>>>>
+
 
 ## With your own result type
 

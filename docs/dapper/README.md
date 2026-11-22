@@ -50,11 +50,13 @@ Dapper keeps one handler per closed type, so each `Option<T>` is registered on i
 | Direction | Option | Database |
 | --- | --- | --- |
 | parameter | `Option.Some(x)` | the value `x` |
-| parameter | `Option.None` or `default` | `NULL` |
+| parameter | `(Option<int>)Option.None` or `default` | `NULL` |
 | column | `NULL` | `Option.None` |
 | column | a value | `Option.Some(value)` |
 
 The parameter keeps its database type for the common types, so a `NULL` option still has a type. For other types the provider infers it from the value.
+
+In an anonymous parameter object, cast `Option.None` to the option type, as in the quick example. A bare `Option.None` has the type `None`, which has no handler.
 
 A column value that is not a `T` is converted: numbers with `Convert`, text with the type's converter (for example text to `Guid`, `DateTime` or `DateTimeOffset` on SQLite), bytes to `Guid`, a `DateTime` to `DateTimeOffset`, and enums from their name (case-insensitive, like plain Dapper) or from a number. A value that cannot be converted throws.
 

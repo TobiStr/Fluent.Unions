@@ -57,7 +57,7 @@ The filter does not catch exceptions. An exception thrown by the handler goes th
 
 ## With your own result type
 
-The filter handles any result type, including one declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). A value gives 200 with the value, a value-less success gives 204, and an error gives the configured [error mapping](error-mapping.md). The OpenAPI metadata uses the same shape. The filter finds `IResult<TSelf, T, TError>` at runtime, reads the type arguments once per type and caches them.
+The filter handles any result type, including one declared with `[FluentResult<TError>]` (see [your own result type](../errors/custom-error-types.md)). A value gives 200 with the value, a value-less success gives 204, and an error gives the configured [error mapping](error-mapping.md). The OpenAPI metadata uses the same shape. The filter finds `IErrorResult<TSelf, TError>` at runtime, which the generator implements on every result type, reads the type arguments once per type and caches them.
 
 | Handler returns | Response |
 | --- | --- |

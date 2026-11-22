@@ -46,7 +46,7 @@ Result<UserId> result = await sender.Send(new CreateUser("", 0));
 
 ### With your own result type
 
-`TResponse` can be any result type: `Result`, `Result<T>` or your own declared result. The error is what the response type's `FromException` makes of the exception or of the `ValidationErrors`. A request with another response type is left alone.
+`TResponse` can be any result type: `Result`, `Result<T>` or your own declared result. The error is what the response type's `FromException` makes of the exception or of the `ValidationErrors`. An exception that the response type's capture policy excludes is not caught and propagates. A request with another response type is left alone.
 
 The behaviors use reflection, so they are not trimming or AOT friendly. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 

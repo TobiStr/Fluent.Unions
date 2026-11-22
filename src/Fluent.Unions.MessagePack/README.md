@@ -51,14 +51,14 @@ public class Scoreboard
 
 The first names the formatter per member and keeps the source generator. The second falls back to the reflection-based resolver, which finds `UnionsResolver` through the options.
 
-## Documentation
-
-- [MessagePack documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/messagepack/README.md)
-- [Fluent.Unions on GitHub](https://github.com/TobiStr/Fluent.Unions)
-
 ## Rules
 
 - **Nil is `None`.** Nil reads as `None`, and a formatter that returns `null` also gives `None`. `null` never becomes a value.
 - **Results throw.** `Result`, `Result<T>` and every result type you declare with [`[FluentResult<TError>]`](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md) throw `NotSupportedException`, wrapped by MessagePack in a `MessagePackSerializationException`, when writing and when reading. An error would expose exception details such as the stack trace. Convert the result first.
-- **Reflection.** `UnionsResolver` creates formatters with `MakeGenericType`, so it does not work in trimmed or native AOT apps. Register `OptionFormatter<T>` yourself there.
+- **Reflection.** `UnionsResolver` creates formatters with `MakeGenericType`, so it does not work in trimmed or native AOT apps. `WithFluentUnions()` carries `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]`. Register `OptionFormatter<T>` yourself there. See [AOT and trimming](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/aot-and-trimming.md).
 - **Your own unions** are not covered by this package.
+
+## Documentation
+
+- [MessagePack documentation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/messagepack/README.md)
+- [Fluent.Unions on GitHub](https://github.com/TobiStr/Fluent.Unions)

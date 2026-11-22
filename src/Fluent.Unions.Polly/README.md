@@ -31,7 +31,7 @@ var pipeline = new ResiliencePipelineBuilder<Result<Payment>>()
     .Build();
 ```
 
-Run an operation through the pipeline. A thrown exception or a cancelled token becomes an error instead of being thrown.
+Run an operation through the pipeline. A thrown exception becomes an error instead of being thrown. Cancellation still throws `OperationCanceledException`.
 
 ```csharp
 Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(order, ct), cancellationToken);
@@ -40,7 +40,7 @@ Result<Payment> payment = await pipeline.ExecuteResultAsync(ct => ChargeAsync(or
 
 ### With your own result type
 
-Your own result type works with the same members, but `HandleError<TResult, TError>()` and `ExecuteResultAsync<TResult, TError>(...)` need explicit type arguments, because Polly's builders carry only the result type. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
+A result type declared with `[FluentResult<TError>]` works with the same members, but `HandleError<TResult, TError>()` and `ExecuteResultAsync<TResult, TError>(...)` need explicit type arguments, because Polly's builders carry only the result type. The example uses `[FluentResult<DomainException>] public readonly partial struct Result<T>;`. Exceptions that its capture policy excludes are rethrown. See [your own result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md).
 
 ```csharp
 ShouldHandle = new PredicateBuilder<Result<Payment>>()

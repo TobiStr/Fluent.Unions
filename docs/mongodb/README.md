@@ -41,11 +41,22 @@ An option is written as its value, or as BSON null when it holds none. Reading B
 
 No attribute is needed on the properties. The driver finds `OptionSerializer<T>` through the registration, so it does not try to map the members of the union itself.
 
-To use a specific serializer for the value, create `OptionSerializer<T>` with it:
+To use a specific serializer for the value, create `OptionSerializer<T>` with it and set it on the member, for example in a class map:
 
 ```csharp
-new OptionSerializer<Level>(new EnumSerializer<Level>(BsonType.String))
+using MongoDB.Bson.Serialization.Serializers;
+
+BsonClassMap.RegisterClassMap<Player>(map =>
+{
+    map.AutoMap();
+    map.MapMember(player => player.Level)
+        .SetSerializer(new OptionSerializer<Level>(new EnumSerializer<Level>(BsonType.String)));
+});
 ```
+
+The parameterless constructor uses the serializer registered for `T` when the option serializer is created.
+>>>>
+
 
 ## None and missing elements
 

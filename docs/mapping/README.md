@@ -66,7 +66,7 @@ The element is mapped with the configuration you already have, so `Option<Addres
 `AddFluentUnions()` extends a `TypeAdapterConfig` with one rule for every pair that involves `Option<T>`. It works on `TypeAdapterConfig.GlobalSettings` and on a config you own, and calling it again on the same config adds nothing. `config.Compile()` validates the setup.
 
 - **Element rules apply.** A `NewConfig<Address, AddressDto>()` rule with custom members is used inside the option.
-- **Code generation is not supported.** Mapster.Tool (`dotnet mapster`) renders expression trees to source. The rules call back into the runtime `TypeAdapterConfig`, which the generator cannot render, so do not generate mappers for types with `Option<T>` members. Runtime mapping is unaffected. ASSUMPTION: this is based on how the generator works, it was not run against these rules.
+- **Code generation is not supported.** Mapster.Tool (`dotnet mapster`) renders expression trees to source. The rules call back into the runtime `TypeAdapterConfig`, which the generator cannot render, so do not generate mappers for types with `Option<T>` members. Runtime mapping is unaffected. This follows from how the generator works and has not been tested with Mapster.Tool.
 
 ## AutoMapper
 
@@ -84,6 +84,7 @@ There is no mapping from `Result<TSource>` to `Result<TDestination>`. It is not 
 - **`None` and `null` are the same state.** There is no `Some(null)`. Mapping never produces a value from `null`.
 - **Mapping onto an existing object replaces the option.** The old value is not merged.
 - **Errors are exceptions.** A failing element mapping throws the mapper's exception. Nothing is captured into a result.
+- **No trimming or AOT.** Both packages build on reflection. See [AOT and trimming](../getting-started/aot-and-trimming.md).
 
 ---
 
