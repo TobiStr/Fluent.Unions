@@ -118,7 +118,8 @@ Behavior:
 - **Reading** accepts `$type` and `$value` in any order, and skips other properties.
 - **An empty union** is written as `null` and read back as an empty union. A `Shape?` reads `null` as `null`.
 - **A missing or unknown `$type`**, or a token that is not an object, throws `JsonSerializationException`.
-- **Case names** are the case types' short names, so two cases must not share a name, even across namespaces. A union with duplicate case names throws `InvalidOperationException` on first use.
+- **Case names** are the case types' short names, unless `[UnionCaseName]` gives a case a stable name and aliases, see [Stable case names](../serialization/README.md#stable-case-names). A union whose cases share a name throws `InvalidOperationException` on first use.
+- **A missing `$value`**, or one that would give an empty union, throws `JsonSerializationException`.
 - **Value types only.** The converter handles union structs.
 - **`$value` before `$type`.** The value is buffered. Dates stay as written, but a `decimal` beyond double precision can lose precision. The converter writes `$type` first.
 

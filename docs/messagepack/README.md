@@ -88,6 +88,7 @@ Convert a result before serializing it, for example with `Match`, `GetValueOrDef
 
 - `UnionsResolver` needs to be in the options. `WithFluentUnions()` is the shortest way, or add `UnionsResolver.Instance` to a `CompositeResolver` yourself.
 - `Option<T>` in a `[MessagePackObject]` type needs one of the two source generator workarounds above.
+- `Option<Option<T>>` loses the difference between its levels: `None` and `Some(None)` are both written as nil. Flatten it with `Unwrap()` first.
 - `UnionsResolver` creates formatters through reflection (`MakeGenericType`). AOT and trimming have not been investigated or tested.
 - Your own C# 15 unions are not covered. MessagePack's own `[Union]` attribute is for class hierarchies, and has not been tried with `union` types.
 

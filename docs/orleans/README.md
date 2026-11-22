@@ -78,7 +78,7 @@ The Orleans code generator never sees `Option<T>`: it generates the serializer o
 ## Rules
 
 - Register `AddFluentUnions()` in the silo and in every client.
-- `Option<T>` needs no attribute on your types.
+- `Option<T>` needs no attribute on your types. `Option<Option<T>>` keeps both levels, unlike the JSON, MessagePack and MongoDB integrations.
 - Results throw. Convert them before the grain returns.
 - A local call within a silo copies its arguments and result instead of serializing them. `Result` and `Result<T>` throw `NotSupportedException` there as well. A result type you declare is not covered by the copier, because Orleans treats it as a plain struct and copies it locally, so only serialization (a remote call, persisted state) refuses it.
 - Your own C# 15 unions are not covered. AOT and trimming have not been investigated or tested.

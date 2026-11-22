@@ -34,7 +34,7 @@ JsonSerializer.Serialize(new CustomerDto("Ada", "Countess"));  // {"Name":"Ada",
 - `Option<T>` needs no registration. The converter is applied by attribute.
 - A missing property reads as a `default` option, which holds no value.
 - `WhenWritingNull` does not omit `None`. `WhenWritingDefault` omits every option without a value, because `None` equals `default`.
-- `Option<Option<T>>` loses the difference between its levels.
+- `Option<Option<T>>` is not a round-trip type: it loses the difference between its levels.
 - `Result` and `Result<T>` throw `NotSupportedException` in both directions.
 - Both converters use reflection. See [AOT and trimming](#aot-and-trimming).
 
@@ -84,7 +84,7 @@ Do not rely on `WhenWritingNull` to omit options. If you must omit absent fields
 
 ### Nested options
 
-`Option<Option<T>>` writes `null` for both `None` and `Some(None)`, so reading gives `None` either way. Flatten with `Unwrap()` before you serialize.
+`Option<Option<T>>` writes `null` for both `None` and `Some(None)`, so reading gives `None` either way. It is not supported as a round-trip type in JSON, MessagePack or MongoDB; only Orleans keeps both levels. Flatten with `Unwrap()` before you serialize, or use a DTO with an explicit flag.
 
 ### Source-generated contexts
 
@@ -141,11 +141,34 @@ Shape shape = JsonSerializer.Deserialize<Shape>("""{"$type":"Square","$value":{"
 
 Behavior:
 
-- **Reading** accepts `$type` and `$value` in any order.
-- **An empty union** is written as `null` and read back as an empty union.
-- **A missing or unknown `$type`** throws `JsonException`.
-- **Case names** are the case types' short names, so two cases must not share a name, even across namespaces. A union with duplicate case names throws `InvalidOperationException` when the converter is created.
-- **Value types only.** The converter handles union structs.
+| Payload | Result |
+| --- | --- |
+| `{"$type":...,"$value":...}`, properties in any order | the case. Other properties are ignored. |
+| `null` | an empty union, which is also how an empty union is written |
+| a missing, `null` or unknown `$type` | `JsonException` |
+| a missing `$value` | `JsonException` |
+| a `$value` that gives an empty union, such as `null` for a class case | `JsonException`. A case whose own converter reads `null`, such as `Option<T>`, still reads it. |
+| a number, string or array instead of an object | `JsonException` |
+
+The converter handles union structs only.
+
+### Stable case names
+
+By default a case is named after its type, such as `Circle` or ``List`1``. Renaming the type changes the name, so stored payloads stop reading, and two cases with the same short name, such as `List<int>` and `List<string>` or `Orders.Item` and `Billing.Item`, cannot be told apart. A union with such a clash throws `InvalidOperationException` when the converter is created, and the message names both types.
+
+Give a case a name that does not depend on its type with `[UnionCaseName]` on the union. `Aliases` are names that are still read:
+
+```csharp
+[JsonConverter(typeof(UnionJsonConverter))]
+[UnionCaseName(typeof(Circle), "circle", Aliases = ["Circle"])]
+[UnionCaseName(typeof(List<int>), "numbers")]
+[UnionCaseName(typeof(List<string>), "words")]
+public union Drawing(Circle, List<int>, List<string>);
+```
+
+To rename a case type safely, add `[UnionCaseName(typeof(Round), "Circle")]` before you rename `Circle` to `Round`: the payloads keep the old name. To move to a new name, write it as the `Name` and keep the old one in `Aliases` until every stored payload is rewritten. Cases without the attribute keep the name of their type, so adding the attribute to one case never changes the others.
+
+Every name and alias must be unique within the union. A clash, an empty name, a type that is not a case, or two attributes for one case throw `InvalidOperationException` when the converter is created. The Newtonsoft.Json converter reads the same attribute.
 
 The constants `UnionJsonConverter.TypeProperty` and `UnionJsonConverter.ValueProperty` hold the two property names. See [your own unions](../unions/README.md) for `Is` and `As`.
 
@@ -158,7 +181,8 @@ Not supported. `OptionJsonConverter` and `UnionJsonConverter` create converters 
 - `JsonIgnoreCondition.WhenWritingNull` does not omit `None`.
 - A source-generated context without `T` registered fails at runtime for `Option<T>`.
 - Serializing a `Result<T>`, or your own result type, throws. Convert it before the serializer sees it.
-- Two union cases with the same type name cannot be told apart.
+- Two union cases with the same type name cannot be told apart without `[UnionCaseName]`.
+- Renaming a case type changes its name in JSON. Pin the old name with `[UnionCaseName]` first.
 
 ## See also
 

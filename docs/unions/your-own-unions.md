@@ -88,7 +88,9 @@ var method = JsonSerializer.Deserialize<PaymentMethod>("""{ "$value": { "Code": 
 - **An empty union is `null`.** A `default` union writes `null`, and `null` reads as a `default` union.
 - **Case names come from the type name.** `$type` is the name of the case type without its namespace, so an `int` case is `"Int32"`.
 - **Unknown or missing `$type` throws `JsonException`.** `{"$type":"Cash","$value":{}}` fails with `'Cash' is not a case of PaymentMethod.`. A missing `$type`, or `{"$type":null}`, fails with `A PaymentMethod needs a '$type' property.`.
-- **Case names must be unique.** Two cases with the same type name from different namespaces cannot be told apart. The first serialization throws a `TargetInvocationException` that wraps an `InvalidOperationException` ("has several cases named 'Card'"). Rename one case type.
+- **A missing `$value` throws `JsonException`,** and so does a `$value` that would give an empty union.
+- **Case names must be unique.** Two cases with the same type name, from different namespaces or closed generics such as `List<int>` and `List<string>`, cannot be told apart. The first serialization throws an `InvalidOperationException` ("has several cases named 'Card'") that names both types. Give the cases distinct names with `[UnionCaseName]`, see [Stable case names](../serialization/README.md#stable-case-names).
+- **Renaming a case type renames it in JSON.** Pin the stored name with `[UnionCaseName(typeof(NewType), "OldName")]` before the rename.
 
 The converter uses reflection, like the option converter. Trimming and AOT are not investigated.
 
