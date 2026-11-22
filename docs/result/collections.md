@@ -26,7 +26,7 @@ Collects all values into one result. Use it when the batch is all or nothing, su
 Result<IReadOnlyList<Customer>> all = customers.Combine();
 ```
 
-With ids `[good, missing, good, missing]`, the result is the error of the first missing customer. `Combine` stops enumerating at the first error, so a lazy `Select` is evaluated only up to that point. A `null` sequence throws `ArgumentNullException`.
+With ids `[good, missing, good, missing]`, the result is the error of the first missing customer. `Combine` stops enumerating at the first error, so a lazy `Select` is evaluated only up to that point. An exception thrown while enumerating the sequence becomes the error, in `Combine` and `CombineAll`. A `null` sequence throws `ArgumentNullException`.
 
 `Combine` is deliberately not called `ToList()`. Overload resolution would prefer it over `Enumerable.ToList()` and silently change what existing code returns.
 

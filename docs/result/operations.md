@@ -8,8 +8,8 @@ using Fluent.Unions;
 
 | Operators | ok | error |
 | --- | --- | --- |
-| `Select`, `Chain`, `Ensure`, `Zip`, `ChainAppend`, `Do(onSuccess)` | runs | passes through |
-| `Finally` | runs | runs |
+| `Select`, `Chain`, `Ensure`, `Zip`, `ChainAppend`, `Do(onSuccess)`, `Tap(onSuccess)` | runs | passes through |
+| `Finally`, `Do(onSuccess, onError)`, `Tap(onSuccess, onError)` | runs | runs |
 
 All of them also exist on `Task<Result<T>>`. Asynchronous lambdas use the `...Await` variants. See [Async](../async/README.md).
 
@@ -184,7 +184,7 @@ Result<Customer> logged = GetCustomer(id).Do(
     e => log.LogWarning(e, "Customer {Id} failed", id));
 ```
 
-An exception thrown by the action becomes the error, even when the result was ok before. For logging and metrics, whose failure must not turn a success into an error, use `Tap`.
+An exception thrown by the action becomes the error, even when the result was ok before. In `Do(onSuccess, onError)`, an exception from `onError` replaces the original error. For logging and metrics, whose failure must not turn a success into an error, use `Tap`.
 
 ## Tap
 
@@ -226,7 +226,7 @@ Result<string> confirmation = await GetCustomerAsync(id).Out(out var customer)
 
 ## Finally
 
-Runs an action for ok and error alike, and returns the same result. Use it for cleanup and timing.
+Runs an action for ok and error alike, and returns the same result. Use it for cleanup and timing. An exception thrown by the action becomes the error and replaces the original one, see [When a callback throws](error-handling.md#when-a-callback-throws). `FinallyAwait` takes an asynchronous action.
 
 ```csharp
 var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -241,10 +241,10 @@ Leaves the chain with the value. For an error you get `default`, a fallback or t
 Cart? maybeCart = GetCustomer(id).Chain(GetCart).GetValueOrDefault();
 Cart orEmpty = GetCustomer(id).Chain(GetCart).GetValueOrDefault(new Cart(id, []));
 Cart lazy = GetCustomer(id).Chain(GetCart).GetValueOrDefault(() => new Cart(id, []));
-int count = await GetCustomerAsync(id).Chain(GetCart).Select(c => c.Items.Count).GetValueOrDefault(0);
+int count = await GetCustomerAsync(id).Chain(GetCart).Select(c => c.Items.Count).GetValueOrDefault(() => 0);
 ```
 
-The factory runs only when the result is not ok. An exception from the factory is not caught. It propagates, because this operator leaves the chain. All three overloads also exist on `Task<Result<T>>`.
+The factory runs only when the result is not ok. An exception from the factory is not caught. It propagates, because this operator leaves the chain. On `Task<Result<T>>` there are two overloads, without arguments and with a factory. Pass a fallback value as `() => value`.
 
 ## Unwrap
 

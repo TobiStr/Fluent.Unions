@@ -18,7 +18,7 @@ Result<Order> throwing = GetCustomer(id)
     .Chain(Unreliable); // Unreliable throws a TimeoutException: error: TimeoutException
 ```
 
-You never need a `try`/`catch` around a chain. Only [`Check()`](#check) throws, on purpose.
+You never need a `try`/`catch` around a chain. [`Check()`](#check) throws on purpose, and [`Tap`](#do-or-tap) lets an observer's exception through. [What still throws](#what-still-throws) lists every case.
 
 ### What is captured
 
@@ -142,7 +142,7 @@ The way into a chain from code that throws. A thrown exception becomes the error
 
 ```csharp
 Result<int> quantity = Result.Try(() => int.Parse(input));
-Result<Payment> tried = await Result.TryAsync(async () => (await ChargeAsync(known)).GetValue());
+Result<string> text = await Result.TryAsync(() => File.ReadAllTextAsync(path));
 ```
 
 | Body | `Try` returns | `TryAsync` body |
@@ -176,7 +176,7 @@ Result<Payment> retriedAsync = await Result.RetryAsync(
     cancellationToken: ct);
 ```
 
-An error that `shouldRetry` rejects ends the loop after one attempt. Cancellation stops retrying and throws `OperationCanceledException`. A `maxAttempts` below 1 throws `ArgumentOutOfRangeException`. Only retry operations that are safe to repeat, such as an idempotent payment call. See [Async](../async/README.md) for timeouts and cancellation.
+An error that `shouldRetry` rejects ends the loop at once and is returned. `Retry` lets an `OperationCanceledException` propagate. `RetryAsync` retries one that its own token did not cause, such as an `HttpClient` timeout. Cancelling its token stops retrying and throws `OperationCanceledException`. A `maxAttempts` below 1 throws `ArgumentOutOfRangeException`. Only retry operations that are safe to repeat, such as an idempotent payment call. See [Async](../async/README.md) for timeouts and cancellation.
 
 ## What still throws
 
@@ -185,10 +185,10 @@ An error that `shouldRetry` rejects ends the loop after one attempt. Cancellatio
 | Any operator with a `null` lambda | `ArgumentNullException`, immediately |
 | `Check()` | the stored exception |
 | `GetValue()` | `InvalidOperationException` for an error, with the error as `InnerException` |
-| `GetError()` | `InvalidOperationException` when the result holds no exception |
+| `GetError()` | `InvalidOperationException` when the result is ok |
 | `Match` callbacks | whatever your callback throws |
 | `GetValueOrDefault(() => ...)` factory | whatever your factory throws |
-| `Result<T>.Ok(null)` | `ArgumentNullException` |
+| `Result<T>.Ok(null)`, `Result.From(null)`, `Error(null)`, `WithValue(null)` | `ArgumentNullException` |
 | `switch` expression over a `default` result | `SwitchExpressionException`, see [The default result](core-concepts.md#the-default-result) |
 | Any operator whose lambda is cancelled | `OperationCanceledException` |
 | `Tap`, `TapError` and `TapAwait` callbacks | whatever your callback throws |

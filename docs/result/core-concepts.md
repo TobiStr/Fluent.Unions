@@ -47,7 +47,7 @@ A `default` result is an error for every library member, but native C# pattern m
 | `switch` statement | Matches no case and runs no branch |
 | `is T`, `is Exception` | `false` |
 | `is null`, `Value` | `true`, `null` |
-| `==`, `GetHashCode()` | Equal to every other `default` result and to a result created from `null` |
+| `Equals`, `GetHashCode()` | Equal to every other `default` result and to a result created from `null` |
 | JSON | Refused like every result, see [Serialization](../serialization/README.md) |
 
 Your own result types behave the same. Their error is what `FromException` makes of that exception, see [Custom error types](../errors/custom-error-types.md).
@@ -89,7 +89,7 @@ Result failed = Result.Error(new TimeoutException());
 
 `Result.Ok` is a property. `Result<T>.Ok(value)` is a method and throws `ArgumentNullException` for `null`, where the implicit conversion gives an error.
 
-`Result.From(value)` does the same as `Result<T>.Ok(value)`, but infers `T`. Use it to start a chain from a plain value:
+`Result.From(value)` does the same as `Result<T>.Ok(value)`, including the `ArgumentNullException` for `null`, but infers `T`. Use it to start a chain from a plain value:
 
 ```csharp
 Result<Order> placed = Result.From(order)
@@ -196,7 +196,7 @@ It also exists on `Task<Result<T>>` and `Task<Result>`.
 
 - `GetValue()` throws for an error. Prefer `TryGetValue`, `switch` or `Match`.
 - `Result<Exception>` compiles, but converting an exception to it fails with CS0457, because both cases take an `Exception`. Analyzer error [FLU0004](../analyzer/README.md#flu0004) reports the type. Wrap the payload in another type.
-- Equality is not payload-based. Two results wrapping different class instances are not equal.
+- Results have no `==` operator. `Equals` compares the payload with the payload's own `Equals`: two results holding equal records are equal, and two results holding different instances of a class without value equality are not. Two error results are equal only when they hold the same exception instance.
 
 ## See also
 

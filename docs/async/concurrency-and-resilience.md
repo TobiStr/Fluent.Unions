@@ -84,9 +84,9 @@ Result<Payment> payment = await Result.RetryAsync(
 
 Details:
 
-- An exception thrown by the operation counts as a failure, like an error result. That includes an `OperationCanceledException` that is not caused by your token, such as an `HttpClient` timeout: it is retried like any other failure.
+- An exception thrown by the operation counts as a failure, like an error result. `Retry` lets an `OperationCanceledException` propagate. `RetryAsync` retries one that its token did not cause, such as an `HttpClient` timeout, like any other failure.
 - `shouldRetry` is only called for errors, and not after the last attempt. An error it rejects is returned at once.
-- The `delay` is the same for every attempt. There is no backoff. Write your own `shouldRetry` and loop when you need one.
+- The `delay` is the same for every attempt. There is no backoff or jitter. Write your own loop, or use [Polly](../polly/README.md), when you need one.
 - **Cancellation stops retrying.** When your token is cancelled, `RetryAsync` throws `OperationCanceledException` instead of waiting or retrying again.
 - Retry only operations that are safe to repeat. A payment call needs an idempotency key.
 
@@ -96,17 +96,20 @@ Details:
 
 ```csharp
 Result<Customer> customer = await LoadCustomerAsync(id).Timeout(TimeSpan.FromSeconds(5));
-// error: TimeoutException, after 5 seconds
+// error: TimeoutException, when the load takes longer than 5 seconds
 ```
 
-**The operation keeps running.** `Timeout` stops waiting. It does not cancel anything. Pair it with a `CancellationTokenSource` so the work stops too:
+**The operation keeps running.** `Timeout` stops waiting. It does not cancel anything. Cancel a token after the timeout so the work stops too:
 
 ```csharp
-using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+using var cts = new CancellationTokenSource();
 
 Result<Customer> customer = await LoadCustomerAsync(id, cts.Token)
-    .Timeout(TimeSpan.FromSeconds(5));
+    .Timeout(TimeSpan.FromSeconds(5))
+    .Finally(cts.Cancel);
 ```
+
+The error stays the `TimeoutException`. Do not give the token the same deadline as `Timeout`: when the token fires first, the load throws `OperationCanceledException`, which propagates instead of becoming an error.
 
 With ASP.NET Core, the `TimeoutException` maps to HTTP 504. See [ASP.NET Core](../aspnetcore/README.md).
 

@@ -57,10 +57,15 @@ A lambda that itself returns a `Task` needs the `...Await` variant, named after 
 | --- | --- | --- | --- |
 | `SelectAwait` | `T -> Task<TOut>` | yes | yes |
 | `ChainAwait` | `T -> Task<Result<TOut>>` | yes | yes (`Task<Option<TOut>>`) |
-| `WhereAwait` | `T -> Task<bool>` | yes | yes |
+| `ChainAppendAwait` | `T -> Task<Result<TNext>>` | yes, on `Result<T>` | no |
+| `EnsureAwait` | `T -> Task<bool>`, plus a message or an error factory | yes, on `Result<T>` | no |
+| `WhereAwait` | `T -> Task<bool>` | no, use `EnsureAwait` | yes |
 | `DoAwait` | `T -> Task` | yes | yes |
+| `TapAwait` | `T -> Task` | yes, never captures | no |
 | `CatchAwait` | `Exception -> Task<Result<T>>` | yes | no, options have no errors |
 | `FinallyAwait` | `() -> Task` | yes | no |
+
+On a `Result`, the lambdas of `SelectAwait`, `ChainAwait`, `DoAwait` and `TapAwait` take no argument.
 
 ```csharp
 Result<Address> address = await LoadCustomerAsync(id)
@@ -123,13 +128,12 @@ Reading `customer.Value` before the task completes, or after a failed step, thro
 
 ## Match at the end of a pipeline
 
-`Match` on a `Task` ends the pipeline and returns `Task<TOut>`. On results it takes three callbacks, for ok, error and empty. On options it takes two.
+`Match` on a `Task` ends the pipeline and returns `Task<TOut>`. It takes two callbacks, as on the plain types: for the value and the error on results, for the value and `None` on options. A `default` result goes to the error callback.
 
 ```csharp
 IResult response = await LoadCustomerAsync(id).Match(
     customer => Results.Ok(customer),
-    error => Results.Problem(error.Message),
-    () => Results.NotFound());
+    error => Results.Problem(error.Message));
 ```
 
 ```csharp
@@ -150,7 +154,7 @@ async Task<Result<Customer>> LoadAsync(Guid id, CancellationToken ct) =>
         .ChainAwait(customer => EnrichAsync(customer, ct));
 ```
 
-- A cancelled operation throws `OperationCanceledException` out of the pipeline, for results and options alike. It is never turned into an error, so ASP.NET Core aborts the request instead of answering 500.
+- A cancelled operation throws `OperationCanceledException` out of the pipeline, for results and options alike. The operators never turn it into an error, so ASP.NET Core aborts the request instead of answering 500. Only `Result.RetryAsync` treats one that its own token did not cause as a failure.
 - Check `ct.IsCancellationRequested` or call `ct.ThrowIfCancellationRequested()` in a lambda when a long synchronous step should stop early.
 - Use `Result.RetryAsync` and `CombineAsync` when you want the library to pass the token. See [concurrency and resilience](concurrency-and-resilience.md) and [streams](streams.md).
 

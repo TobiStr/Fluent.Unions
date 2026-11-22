@@ -42,8 +42,8 @@ Use `Chain` instead when a step depends on the previous one, such as loading a c
 ## How Validate behaves
 
 - Every rule runs. There is no short circuit.
-- A failed validation is always a `ValidationErrors`, even when only one rule failed. Match that one type.
-- A rule that throws counts as a failure. When a failure is not a `ValidationError`, the error is an `AggregateException` instead, because it is not the client's fault.
+- When every failure is a `ValidationError`, the error is a `ValidationErrors`, even when only one rule failed. Match that one type.
+- A rule that throws counts as a failure. When any failure is not a `ValidationError`, the error is an `AggregateException` with every failure instead, because it is not the client's fault.
 - An error passes through without running the rules.
 
 ## Validate
@@ -65,7 +65,7 @@ What you get back:
 | ok, a rule fails with another exception | error: `AggregateException` with every failure |
 | error | the same error, rules not run |
 
-Because the type is always `ValidationErrors`, one handler works for one failure or many:
+Because one failed rule also gives a `ValidationErrors`, one handler works for one failure or many:
 
 ```csharp
 validated.OnErrorDo(e => { if (e is ValidationErrors v) Log(v.ToDictionary()); });
@@ -125,7 +125,7 @@ A rule returns `Result<string>`, and `Validate` takes `Func<T, Result>`. The imp
 
 ```csharp
 Option<string> nickname = Option.Some("").Where(Is.NotEmpty);
-// none
+// None
 
 Result<string> name = Result<string>.Ok(input).Ensure(Is.ShorterThan(50), "The name is too long.");
 ```
@@ -433,7 +433,7 @@ Map `ValidationErrors` to another status, such as 422, with `ResultHttpOptions`;
 
 | Operator | Input | On failure |
 | --- | --- | --- |
-| `Validate(rules)` | one `Result<T>` | `ValidationErrors` with every failed rule |
+| `Validate(rules)` | one `Result<T>` | `ValidationErrors` (or `AggregateException`) with every failed rule |
 | `CombineAll()` | many results | `ValidationErrors` (or `AggregateException`) with every error |
 | `Combine()` | many results | the first error, as is |
 | `Chain(next)` | one result | the first error, as is, later steps skipped |
@@ -446,7 +446,7 @@ Map `ValidationErrors` to another status, such as 422, with `ResultHttpOptions`;
 - Rules run on the same value, in order, without short circuit. Do not write a rule that depends on an earlier rule having passed. Guard against `null` inside the rule, or validate in two steps.
 - A rule that throws is reported, not rethrown.
 - `Is` clashes with `NUnit.Framework.Is` in a test file. Add `using Is = Fluent.Unions.Validation.Is;` and write NUnit constraints as `NUnit.Framework.Is.EqualTo(...)`.
-- Rules are synchronous. For asynchronous checks, use `ChainAwait` or `Task.WhenAll` with `CombineAll`.
+- Rules are synchronous. For asynchronous checks, use `EnsureAwait`, `ChainAwait`, or `Task.WhenAll` with `CombineAll`.
 
 ## See also
 

@@ -78,10 +78,10 @@ The returned option is always a real `None` when there is no value, even if the 
 ```csharp
 Option<string> receipt = FindCustomer(id).Out(out var customer)
     .Chain(c => FindCart(c.Id))
-    .Select(cart => $"{customer.Value.Name}: {cart.Items} items");
+    .Select(cart => $"{customer.Value.Name}: {cart.Items.Count} items");
 ```
 
-Inside the chain, later steps run only after a value, so `customer.Value` is safe there. Outside the chain, check `customer.HasValue` first, because `.Value` throws `InvalidOperationException` when nothing was captured. [Using earlier values](../result/patterns.md#using-earlier-values) describes `Captured<T>` in detail.
+Inside the chain, later steps run only after a value, so `customer.Value` is safe there. Outside the chain, check `customer.HasValue` first, because `.Value` throws `InvalidOperationException` when nothing was captured. [Out on results](../result/operations.md#out) describes `Captured<T>` in detail.
 
 ## GetValueOrDefault
 

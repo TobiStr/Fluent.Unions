@@ -33,7 +33,7 @@ string label = FindCustomer(id)
 
 - Write `None or null` or `_` in a `switch`, not only `None`. A `default` option holds neither case. See [core concepts](core-concepts.md#matching-an-option).
 - `0`, `false` and `""` are values. Only `null` and `None` mean no value.
-- Option operators never catch exceptions. An exception thrown in a lambda, or a faulted task, propagates.
+- Option operators never catch exceptions. An exception thrown in a lambda, or a faulted task, propagates. The one exception is the error factory of `ToResult`, which produces a result, so its exception becomes the error.
 - `SingleOrNone` throws when there are several elements, as `SingleOrDefault` does.
 - `Option.Some(null)` throws `ArgumentNullException`. Use `ToOption()` when the value may be `null`.
 

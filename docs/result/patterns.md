@@ -122,8 +122,7 @@ public class CustomerRepository : ICustomerRepository
         {
             await Task.Delay(1);
             return store.GetValueOrNone(id)
-                .ToResult(() => new KeyNotFoundException($"Customer {id} not found."))
-                .GetValue();
+                .ToResult(() => new KeyNotFoundException($"Customer {id} not found."));
         });
 
     public Task<Result> SaveAsync(Customer customer) =>
@@ -147,7 +146,7 @@ public class CheckoutService(ICustomerRepository customers)
 }
 ```
 
-The `GetValue()` in the repository sits inside `TryAsync`, so a failed `ToResult` is turned back into an error. The `Task.Delay` stands in for a real database call. Log an error once, at the boundary where you handle it, not in every layer.
+The body of `FindAsync` returns a `Result<Customer>`, so `TryAsync` returns that result as is, not nested, and a missing customer stays a `KeyNotFoundException`. An exception thrown by the store becomes the error. The `Task.Delay` stands in for a real database call. Log an error once, at the boundary where you handle it, not in every layer.
 
 ## When not to use results
 

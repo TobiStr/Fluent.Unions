@@ -44,7 +44,7 @@ static Option<Customer> FindCustomer(Guid id) =>
     cache.Find(id).Or(() => database.Find(id).Do(cache.Store));
 ```
 
-Add a last resort with `DefaultIfEmpty`:
+Add a last resort with `GetValueOrDefault`, which leaves the option, or with `DefaultIfEmpty` to keep an option:
 
 ```csharp
 Customer customer = cache.Find(id)
@@ -121,7 +121,7 @@ Rules of thumb:
 
 ## Pitfalls
 
-- `Or` and `DefaultIfEmpty` take factories, not values, for the lazy case. `DefaultIfEmpty(value)` evaluates `value` immediately.
+- `Or` takes only a factory. `DefaultIfEmpty` and `GetValueOrDefault` also take a value, which is evaluated before the call even when the option has a value. Pass a factory when the fallback is expensive.
 - `Do` after `Or` runs for values from either source. Place it where you mean it.
 
 ## See also
