@@ -50,6 +50,77 @@ public readonly partial struct PaymentResult<T>
 }
 ```
 
+## Choosing the shape of the error
+
+The error type can take three shapes, from open to closed:
+
+| Shape | `catch` at a boundary | Exhaustive `switch` | A new error needs |
+| --- | --- | --- | --- |
+| A base exception, as above | `catch (DomainException)` | no, a `switch` needs a fallback arm | a subclass |
+| A base exception and a union of its cases | `catch (ShopException)` | yes | a subclass and a case in the union |
+| [Errors as data](errors-as-data.md): a union of records | no, `Check()` throws a `ResultErrorException` | yes | a case in the union |
+
+Start with a base exception. It is the smallest step from the default `Result<T>`, keeps working in code that throws, and lets you add errors without touching every `switch`. Move to a union when the list of errors is closed and the compiler should make every caller handle each one.
+
+A C# `union` is always a struct, and only an `Exception` can be thrown, so a union cannot be an exception itself. Its cases can be.
+
+### A base exception and a union of its cases
+
+Derive every case from one abstract exception, and list the cases in a union that is the error type:
+
+```csharp
+public abstract class ShopException(string message, Exception? inner = null) : Exception(message, inner);
+
+public sealed class NotFoundException(string message) : ShopException(message);
+
+public sealed class InvalidInputException(Exception validation) : ShopException("The input is invalid.", validation);
+
+public sealed class UnexpectedShopException(Exception inner) : ShopException("An unexpected error occurred.", inner);
+
+public union ShopError(NotFoundException, InvalidInputException, UnexpectedShopException) : IFromException<ShopError>
+{
+    public static ShopError FromException(Exception exception) => exception switch
+    {
+        NotFoundException notFound => notFound,
+        InvalidInputException invalid => invalid,
+        UnexpectedShopException unexpected => unexpected,
+        ValidationError or ValidationErrors => new InvalidInputException(exception),
+        _ => new UnexpectedShopException(exception)
+    };
+}
+
+[FluentResult<ShopError>]
+public readonly partial struct Result<T>;
+```
+
+You get the strengths of both shapes:
+
+- **A `catch` of the base works.** `Check()` rethrows the case itself, so `catch (ShopException e)` at a boundary catches every case, with its stack trace.
+- **One handler for every case.** `.Catch((ShopException e) => ...)` handles all cases inside a chain, because the typed `Catch` looks inside the union.
+- **The compiler checks the cases.** `result.GetError() switch { NotFoundException => ..., InvalidInputException => ..., UnexpectedShopException => ... }` needs no fallback arm, and a new case fails every `switch` that does not handle it.
+- **A thrown case stays itself.** A `NotFoundException` thrown inside a step becomes the `NotFoundException` case, not an unexpected error.
+- **Shared members live on the base.** `Message`, or a `Code` you add, is available without a `switch`.
+
+The base class is open and the union is closed, so they can drift apart. A subclass of `ShopException` that is not a case of `ShopError` still compiles, and when it is thrown, `FromException` turns it into `UnexpectedShopException`. With [`Capture = ExceptionCapture.Declared`](#capture-policy), it escapes instead. Keep them in sync:
+
+- Make the base `abstract`, seal every case, and keep them in one file next to the union.
+- List every case in `FromException`. C# has no conversion from the base class to the union, so each case needs its own arm.
+- Guard the list with a test:
+
+```csharp
+[Test]
+public void EveryShopExceptionIsACaseOfShopError()
+{
+    var cases = UnionCaseNames.For(typeof(ShopError)).CaseTypes;
+    var exceptions = typeof(ShopException).Assembly.GetTypes()
+        .Where(type => type.IsSubclassOf(typeof(ShopException)) && !type.IsAbstract);
+
+    Assert.That(exceptions, Is.SubsetOf(cases));
+}
+```
+
+`UnionCaseNames` is in `Fluent.Unions.Serialization`.
+
 ## What the generator writes
 
 | Part | Members |
