@@ -227,7 +227,9 @@ class Fluent.Unions.Captured<T>
   public static TSelf Validate<TSelf, T, TError, TRule>(TSelf result, params System.Func<T, TRule>[] rules) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull where TRule : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TRule, TError>
 
 class Fluent.Unions.FluentResultAttribute<TError> where TError : notnull : class System.Attribute
+  public Fluent.Unions.ExceptionCapture Capture { get; init; }
   public FluentResultAttribute()
+  public System.Type[] Propagate { get; init; }
   public bool CaseConversions { get; init; }
 
 class Fluent.Unions.Loadable
@@ -841,6 +843,11 @@ class Fluent.Unions.ValidationErrors : class System.Exception
   public System.Collections.Generic.IDictionary<string, string[]> ToDictionary()
   public System.Collections.Generic.IReadOnlyList<Fluent.Unions.ValidationError> Errors { get; }
   public ValidationErrors(System.Collections.Generic.IEnumerable<Fluent.Unions.ValidationError> errors)
+
+enum Fluent.Unions.ExceptionCapture
+  All = 0
+  Declared = 1
+  public ExceptionCapture()
 
 interface Fluent.Unions.Abstractions.IErrorResult
   bool IsSuccess { get; }

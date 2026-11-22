@@ -26,6 +26,8 @@ This folder has one page, this one. Each rule has its own section below, and the
 | [FLU0101](#flu0101) | Error | A `[FluentResult]` declaration that is not supported, with the reason | |
 | [FLU0102](#flu0102) | Error | A `[FluentResult]` error type that cannot represent an unexpected exception | |
 | [FLU0103](#flu0103) | Info | A case of an error union that gets no conversion, with the reason | |
+| [FLU0104](#flu0104) | Warning | `Capture = ExceptionCapture.Declared` on a type whose error type is `Exception` | |
+| [FLU0105](#flu0105) | Error | A type in `Propagate` that is not an exception | |
 
 The errors mark a type or a call that is wrong every time it appears, so they fail the build. The warnings point at bugs. The info rules point at code that works, but is easy to get wrong. They show as suggestions in the IDE and do not appear in the build output.
 
@@ -351,6 +353,23 @@ The error type must implement `IFromException<TError>` for itself, or the struct
 ### FLU0103: Case without a conversion
 
 A case of the error union gets no conversion to the result when C# does not allow one: an interface, `object` or `System.ValueType`, or a type that is less accessible than the result, because conversion operators are public. The message names the reason. Return the case through `Error(...)` instead.
+
+<a id="flu0104"></a>
+
+### FLU0104: Declared capture has no effect
+
+`Capture = ExceptionCapture.Declared` captures only exceptions that the error type declares. With `Exception` as the error type, every exception is declared, so the setting changes nothing. Remove it, or use `Propagate` to let chosen exceptions escape. See [Capture policy](../errors/custom-error-types.md#capture-policy).
+
+<a id="flu0105"></a>
+
+### FLU0105: Propagated type is not an exception
+
+Every type in `Propagate` must derive from `Exception`, because only exceptions are thrown:
+
+```csharp
+[FluentResult<DomainException>(Propagate = [typeof(string)])] // error FLU0105
+public readonly partial struct Result<T>;
+```
 
 ---
 

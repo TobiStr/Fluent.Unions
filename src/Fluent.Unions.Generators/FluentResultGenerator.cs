@@ -50,6 +50,24 @@ public sealed class FluentResultGenerator : IIncrementalGenerator
         isEnabledByDefault: true,
         helpLinkUri: HelpLink + "flu0103");
 
+    internal static readonly DiagnosticDescriptor IneffectiveCapture = new(
+        "FLU0104",
+        "Declared capture has no effect",
+        "'{0}' captures only declared exceptions, but its error type '{1}' declares every exception",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: HelpLink + "flu0104");
+
+    internal static readonly DiagnosticDescriptor InvalidPropagate = new(
+        "FLU0105",
+        "Propagated type is not an exception",
+        "'{0}' in Propagate of '{1}' is not an exception type",
+        "Usage",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: HelpLink + "flu0105");
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -108,6 +126,8 @@ public sealed class FluentResultGenerator : IIncrementalGenerator
             }
         }
 
+        var captureFilter = CaptureFilter(type, attribute, error, locus, diagnostics);
+
         cancellationToken.ThrowIfCancellationRequested();
 
         var declared = type.GetMembers()
@@ -128,6 +148,7 @@ public sealed class FluentResultGenerator : IIncrementalGenerator
             Companion: false,
             conversions,
             new EquatableArray<string>(cases.ToImmutableArray()),
+            captureFilter,
             new EquatableArray<string>(declared),
             compilation.AssemblyName == "Fluent.Unions",
             HintName(type),
@@ -149,6 +170,8 @@ public sealed class FluentResultGenerator : IIncrementalGenerator
                 (false, null) => $"a result type without a value needs a generic '{model.Name}<T>' next to it that is declared with [FluentResult]",
                 (_, { } other) when other.ErrorType != model.ErrorType =>
                     $"it and '{other.Name}{(other.TypeParameter is null ? "" : "<" + other.TypeParameter + ">")}' must have the same error type",
+                (_, { } other) when other.CaptureFilter != model.CaptureFilter =>
+                    $"it and '{other.Name}{(other.TypeParameter is null ? "" : "<" + other.TypeParameter + ">")}' must have the same Capture and Propagate settings",
                 _ => null
             };
 
@@ -269,6 +292,59 @@ public sealed class FluentResultGenerator : IIncrementalGenerator
         && method.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal
         && method.Parameters[0].Type.ToDisplayString() == "System.Exception"
         && SymbolEqualityComparer.Default.Equals(method.ReturnType, error);
+
+    private static string? CaptureFilter(INamedTypeSymbol type, AttributeData attribute, ITypeSymbol error, Locus locus, List<DiagnosticInfo> diagnostics)
+    {
+        var conditions = new List<string>();
+
+        if (attribute.NamedArguments.FirstOrDefault(argument => argument.Key == "Capture").Value.Value is int and not 0)
+        {
+            if (error.ToDisplayString() == "System.Exception")
+                diagnostics.Add(DiagnosticInfo.Create(IneffectiveCapture, locus, type.Name, error.ToDisplayString()));
+
+            var captured = new[] { error }
+                .Concat(IsUnion(error) ? CaseTypes((INamedTypeSymbol)error) : ImmutableArray<ITypeSymbol>.Empty)
+                .Where(IsException)
+                .Select(FullName)
+                .Distinct()
+                .ToList();
+            conditions.Add(captured.Count == 0 ? "false" : $"exception is {string.Join(" or ", captured)}");
+        }
+
+        var propagated = new List<string>();
+        var propagate = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == "Propagate").Value;
+        if (propagate.Kind == TypedConstantKind.Array)
+        {
+            foreach (var entry in propagate.Values)
+            {
+                if (entry.Value is not ITypeSymbol propagatedType)
+                    continue;
+                if (IsException(propagatedType))
+                    propagated.Add(FullName(propagatedType));
+                else
+                    diagnostics.Add(DiagnosticInfo.Create(InvalidPropagate, locus, propagatedType.ToDisplayString(), type.Name));
+            }
+        }
+
+        if (propagated.Count > 0)
+            conditions.Add($"exception is not ({string.Join(" or ", propagated.Distinct())})");
+
+        return conditions.Count == 0 ? null : string.Join(" && ", conditions);
+
+        static string FullName(ITypeSymbol exceptionType) =>
+            exceptionType.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    }
+
+    private static bool IsException(ITypeSymbol type)
+    {
+        for (var current = type as INamedTypeSymbol; current is not null; current = current.BaseType)
+        {
+            if (current.ToDisplayString() == "System.Exception")
+                return true;
+        }
+
+        return false;
+    }
 
     private static bool Named(AttributeData attribute, string name, bool fallback) =>
         attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value as bool? ?? fallback;

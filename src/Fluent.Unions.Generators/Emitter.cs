@@ -213,6 +213,12 @@ internal static class Emitter
         code.AppendLine($"    private static {e} MapException({Exception} exception) => {expression};");
         code.AppendLine();
         code.AppendLine($"    static {e} {Abstractions}.IErrorResult<{self}, {e}>.FromException({Exception} exception) => MapException(exception);");
+
+        if (model.CaptureFilter is null)
+            return;
+
+        code.AppendLine();
+        code.AppendLine($"    static bool {Abstractions}.IErrorResult<{self}, {e}>.Captures({Exception} exception) => {model.CaptureFilter};");
     }
 
     private static void Forwarder(StringBuilder code, ResultTypeModel model, OperatorTemplate op)

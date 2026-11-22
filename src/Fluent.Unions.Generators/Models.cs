@@ -40,6 +40,7 @@ internal sealed record ResultTypeModel(
     bool Companion,
     bool CaseConversions,
     EquatableArray<string> ErrorCases,
+    string? CaptureFilter,
     EquatableArray<string> DeclaredMembers,
     bool IsLibrary,
     string HintName,

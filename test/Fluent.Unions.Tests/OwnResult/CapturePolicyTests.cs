@@ -9,8 +9,43 @@ public readonly partial struct StrictResult<T>
     static bool IErrorResult<StrictResult<T>, DomainException>.Captures(Exception exception) => exception is not NullReferenceException;
 }
 
+[FluentResult<DomainException>(Capture = ExceptionCapture.Declared)]
+public readonly partial struct DeclaredResult<T>;
+
+[FluentResult<DomainException>(Propagate = [typeof(NullReferenceException), typeof(ArgumentException)])]
+public readonly partial struct GuardedResult<T>;
+
 public class CapturePolicyTests
 {
+    [Test]
+    public void DeclaredPolicyCapturesTheErrorTypeAndItsSubtypes()
+    {
+        DeclaredResult<int> one = 1;
+
+        var failed = one.Select(_ => ThrowNotFound());
+
+        Assert.That(failed.GetError(), Is.TypeOf<NotFoundException>());
+    }
+
+    [Test]
+    public void DeclaredPolicyLetsUndeclaredExceptionsEscape()
+    {
+        DeclaredResult<int> one = 1;
+
+        Assert.Throws<TimeoutException>(() => one.Select(_ => ThrowTimeout()));
+        Assert.Throws<NullReferenceException>(() => DeclaredResult.Try(() => ThrowNullReference()));
+    }
+
+    [Test]
+    public void PropagateListLetsTheListedTypesAndTheirSubtypesEscape()
+    {
+        GuardedResult<int> one = 1;
+
+        Assert.Throws<NullReferenceException>(() => one.Select(_ => ThrowNullReference()));
+        Assert.Throws<ArgumentNullException>(() => one.Select(_ => ThrowArgumentNull()));
+        Assert.That(one.Select(_ => ThrowTimeout()).GetError(), Is.TypeOf<UnexpectedDomainException>());
+    }
+
     private static readonly StrictResult<int> One = 1;
 
     [Test]
@@ -85,6 +120,10 @@ public class CapturePolicyTests
     private static int ThrowNullReference() => throw new NullReferenceException("Bug.");
 
     private static int ThrowTimeout() => throw new TimeoutException("Slow.");
+
+    private static int ThrowNotFound() => throw new NotFoundException("No order.");
+
+    private static int ThrowArgumentNull() => throw new ArgumentNullException("id");
 
     private static int ThrowCancelled() => throw new OperationCanceledException();
 }
