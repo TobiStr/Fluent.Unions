@@ -56,6 +56,56 @@ public static class ResultMemberCore
             : throw new InvalidOperationException($"The {ResultErrors.Name(typeof(TSelf))} is successful and holds no error.");
 
     /// <summary>
+    /// Converts the result to another result type with the same value type: keeps the value and maps the error.
+    /// An exception thrown by <paramref name="map"/> becomes an error of <typeparamref name="TOut"/>.
+    /// </summary>
+    public static TOut MapError<TSelf, T, TError, TOut, TOutError>(TSelf result, Func<TError, TOutError> map)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TOut : struct, IFluentResult<TOut, T, TOutError>
+        where TError : notnull
+        where TOutError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (result.TryGetValue(out var value))
+            return TOut.FromValue(value);
+
+        try
+        {
+            return TOut.FromError(map(Flow.ErrorOf<TSelf, T, TError>(result)));
+        }
+        catch (Exception exception) when (Flow.Captured<TOut, TOutError>(exception))
+        {
+            return Flow.Thrown<TOut, TOutError>(exception);
+        }
+    }
+
+    /// <summary>
+    /// Converts a result without a value to another such type: keeps success and maps the error.
+    /// An exception thrown by <paramref name="map"/> becomes an error of <typeparamref name="TOut"/>.
+    /// </summary>
+    public static TOut MapError<TSelf, TError, TOut, TOutError>(TSelf result, Func<TError, TOutError> map)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TOut : struct, IFluentUnitResult<TOut, TOutError>
+        where TError : notnull
+        where TOutError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (!result.TryGetError(out var error))
+            return TOut.Success;
+
+        try
+        {
+            return TOut.FromError(map(error));
+        }
+        catch (Exception exception) when (Flow.Captured<TOut, TOutError>(exception))
+        {
+            return Flow.Thrown<TOut, TOutError>(exception);
+        }
+    }
+
+    /// <summary>
     /// A successful result.
     /// </summary>
     /// <exception cref="ArgumentNullException"><paramref name="value"/> is <c>null</c>.</exception>

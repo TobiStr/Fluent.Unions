@@ -116,6 +116,8 @@ class Fluent.Unions.Captured<T>
   public static TError FromException<TError>(System.Exception exception) where TError : notnull, Fluent.Unions.Abstractions.IFromException<TError>
   public static TError GetError<TSelf, T, TError>(TSelf result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static TError GetError<TSelf, TError>(TSelf result) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static TOut MapError<TSelf, T, TError, TOut, TOutError>(TSelf result, System.Func<TError, TOutError> map) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull where TOut : struct, Fluent.Unions.Abstractions.IFluentResult<TOut, T, TOutError> where TOutError : notnull
+  public static TOut MapError<TSelf, TError, TOut, TOutError>(TSelf result, System.Func<TError, TOutError> map) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull where TOut : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TOut, TOutError> where TOutError : notnull
   public static TSelf Error<TSelf, TError>(TError error) where TSelf : struct, Fluent.Unions.Abstractions.IErrorResult<TSelf, TError> where TError : notnull
   public static TSelf Ok<TSelf, T, TError>(T value) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static string Describe<TError>(TError error) where TError : notnull
@@ -953,6 +955,7 @@ readonly struct Fluent.Unions.Ok : interface System.IEquatable<Fluent.Unions.Ok>
   public Result(Fluent.Unions.Ok value)
   public Result(System.Exception value)
   public System.Exception GetError()
+  public TTarget MapError<TTarget, TTargetError>(System.Func<System.Exception, TTargetError> map) where TTarget : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TTarget, TTargetError> where TTargetError : notnull
   public bool IsError { get; }
   public bool IsSuccess { get; }
   public bool TryGetError(out System.Exception? error)
@@ -987,6 +990,7 @@ readonly struct Fluent.Unions.Ok : interface System.IEquatable<Fluent.Unions.Ok>
   public Result(T value)
   public System.Exception GetError()
   public T GetValue()
+  public TTarget MapError<TTarget, TTargetError>(System.Func<System.Exception, TTargetError> map) where TTarget : struct, Fluent.Unions.Abstractions.IFluentResult<TTarget, T, TTargetError> where TTargetError : notnull
   public bool IsError { get; }
   public bool IsSuccess { get; }
   public bool TryGetError(out System.Exception? error)

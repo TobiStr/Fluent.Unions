@@ -20,7 +20,7 @@ public sealed class FluentResultGenerator : IIncrementalGenerator
 
     private static readonly string[] GeneratedMembers =
     [
-        "Value", "IsSuccess", "IsError", "TryGetValue", "TryGetError", "GetValue", "GetError", "Ok", "Error", "Deconstruct", "ToString", "MapException"
+        "Value", "IsSuccess", "IsError", "TryGetValue", "TryGetError", "GetValue", "GetError", "MapError", "Ok", "Error", "Deconstruct", "ToString", "MapException"
     ];
 
     internal static readonly DiagnosticDescriptor UnsupportedShape = new(

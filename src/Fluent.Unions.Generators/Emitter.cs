@@ -78,6 +78,10 @@ internal static class Emitter
         Member(code, model, "GetError",
             "/// <summary>Gets the error.</summary>\n    /// <exception cref=\"global::System.InvalidOperationException\">The result holds a value.</exception>",
             $"[global::Fluent.Unions.Core.ResultOperator]\n    public {e} GetError() => {MemberCore}.GetError<{self}, {t}, {e}>(this);");
+        var (target, targetError) = MapErrorTypeParameters(t);
+        Member(code, model, "MapError",
+            $"/// <summary>Converts to another result type with the same value type: keeps the value and maps the error with <paramref name=\"map\"/>.</summary>\n    /// <typeparam name=\"{target}\">The result type to convert to.</typeparam>\n    /// <typeparam name=\"{targetError}\">The error type of <typeparamref name=\"{target}\"/>.</typeparam>",
+            $"[global::Fluent.Unions.Core.ResultOperator]\n    public {target} MapError<{target}, {targetError}>(global::System.Func<{e}, {targetError}> map)\n        where {target} : struct, {Abstractions}.IFluentResult<{target}, {t}, {targetError}>\n        where {targetError} : notnull =>\n        {MemberCore}.MapError<{self}, {t}, {e}, {target}, {targetError}>(this, map);");
         Member(code, model, "Ok",
             "/// <summary>A successful result.</summary>\n    /// <exception cref=\"global::System.ArgumentNullException\"><paramref name=\"value\"/> is <c>null</c>.</exception>",
             $"public static {self} Ok({t} value) => {MemberCore}.Ok<{self}, {t}, {e}>(value);");
@@ -146,6 +150,9 @@ internal static class Emitter
         Member(code, members, "GetError",
             "/// <summary>Gets the error.</summary>\n    /// <exception cref=\"global::System.InvalidOperationException\">The result is successful.</exception>",
             $"[global::Fluent.Unions.Core.ResultOperator]\n    public {e} GetError() => {MemberCore}.GetError<{self}, {e}>(this);");
+        Member(code, members, "MapError",
+            "/// <summary>Converts to another result type without a value: keeps success and maps the error with <paramref name=\"map\"/>.</summary>\n    /// <typeparam name=\"TTarget\">The result type to convert to.</typeparam>\n    /// <typeparam name=\"TTargetError\">The error type of <typeparamref name=\"TTarget\"/>.</typeparam>",
+            $"[global::Fluent.Unions.Core.ResultOperator]\n    public TTarget MapError<TTarget, TTargetError>(global::System.Func<{e}, TTargetError> map)\n        where TTarget : struct, {Abstractions}.IFluentUnitResult<TTarget, TTargetError>\n        where TTargetError : notnull =>\n        {MemberCore}.MapError<{self}, {e}, TTarget, TTargetError>(this, map);");
         Member(code, members, "Ok", "/// <summary>A successful result.</summary>",
             $"public static {self} Ok => new(new {OkType}());");
         Member(code, members, "Error",
@@ -244,6 +251,9 @@ internal static class Emitter
         code.AppendLine($"    {documentation}");
         code.AppendLine($"    {declaration}");
     }
+
+    private static (string Target, string TargetError) MapErrorTypeParameters(string typeParameter) =>
+        typeParameter is "TTarget" or "TTargetError" ? ("TConverted", "TConvertedError") : ("TTarget", "TTargetError");
 
     private static string Replace(string template, ResultTypeModel model) =>
         template.Replace(OperatorReader.ResultToken, model.FullName).Replace(OperatorReader.ErrorToken, model.ErrorType);
