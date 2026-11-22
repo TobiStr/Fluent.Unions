@@ -87,4 +87,16 @@ public class CustomResultBehaviorTests
         Assert.That(result.GetValue(), Is.EqualTo("Ada"));
         Assert.That(RegisterHandler.Calls, Is.EqualTo(1));
     }
+
+    [Test]
+    public void StrictPolicy_UndeclaredException_Propagates() =>
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await Mediator.Send(new FindStrict(-1)));
+
+    [Test]
+    public async Task StrictPolicy_DeclaredException_IsReturned()
+    {
+        var result = await Mediator.Send(new FindStrict(0));
+
+        Assert.That(result.GetError(), Is.TypeOf<MissingException>());
+    }
 }

@@ -1,3 +1,4 @@
+using FluentValidation;
 using FluentValidation.Results;
 using Fluent.Unions;
 using Fluent.Unions.FluentValidation;
@@ -71,5 +72,15 @@ public class GeneratedResultValidatorTests
         Assert.That(validated.GetValue(), Is.SameAs(Valid));
         Assert.That(failed.GetError().InnerException, Is.TypeOf<ValidationErrors>());
         Assert.That(mapped.GetError(), Is.TypeOf<InvalidInputException>());
+    }
+
+    [Test]
+    public void StrictPolicy_ThrowingValidator_Propagates()
+    {
+        StrictResult<Customer> result = Valid;
+        var validator = new InlineValidator<Customer>();
+        validator.RuleFor(customer => customer.Name).Must(_ => throw new InvalidOperationException("broken rule"));
+
+        Assert.Throws<InvalidOperationException>(() => result.Validate(validator));
     }
 }

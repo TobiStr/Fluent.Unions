@@ -94,7 +94,7 @@ public static class ValidatorExtensions
         {
             return ToResult<TSelf, T, TError>(value, validator.Validate(value), map);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (exception is not OperationCanceledException && TSelf.Captures(exception))
         {
             return TSelf.FromError(TSelf.FromException(exception));
         }
@@ -143,7 +143,7 @@ public static class ValidatorExtensions
                 await validator.ValidateAsync(value, cancellationToken).ConfigureAwait(false),
                 map);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (exception is not OperationCanceledException && TSelf.Captures(exception))
         {
             return TSelf.FromError(TSelf.FromException(exception));
         }

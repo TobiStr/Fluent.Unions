@@ -150,6 +150,7 @@ public static class ResiliencePipelineExtensions
         return outcome.Exception switch
         {
             OperationCanceledException canceled => throw Rethrow(canceled),
+            { } exception when !TResult.Captures(exception) => throw Rethrow(exception),
             { } exception => TResult.FromError(TResult.FromException(exception)),
             null => outcome.Result
         };

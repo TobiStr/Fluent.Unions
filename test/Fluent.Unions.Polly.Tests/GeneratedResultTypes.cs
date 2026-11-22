@@ -15,3 +15,6 @@ public sealed class PermanentException(string message) : DomainException(message
 
 [FluentResult<DomainException>]
 public readonly partial struct Result<T>;
+
+[FluentResult<DomainException>(Capture = ExceptionCapture.Declared)]
+public readonly partial struct StrictResult<T>;

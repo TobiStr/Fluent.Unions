@@ -153,4 +153,25 @@ public class GeneratedResultPollyTests
 
         Assert.That(result.GetError().InnerException, Is.SameAs(failure));
     }
+
+    [Test]
+    public void ToResult_StrictPolicy_UndeclaredExceptionIsRethrown()
+    {
+        var failure = new InvalidOperationException("boom");
+
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            Outcome.FromException<StrictResult<int>>(failure).ToResult<StrictResult<int>, DomainException>());
+
+        Assert.That(thrown, Is.SameAs(failure));
+    }
+
+    [Test]
+    public async Task ExecuteResultAsync_StrictPolicy_DeclaredExceptionIsKept()
+    {
+        var failure = new PermanentException("no");
+
+        var result = await ResiliencePipeline<StrictResult<int>>.Empty.ExecuteResultAsync<StrictResult<int>, DomainException>(_ => throw failure);
+
+        Assert.That(result.GetError(), Is.SameAs(failure));
+    }
 }

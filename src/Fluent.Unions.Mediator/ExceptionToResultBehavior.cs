@@ -16,7 +16,7 @@ public sealed class ExceptionToResultBehavior<TMessage, TResponse> : IPipelineBe
         {
             return await next(message, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException && ExceptionResult<TResponse>.IsResult)
+        catch (Exception exception) when (exception is not OperationCanceledException && ExceptionResult<TResponse>.IsResult && ExceptionResult<TResponse>.Captures(exception))
         {
             return ExceptionResult<TResponse>.Create(exception);
         }

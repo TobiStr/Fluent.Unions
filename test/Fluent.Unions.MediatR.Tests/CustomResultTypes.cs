@@ -53,3 +53,14 @@ public sealed class RegisterHandler : IRequestHandler<Register, Result<string>>
         return Task.FromResult<Result<string>>(request.Name);
     }
 }
+
+[FluentResult<DomainException>(Capture = ExceptionCapture.Declared)]
+public readonly partial struct StrictResult<T>;
+
+public sealed record FindStrict(int Id) : IRequest<StrictResult<int>>;
+
+public sealed class FindStrictHandler : IRequestHandler<FindStrict, StrictResult<int>>
+{
+    public Task<StrictResult<int>> Handle(FindStrict request, CancellationToken cancellationToken) =>
+        request.Id < 0 ? throw new InvalidOperationException("negative") : throw new MissingException("missing");
+}

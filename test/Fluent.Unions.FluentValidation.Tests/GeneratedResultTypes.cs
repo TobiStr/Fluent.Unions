@@ -13,3 +13,6 @@ public sealed class InvalidInputException(string message) : DomainException(mess
 
 [FluentResult<DomainException>]
 public readonly partial struct Result<T>;
+
+[FluentResult<DomainException>(Capture = ExceptionCapture.Declared)]
+public readonly partial struct StrictResult<T>;
