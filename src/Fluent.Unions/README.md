@@ -6,7 +6,7 @@
 
 `Result`, `Result<T>` and `Option<T>` for .NET, built on the C# 15 `union` keyword. A method returns either its value or an error, and the compiler checks that callers handle both. Fluent operators are named after LINQ and Rx.NET, so a whole flow reads as one expression.
 
-- **Your own Result in one line.** `[FluentResult<TError>]` on a `partial struct` lets the source generator build a complete `Result<T>` around your error type, with every operator and `Task` overload. Make the error a union and the compiler checks that every case is handled.
+- **Your own Result in one line.** `[FluentResult<TError>]` on a `readonly partial struct` lets the source generator build a complete `Result<T>` around your error type, with every operator and `Task` overload. Make the error a union and the compiler checks that every case is handled.
 - **Built for hot paths.** Results store their value without boxing, and a chain of operators with static lambdas allocates nothing.
 - **Every outcome in the signature.** `Option<T>` replaces `null`, and failures are typed values instead of hidden exceptions. What a method can return is visible in its type and checked by the compiler, so flows stay flat, readable and free of `null` checks and `try`/`catch`.
 
@@ -16,7 +16,7 @@
 dotnet add package Fluent.Unions
 ```
 
-Requires .NET 11. C# 15 is the default language version for `net11.0`.
+Requires the .NET 11 SDK. C# 15 is the default language version for `net11.0`, so no `LangVersion` setting is needed. The package includes the source generator and the analyzers.
 
 ## Choose your Result
 
@@ -42,7 +42,7 @@ public sealed class UnexpectedDomainException(Exception inner)
 public readonly partial struct Result<T>;
 ```
 
-The generator adds the union cases, the value-less `Result` with `Result.From` and `Result.Try`, and every operator of the default type. The error type can also be a union of your error cases; the compiler then checks that a `switch` handles each one. Results store their value without boxing, so a `Result<int>` and a chain of `Select`, `Chain`, `Ensure` and `Do` allocate nothing.
+The generator adds the union cases, the value-less `Result` with `Result.From`, `Result.Try` and `Result.WhenAll`, and every operator of the default type. `FromException` decides what any other exception becomes, and `Capture` and `Propagate` on the attribute choose which exceptions become errors at all. The error type can also be a union of your error cases; the compiler then checks that a `switch` handles each one. Results store their value without boxing, so a `Result<int>` and a chain of `Select`, `Chain`, `Ensure` and `Do` allocate nothing.
 
 ## Common scenarios
 
@@ -92,7 +92,7 @@ Option<Customer> cached = cache.GetValueOrNone(id).Or(() => FindInDatabase(id));
 string name = cached.Select(c => c.Name).GetValueOrDefault("Guest");
 ```
 
-**Stay fluent across `await`.** Every operator has a `Task` overload, and `...Await` operators take asynchronous steps:
+**Stay fluent across `await`.** The operators have `Task` overloads, and `...Await` operators take asynchronous steps:
 
 ```csharp
 Result<decimal> total = await LoadCustomerAsync(id)

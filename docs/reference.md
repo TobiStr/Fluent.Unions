@@ -3,10 +3,10 @@
 Every public type and operator, grouped by what you do with it. Each row links to the page that explains it with examples.
 
 ```csharp
-using Fluent.Unions;               // Result, Result<T>, Option<T>, Loadable<T>, ValidationError(s), and all operators
+using Fluent.Unions;               // Result, Result<T>, Option<T>, Loadable<T>, ValidationError(s), [FluentResult<TError>], and all operators
 using Fluent.Unions.Validation;    // Is and the EnsureXxx rules
 using Fluent.Unions.Abstractions;  // IFromException for your own error type, ResultTypes, result interfaces
-using Fluent.Unions.Serialization; // OptionJsonConverter, ResultJsonConverter, UnionJsonConverter
+using Fluent.Unions.Serialization; // OptionJsonConverter, ResultJsonConverter, UnionJsonConverter, UnionCaseName, UnionCaseNames
 using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHttpOptions (Fluent.Unions.AspNetCore)
 ```
 
@@ -42,7 +42,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `IsSuccess`, `IsError`, `TryGetError(out error)`, `GetError()` | `Result`, `Result<T>`, and your own result types | [Result core concepts](result/core-concepts.md) |
 | `TryGetValue(out value)`, `GetValue()` | `Result<T>`, your own result types | [Result core concepts](result/core-concepts.md) |
 | `HasValue`, `TryGetValue(out value)`, `GetValue()` | `Option<T>` | [Option core concepts](option/core-concepts.md) |
-| `IsNotLoaded`, `IsLoading`, `IsLoaded`, `IsFaulted`, `TryGetValue` | `Loadable<T>` | [Loadable](unions/loadable.md) |
+| `IsNotLoaded`, `IsLoading`, `IsLoaded`, `IsFaulted`, `TryGetValue`, `Select`, `GetValueOrDefault(fallback)` | `Loadable<T>` | [Loadable](unions/loadable.md) |
 | `var (value, error) = result` | `Result<T>` | [Result core concepts](result/core-concepts.md) |
 | `Value` | every union, from .NET's `IUnion` | [Your own unions](unions/your-own-unions.md) |
 
@@ -52,12 +52,12 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | --- | --- | --- | --- | --- |
 | `Select` | yes | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Chain` / `SelectMany` | yes | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
-| `Where` | `Option<T>` | yes | yes | [Option](option/operations.md) |
+| `Where` | | yes | yes | [Option](option/operations.md) |
 | `Chain(step, combine)`, `ChainAwait(step, combine)` | `Result<T>` | | yes | [Result](result/operations.md#combine-with-the-previous-value) |
 | `Zip` (both inputs already evaluated) | `Result<T>` | yes | yes | [Result](result/operations.md#zip), [Option](option/operations.md) |
 | `Ensure(predicate, message)`, `Ensure(predicate, v => exception)`, `EnsureAwait(...)` | `Result<T>` | | yes | [Result](result/operations.md) |
 | `Result.CombineAll(a, b[, c[, d]])`, `Result.CombineAllAsync(...)` | `Result<T>` | | tasks | [Result](result/operations.md) |
-| `ChainAppend(v => ...)`, `ChainAppend((a, b) => ...)`, `ChainAppendAwait(...)` | `Result<T>`, tuples up to three elements | | yes | [Result](result/operations.md) |
+| `ChainAppend(v => ...)`, `ChainAppend((a, b) => ...)`, `ChainAppendAwait(...)` | `Result<T>`, tuples up to four elements | | yes | [Result](result/operations.md) |
 | `WithValue(value)`, `DiscardValue()` | `Result`, `Result<T>` | | yes | [Result](result/operations.md) |
 | `Out(out var value)` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Unwrap` | nested results | nested options | | [Result](result/operations.md), [Option](option/operations.md) |
@@ -129,7 +129,7 @@ Namespace `Fluent.Unions.Validation`.
 | Operator | On | Docs |
 | --- | --- | --- |
 | `Match(...)` | results and options (two callbacks), `Loadable<T>` (four), custom types | [Result](result/operations.md), [Option](option/operations.md) |
-| `GetValueOrDefault()`, `GetValueOrDefault(fallback)`, `GetValueOrDefault(() => ...)` | results, options | [Result](result/operations.md), [Option](option/operations.md) |
+| `GetValueOrDefault()`, `GetValueOrDefault(fallback)`, `GetValueOrDefault(() => ...)` | results, options; `Loadable<T>` takes a fallback | [Result](result/operations.md), [Option](option/operations.md) |
 | `DefaultIfEmpty(fallback)`, `DefaultIfEmpty(() => ...)` | options | [Option](option/operations.md) |
 | `Check()` | results, custom types | [Error handling](result/error-handling.md) |
 | `ToNullable()` | `Option<T>` of a struct | [Option conversions](option/conversions.md) |
@@ -157,7 +157,7 @@ Namespace `Fluent.Unions.Validation`.
 
 | Member | Docs |
 | --- | --- |
-| `Task` overloads of the operators, `SelectAwait`, `ChainAwait`, `WhereAwait`, `DoAwait`, `CatchAwait`, `FinallyAwait` | [Task pipelines](async/task-pipelines.md) |
+| `Task` overloads of the operators, `SelectAwait`, `ChainAwait`, `EnsureAwait`, `ChainAppendAwait`, `WhereAwait`, `DoAwait`, `TapAwait`, `CatchAwait`, `FinallyAwait` | [Task pipelines](async/task-pipelines.md) |
 | `Result.WhenAll(tasks)`, `Result.Retry(...)`, `Result.RetryAsync(...)`, `task.Timeout(duration)` | [Concurrency and resilience](async/concurrency-and-resilience.md) |
 | `Values()`, `Errors()`, `CombineAsync()` on `IAsyncEnumerable` | [Streams](async/streams.md) |
 
@@ -165,13 +165,14 @@ Namespace `Fluent.Unions.Validation`.
 
 | Member | Docs |
 | --- | --- |
-| `[FluentResult<TError>]` on a `readonly partial struct`, with `CaseConversions` | [Your own Result type](errors/custom-error-types.md) |
+| `[FluentResult<TError>]` on a `readonly partial struct`, with `CaseConversions` | [Your own Result type](errors/custom-error-types.md#options) |
+| `Capture = ExceptionCapture.All` or `ExceptionCapture.Declared`, `Propagate = [typeof(...)]` on the attribute | [Capture policy](errors/custom-error-types.md#capture-policy) |
 | Every operator of `Result<T>` and `Result`, generated for your type | [Your own Result type](errors/custom-error-types.md#what-the-generator-writes) |
 | `IFromException<TSelf>` on the error type, or `FromException` on the struct | [Your own Result type](errors/custom-error-types.md#unexpected-exceptions) |
 | A union as the error type, case conversions, exhaustive `switch` | [Errors as data](errors/errors-as-data.md) |
 | `ResultTypes.IsResult(type)`, `ResultTypes.ErrorType(type)`, `ResultTypes.ValueType(type)` | Runtime checks for any result type |
 | `union.Is<TCase>()`, `union.As<TCase>()` | [Your own unions](unions/your-own-unions.md) |
-| `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>`, `IFluentResult`, `IFluentUnitResult` | Implemented by declared types, not by hand. The integration packages accept any type that implements them |
+| `IResult<TSelf, T, TError>`, `IErrorResult<TSelf, TError>`, `IFluentResult<TSelf, T, TError>`, `IFluentUnitResult<TSelf, TError>` | Implemented by declared types, not by hand. The integration packages accept any type that implements them |
 | Hand-written result types and `Result<T, TError>` from 0.3.0 | Removed, see [Migrating](errors/custom-error-types.md#migrating-from-030) |
 
 ## FluentValidation
@@ -281,8 +282,8 @@ Package `Fluent.Unions.Mediator`, namespace `Fluent.Unions.Mediator`.
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `ExceptionToResultBehavior<TMessage, TResponse>` | pipeline behavior, `TResponse` implements `IErrorResult<TResponse, Exception>` | [Mediator and MediatR](mediator/README.md#the-behaviors) |
-| `ValidationToResultBehavior<TMessage, TResponse>` | pipeline behavior, same constraint | [Mediator and MediatR](mediator/README.md#the-behaviors) |
+| `ExceptionToResultBehavior<TMessage, TResponse>` | pipeline behavior; acts when `TResponse` is a result type with any error type, other responses pass through | [Mediator and MediatR](mediator/README.md#the-behaviors) |
+| `ValidationToResultBehavior<TMessage, TResponse>` | pipeline behavior, same rule | [Mediator and MediatR](mediator/README.md#the-behaviors) |
 
 ## MediatR
 
@@ -290,8 +291,8 @@ Package `Fluent.Unions.MediatR`, namespace `Fluent.Unions.MediatR`.
 
 | Member | On | Docs |
 | --- | --- | --- |
-| `ExceptionToResultBehavior<TRequest, TResponse>` | pipeline behavior, `TResponse` implements `IErrorResult<TResponse, Exception>` | [Mediator and MediatR](mediator/README.md#the-behaviors) |
-| `ValidationToResultBehavior<TRequest, TResponse>` | pipeline behavior, same constraint | [Mediator and MediatR](mediator/README.md#the-behaviors) |
+| `ExceptionToResultBehavior<TRequest, TResponse>` | pipeline behavior; acts when `TResponse` is a result type with any error type, other responses pass through | [Mediator and MediatR](mediator/README.md#the-behaviors) |
+| `ValidationToResultBehavior<TRequest, TResponse>` | pipeline behavior, same rule | [Mediator and MediatR](mediator/README.md#the-behaviors) |
 
 ## MongoDB
 
@@ -394,9 +395,14 @@ Package `Fluent.Unions.Verify`, namespace `Fluent.Unions.Verify`.
 
 ## Serialization
 
+Namespace `Fluent.Unions.Serialization`.
+
 | Type | Docs |
 | --- | --- |
 | `OptionJsonConverter` (applied to `Option<T>`), `ResultJsonConverter` (refuses results), `UnionJsonConverter` | [Serialization](serialization/README.md) |
+| `OptionJsonConverter<T>`, `UnionJsonConverter<TUnion>`: the same JSON as the factories, registered or applied per type for native AOT and trimmed apps | [AOT and trimming](getting-started/aot-and-trimming.md#systemtextjson) |
+| `[UnionCaseName(typeof(Case), "name", Aliases = [...])]` on a union: a stable case name | [Stable case names](serialization/README.md#stable-case-names) |
+| `UnionCaseNames.For(unionType)`: the case names of a union; keeps the union's constructors in trimmed apps | [AOT and trimming](getting-started/aot-and-trimming.md#trimmed-apps-and-union-cases) |
 
 ## ASP.NET Core (`Fluent.Unions.AspNetCore`)
 
@@ -425,6 +431,11 @@ Package `Fluent.Unions.Verify`, namespace `Fluent.Unions.Verify`.
 | `FLU0011`: a cast of `Value` | [Analyzer](analyzer/README.md#flu0011) |
 | `FLU0012`: a `throw` in a method that returns a result | [Analyzer](analyzer/README.md#flu0012) |
 | `FLU0013`: `ToOption()` that drops an error | [Analyzer](analyzer/README.md#flu0013) |
+| `FLU0101`: a `[FluentResult]` declaration that is not supported | [Analyzer](analyzer/README.md#flu0101) |
+| `FLU0102`: an error type that cannot represent an unexpected exception | [Analyzer](analyzer/README.md#flu0102) |
+| `FLU0103`: a case of the error union without a conversion | [Analyzer](analyzer/README.md#flu0103) |
+| `FLU0104`: `Capture = ExceptionCapture.Declared` that has no effect | [Analyzer](analyzer/README.md#flu0104) |
+| `FLU0105`: a type in `Propagate` that is not an exception | [Analyzer](analyzer/README.md#flu0105) |
 
 ---
 

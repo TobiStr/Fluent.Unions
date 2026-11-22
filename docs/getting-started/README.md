@@ -14,10 +14,10 @@ The types:
 
 Operators are named after LINQ and Rx.NET: `Select`, `SelectMany`, `Catch`, `Do`, `Finally`, `Match`, plus `Chain` and `Ensure`. The same names work on `Task<Result<T>>`, so an asynchronous pipeline stays one expression.
 
-Two packages:
+Packages:
 
-- `Fluent.Unions` has the types, the operators and analyzers that warn when you ignore a result or misuse a union.
-- `Fluent.Unions.AspNetCore` turns results and options into HTTP responses.
+- `Fluent.Unions` has the types, the operators, the source generator for your own `Result<T>`, and analyzers that warn when you ignore a result or misuse a union.
+- Integration packages, such as `Fluent.Unions.AspNetCore` for HTTP responses, connect results and options to other libraries. Add only the ones you use. See [Installation](installation.md#packages).
 
 ## Choose your Result
 
@@ -28,7 +28,7 @@ Start with the default `Result<T>` from `using Fluent.Unions;`. When you want er
 public readonly partial struct Result<T>;
 ```
 
-The source generator turns this line into a complete result type: the union cases and conversions, the value-less `Result`, and every operator with every `Task` overload. The operators forward to the library, so every operator below works on both, with the same behavior and the same performance. See [Your own Result type](../errors/custom-error-types.md).
+The source generator turns this line into a complete result type: the union cases and conversions, the value-less `Result`, and every operator with every `Task` overload. The operators forward to the library, so every operator in these docs works on both, with the same behavior and the same performance. See [Your own Result type](../errors/custom-error-types.md).
 
 ## In this section
 
@@ -59,7 +59,7 @@ Each step runs only if the previous one succeeded. The first error ends the chai
 ## Rules
 
 - A `Result` is a struct. `default(Result<T>)` is not a third state for the library: it counts as an error. A native `switch` sees no case for it; see [The default result](../result/core-concepts.md#the-default-result).
-- Operators on results never throw for failures inside your lambdas. They turn the exception into the error. Only `Check()` throws on purpose.
+- Operators on results turn an exception thrown inside your lambdas into the error. Three cases still throw: an `OperationCanceledException` propagates, `Tap`, `TapError` and `TapAwait` never capture, and your own result type can let more exceptions escape with `Capture` and `Propagate`. `Check()` throws on purpose. See [What is captured](../result/error-handling.md#what-is-captured).
 - Operators on options do not catch exceptions, because an option has no error state.
 
 ---

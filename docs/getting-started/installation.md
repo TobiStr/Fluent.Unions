@@ -16,16 +16,20 @@ dotnet add package Fluent.Unions
 dotnet add package Fluent.Unions.AspNetCore
 ```
 
+`Fluent.Unions` includes the source generator and the analyzers; there is nothing else to install for them.
+
 Add `Fluent.Unions.AspNetCore` only to web projects. It references `Fluent.Unions` and `Microsoft.AspNetCore.App`.
+
+Every other integration, such as FluentValidation, Polly, Newtonsoft.Json, Serilog or a test library, is its own package as well. The [docs index](../README.md#integrations-and-tooling) lists all of them. Add only the ones you use.
 
 ## Namespaces
 
 | Namespace | Contents |
 | --- | --- |
-| `Fluent.Unions` | `Result`, `Result<T>`, `Option<T>`, `Loadable<T>`, `Ok`, `None`, `Captured<T>`, `ValidationError(s)`, and every operator |
+| `Fluent.Unions` | `Result`, `Result<T>`, `Option<T>`, `Loadable<T>`, `Ok`, `None`, `Captured<T>`, `ValidationError(s)`, `[FluentResult<TError>]`, `ExceptionCapture`, and every operator |
 | `Fluent.Unions.Validation` | `Is` and the ready-made `Ensure*` rules |
 | `Fluent.Unions.Abstractions` | `IFromException<T>` for the error type of your own result type, `ResultTypes`, and the result interfaces |
-| `Fluent.Unions.Serialization` | JSON converters, such as `UnionJsonConverter` |
+| `Fluent.Unions.Serialization` | The System.Text.Json converters `OptionJsonConverter`, `UnionJsonConverter`, their generic forms and `ResultJsonConverter`, plus `[UnionCaseName]` and `UnionCaseNames` |
 | `Fluent.Unions.AspNetCore` | `ToHttpResult`, `WithResultMapping`, `ResultHttpOptions` |
 
 `using Fluent.Unions;` is all most files need. The rules stay in their own namespace, so the `Ensure*` methods do not show up on every string and number unless you ask for them. A global using saves repeating it:
@@ -48,7 +52,7 @@ _ = Save(order);  // fine: discarded on purpose
 Save(order).Check();
 ```
 
-Other rules catch an async lambda passed to `Try` or `Select`, a type such as `Result<Exception>` that cannot tell its cases apart, a result that is serialized to JSON, and more. Several come with a code fix. See [Analyzer](../analyzer/README.md) for every rule. To raise a severity, add it to `.editorconfig`:
+Other rules catch an async lambda passed to `Try` or `Select`, a type such as `Result<Exception>` that cannot tell its cases apart, a result that is serialized to JSON, and more. Several come with a code fix. The source generator reports `FLU0101` to `FLU0105` for `[FluentResult]` declarations. See [Analyzer](../analyzer/README.md) for every rule. To raise a severity, add it to `.editorconfig`:
 
 ```
 dotnet_diagnostic.FLU0001.severity = error
@@ -69,7 +73,6 @@ Do this early. It is the main reason to use a union: the compiler tells you when
 ## Pitfalls
 
 - A `default` option or result holds nothing. A `switch` over an option needs `None or null` as its last arm, not just `None`. See [Option](../option/README.md).
-- The README in the repository root describes referencing the project directly. The package IDs above come from the project files in `src/`.
 
 ## See also
 

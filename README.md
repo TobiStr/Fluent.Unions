@@ -149,7 +149,7 @@ Option<Customer> cached = cache.GetValueOrNone(id).Or(() => FindInDatabase(id));
 string name = cached.Select(c => c.Name).GetValueOrDefault("Guest");
 ```
 
-**Stay fluent across `await`.** Every operator has a `Task` overload, and `...Await` operators take asynchronous steps:
+**Stay fluent across `await`.** The operators have `Task` overloads, and `...Await` operators take asynchronous steps:
 
 ```csharp
 Result<decimal> total = await LoadCustomerAsync(id)
@@ -201,7 +201,7 @@ public static Result<Receipt> PlaceOrder(Shop shop, ILogger logger, CheckoutRequ
         .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}."))
             .Out(out var order) // makes the order accessible from steps below
         .Chain(o => Result.Try(() => shop.Charge(o.Customer, o.Total))
-        .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
+            .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
         .Do(shop.Save)
         .Do(receipt => logger.LogInformation(
             "Placed {Quantity} x {Sku} for customer {CustomerId}, payment {PaymentId}",
@@ -291,6 +291,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 |                       | [Installation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/installation.md)                   | Requirements, packages, namespaces, the analyzer, CS8509 as an error                                               |
 |                       | [Quick start](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/quick-start.md)                     | A 10-minute walkthrough from `return` to an HTTP endpoint                                                          |
 |                       | [Limitations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/limitations.md)                     | What the library cannot do                                                                                         |
+|                       | [AOT and trimming](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/getting-started/aot-and-trimming.md)           | What works in native AOT and trimmed apps, and what is tested                                                      |
 | Result                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/README.md)                                      | `Result` and `Result<T>` in short                                                                                  |
 |                       | [Core concepts](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/core-concepts.md)                          | The two states, creating results, members, matching, deconstruction, `Check()`                                     |
 |                       | [Operations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/operations.md)                                | `Select`, `Chain`, `Ensure`, `Zip`, `CombineAll`, `ChainAppend`, `Do`, `Out`, `Finally`, `Unwrap`, `Match` and more |
@@ -309,7 +310,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 |                       | [Streams](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/async/streams.md)                                       | `IAsyncEnumerable` of results and options                                                                          |
 | Validation            | [Validation](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/validation/README.md)                                | `Validate`, `CombineAll`, the rule catalogue, and validation errors over HTTP                                      |
 | Errors                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/README.md)                                      | Choosing between exceptions, custom types and errors as data                                                       |
-|                       | [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md)              | `[FluentResult<TError>]`: your error type, every operator, a closed set of errors                                  |
+|                       | [Your own Result type](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/custom-error-types.md)              | `[FluentResult<TError>]`: your error type, every operator, the capture policy, a closed set of errors              |
 |                       | [Errors as data](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/errors/errors-as-data.md)                        | A `[FluentResult]` type whose error is a union of error records                                                    |
 | Unions                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/README.md)                                      | Helpers for unions in short                                                                                        |
 |                       | [Your own unions](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/unions/your-own-unions.md)                      | `Is`, `As`, and the JSON converter for your unions                                                                 |
@@ -342,7 +343,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | gRPC                  | [gRPC](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/grpc/README.md)                                            | `ToResult()` on gRPC calls and a server interceptor that maps errors to status codes                               |
 | Verify                | [Verify](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/verify/README.md)                                        | Readable Verify snapshots of `Result`, `Option` and `Loadable`                                                     |
 | Tracing               | [Tracing](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/tracing/README.md)                                      | `Activity.RecordResult` for status and exception events                                                            |
-| Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013` and the generator's `FLU0101` to `FLU0103`, with code fixes                           |
+| Analyzer              | [Analyzer](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/analyzer/README.md)                                    | Rules `FLU0001` to `FLU0013` and the generator's `FLU0101` to `FLU0105`, with code fixes                           |
 
 ## Build and test
 
@@ -386,6 +387,7 @@ dotnet test Fluent.Unions.slnx
 | `test/Fluent.Unions.Scenarios.Tests`    | Real-world scenarios that show the core library end to end                                           |
 | `test/Fluent.Unions.Api.Tests`          | Snapshots of every package's public API                                                              |
 | `test/Fluent.Unions.Generators.Tests`   | Tests for the generator: diagnostics, caching, and one forwarder per core operator                   |
+| `test/Fluent.Unions.Aot`                | A sample that CI publishes and runs as a native AOT app and as a trimmed app                         |
 | `bench/Fluent.Unions.Benchmarks`        | BenchmarkDotNet benchmarks; run with `dotnet run -c Release -- --filter "*" --inProcess`             |
 | `test/`                                 | The NUnit tests for each project. `test/Fluent.Unions.Tests/Samples` holds runnable modeling samples |
 | `docs/`                                 | The documentation                                                                                    |

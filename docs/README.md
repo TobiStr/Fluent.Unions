@@ -1,6 +1,6 @@
 # Fluent.Unions documentation
 
-Fluent.Unions brings `Result`, `Result<T>`, `Option<T>` and `Loadable<T>` to C# 15, built on the `union` keyword. Fluent operators are named after LINQ and Rx.NET. An analyzer and an ASP.NET Core package help you use results safely from the first method to the HTTP response.
+Fluent.Unions brings `Result`, `Result<T>`, `Option<T>` and `Loadable<T>` to C# 15, built on the `union` keyword. Fluent operators are named after LINQ and Rx.NET. A source generator builds your own `Result<T>`, analyzers catch the mistakes the compiler lets through, and integration packages connect results and options to ASP.NET Core, serializers, test libraries and more.
 
 ## Your error type, your Result
 
@@ -22,7 +22,7 @@ Make the error type a union and the compiler checks that every case is handled. 
 
 ## Start here
 
-- [Getting started](getting-started/README.md): what the library is, installation, and a quick start.
+- [Getting started](getting-started/README.md): what the library is, installation, a quick start, limitations, and AOT and trimming.
 - [Your own Result type](errors/custom-error-types.md): the declaration, what the generator writes, the capture policy, and how to choose the shape of your errors.
 - [Reference](reference.md): every type and operator on one page, with links to the detailed docs.
 
@@ -65,7 +65,7 @@ Make the error type a union and the compiler checks that every case is handled. 
 | [gRPC](grpc/README.md) | The `Fluent.Unions.Grpc` package: calls as `Result<T>`, errors as status codes. |
 | [Verify](verify/README.md) | The `Fluent.Unions.Verify` package: readable Verify snapshots of results, options and loadables. |
 | [Tracing](tracing/README.md) | `RecordResult` copies a result onto a `System.Diagnostics.Activity`: status and exception event. |
-| [Analyzer](analyzer/README.md) | Rules for ignored results, async lambdas that escape a result, overlapping cases and more. |
+| [Analyzer](analyzer/README.md) | Rules for ignored results, async lambdas that escape a result, overlapping cases and more, plus the diagnostics of the source generator. |
 
 ## Conventions in these docs
 

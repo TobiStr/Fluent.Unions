@@ -1,6 +1,6 @@
 # Quick start
 
-This page walks through the main features in about ten minutes, using a small online shop: customers, carts, orders and payments. The helpers `GetCustomer`, `GetCart`, `PlaceOrder` and `LoadOrderAsync` return results. Their bodies do not matter here.
+This page walks through the main features in about ten minutes, using a small online shop: customers, carts, orders and payments. The helpers `GetCustomer`, `GetCart` and `PlaceOrder` return results, and their `...Async` versions and `LoadOrderAsync` return tasks of results. Their bodies do not matter here.
 
 ```csharp
 using Fluent.Unions;
@@ -70,7 +70,7 @@ Result<string> label = GetCustomer(id)
     .Catch((KeyNotFoundException _) => "GUEST");
 ```
 
-Other errors pass through `Catch` untouched. An exception thrown inside a lambda also becomes the error, so chains do not throw.
+Other errors pass through `Catch` untouched. An exception thrown inside a lambda also becomes the error, so you need no `try`/`catch` around a chain. See [Error handling](../result/error-handling.md) for the few exceptions that still escape.
 
 ## Wrap code that throws
 
@@ -98,7 +98,7 @@ string name = keyboard.Match(p => p.Name, () => "unknown");
 
 ## An async pipeline
 
-Every operator also works on `Task<Result<T>>`. Use the `...Await` variants when your lambda is itself asynchronous.
+The operators also work on `Task<Result<T>>`. Use the `...Await` variants when your lambda is itself asynchronous.
 
 ```csharp
 Result<Confirmation> confirmation = await GetCustomerAsync(id)
