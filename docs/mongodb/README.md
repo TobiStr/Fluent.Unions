@@ -87,7 +87,7 @@ Convert a result before it reaches the serializer, for example with `Match`, `Ge
 - **Both registrations are global.** `BsonSerializer` has no scope, so the serializers apply to the whole process.
 - **`Option<T>` is not queried specially.** LINQ and filter builders see the member as the serializer writes it: the value, or null for `None`.
 - **Nested options flatten.** `Option<Option<T>>` loses the difference between its levels, as with `System.Text.Json`.
-- **Reflection.** The registrations and the convention use reflection. AOT and trimming have not been tested.
+- **Reflection.** The registrations and the convention use reflection, so they do not work in trimmed or native AOT apps. `FluentUnionsBson.Register()` carries `RequiresUnreferencedCode` and `RequiresDynamicCode`. See [AOT and trimming](../getting-started/aot-and-trimming.md).
 
 ---
 

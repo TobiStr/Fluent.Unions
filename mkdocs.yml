@@ -51,6 +51,7 @@ nav:
       - Installation: getting-started/installation.md
       - Quick start: getting-started/quick-start.md
       - Limitations: getting-started/limitations.md
+      - AOT and trimming: getting-started/aot-and-trimming.md
   - Result:
       - result/README.md
       - Core concepts: result/core-concepts.md

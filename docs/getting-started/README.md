@@ -35,6 +35,7 @@ Every operator below works on both. See [Your own Result type](../errors/custom-
 - [Installation](installation.md): requirements, packages, namespaces, the analyzer and CS8509.
 - [Quick start](quick-start.md): a 10-minute walkthrough from `return` to an ASP.NET Core endpoint.
 - [Limitations](limitations.md): what the library cannot do.
+- [AOT and trimming](aot-and-trimming.md): what works in native AOT and trimmed apps, and what is tested.
 - [Result](../result/README.md): the detailed guide, the page to read after the quick start.
 
 ## Quick example

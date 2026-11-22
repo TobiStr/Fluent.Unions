@@ -36,7 +36,7 @@ JsonSerializer.Serialize(new CustomerDto("Ada", "Countess"));  // {"Name":"Ada",
 - `WhenWritingNull` does not omit `None`. `WhenWritingDefault` omits every option without a value, because `None` equals `default`.
 - `Option<Option<T>>` is not a round-trip type: it loses the difference between its levels.
 - `Result` and `Result<T>` throw `NotSupportedException` in both directions.
-- Both converters use reflection. See [AOT and trimming](#aot-and-trimming).
+- The factories use reflection. Trimmed and native AOT apps register the generic converters, see [AOT and trimming](#aot-and-trimming).
 
 ## Options
 
@@ -174,7 +174,7 @@ The constants `UnionJsonConverter.TypeProperty` and `UnionJsonConverter.ValuePro
 
 ## AOT and trimming
 
-Not supported. `OptionJsonConverter` and `UnionJsonConverter` create converters through reflection (`Activator.CreateInstance` and `MakeGenericType`), and `UnionJsonConverter` reads the union's constructors by reflection. AOT and trimming have not been investigated or tested. Do not use these converters in a trimmed or native AOT app without testing it.
+Register `OptionJsonConverter<T>` for each value type of an option and apply `UnionJsonConverter<Shape>` to each union, instead of relying on the factories. Both write the same JSON. A source-generated context must also register every value type and union case type. In a native AOT app the factories throw a `NotSupportedException` that names the converter to register. See [AOT and trimming](../getting-started/aot-and-trimming.md) for the tested combinations.
 
 ## Pitfalls
 

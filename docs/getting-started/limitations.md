@@ -6,7 +6,7 @@ What the current version of the library cannot do.
 - **No `null` literal for a result.** A `default` result is an error; return a value or an exception instead.
 - **`default` is not caught by `switch`.** A `switch` expression over a `default` result throws `SwitchExpressionException` and a `switch` statement runs no branch, because the compiler cannot see that state. Operators and `Match` treat it as an error. See [The default result](../result/core-concepts.md#the-default-result).
 - **Equality is not payload-based.** Two results wrapping distinct class instances are not equal.
-- **AOT and trimming are not verified.** The JSON converters use reflection.
+- **AOT and trimming need explicit converters.** The core package is tested in native AOT and trimmed apps; `Option<T>` of a value type and your own unions need the generic converters there, and several integration packages are not supported. See [AOT and trimming](aot-and-trimming.md).
 - **Hand-written class unions** were not investigated. The library is built on C# `union` declarations.
 - **Entity Framework Core** cannot map `Option<T>` with a value converter. See [Entity Framework Core](../entity-framework-core/README.md) for the backing-field pattern.
 

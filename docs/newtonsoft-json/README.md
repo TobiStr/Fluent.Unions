@@ -127,7 +127,7 @@ Apply `UnionJsonConverter` with the attribute. You can also add it to `settings.
 
 ## AOT and trimming
 
-Not supported. The converters use reflection (`MakeGenericType`, constructor lookup), as does Newtonsoft.Json. AOT and trimming have not been investigated or tested.
+Not supported. The converters use reflection (`MakeGenericType`, constructor lookup), as does Newtonsoft.Json. `AddFluentUnions()` carries `RequiresUnreferencedCode` and `RequiresDynamicCode`, so the trim and AOT analyzers warn where it is called. Use System.Text.Json with the generic converters instead, see [AOT and trimming](../getting-started/aot-and-trimming.md).
 
 ## Pitfalls
 

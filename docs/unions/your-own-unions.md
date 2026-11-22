@@ -92,7 +92,7 @@ var method = JsonSerializer.Deserialize<PaymentMethod>("""{ "$value": { "Code": 
 - **Case names must be unique.** Two cases with the same type name, from different namespaces or closed generics such as `List<int>` and `List<string>`, cannot be told apart. The first serialization throws an `InvalidOperationException` ("has several cases named 'Card'") that names both types. Give the cases distinct names with `[UnionCaseName]`, see [Stable case names](../serialization/README.md#stable-case-names).
 - **Renaming a case type renames it in JSON.** Pin the stored name with `[UnionCaseName(typeof(NewType), "OldName")]` before the rename.
 
-The converter uses reflection, like the option converter. Trimming and AOT are not investigated.
+In a trimmed or native AOT app, apply `UnionJsonConverter<PaymentMethod>` instead of the factory. See [AOT and trimming](../getting-started/aot-and-trimming.md).
 
 ## Pattern matching tips
 
