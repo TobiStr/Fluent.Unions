@@ -51,6 +51,7 @@ public sealed class UnionJsonConverter : JsonConverter
         ConstructorInfo? constructor = null;
         object? value = null;
         JToken? buffered = null;
+        var hasValue = false;
 
         while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
         {
@@ -69,6 +70,7 @@ public sealed class UnionJsonConverter : JsonConverter
             }
             else if (property == ValueProperty)
             {
+                hasValue = true;
                 if (constructor is null)
                     buffered = ReadBuffered(reader);
                 else
@@ -81,10 +83,17 @@ public sealed class UnionJsonConverter : JsonConverter
         if (constructor is null)
             throw new JsonSerializationException($"A {unionType.Name} needs a '{TypeProperty}' property.");
 
+        if (!hasValue)
+            throw new JsonSerializationException($"A {unionType.Name} needs a '{ValueProperty}' property.");
+
         if (buffered is not null)
             value = buffered.ToObject(constructor.GetParameters()[0].ParameterType, serializer);
 
-        return constructor.Invoke([value]);
+        var union = constructor.Invoke([value]);
+
+        return ((IUnion)union).Value is null
+            ? throw new JsonSerializationException($"The '{ValueProperty}' of case '{constructor.GetParameters()[0].ParameterType.Name}' is null. An empty {unionType.Name} is written as null.")
+            : union;
     }
 
     /// <inheritdoc />

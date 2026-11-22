@@ -71,6 +71,36 @@ public class UnionJsonConverterTests
     }
 
     [Test]
+    public void MissingValueThrows()
+    {
+        var thrown = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Shape>("""{"$type":"Int32"}"""));
+
+        Assert.That(thrown!.Message, Does.Contain("needs a '$value' property"));
+    }
+
+    [Test]
+    public void NullValueThatWouldGiveAnEmptyUnionThrows()
+    {
+        var thrown = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Shape>("""{"$type":"Circle","$value":null}"""));
+
+        Assert.That(thrown!.Message, Does.Contain("An empty Shape is written as null"));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Shape>("""{"$type":"Int32","$value":null}"""));
+    }
+
+    [TestCase("5")]
+    [TestCase("[1]")]
+    [TestCase("\"Circle\"")]
+    public void NonObjectTokenThrows(string json) =>
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Shape>(json));
+
+    [Test]
+    public void SameShortNameFromTwoNamespacesThrowsInvalidOperationException()
+    {
+        var thrown = Assert.Throws<InvalidOperationException>(() => JsonSerializer.Serialize((Ambiguous)new FirstNamespace.Item(1)));
+
+        Assert.That(thrown!.Message, Does.Contain("several cases named 'Item'"));
+    }
+    [Test]
     public void NestedOptionLosesItsLevels()
     {
         Option<Option<int>> someNone = Option.Some<Option<int>>(Option.None);

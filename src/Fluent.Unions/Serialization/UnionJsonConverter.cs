@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -30,8 +31,18 @@ public sealed class UnionJsonConverter : JsonConverterFactory
         && !(typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(Option<>));
 
     /// <inheritdoc />
-    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>
-        (JsonConverter)Activator.CreateInstance(typeof(Converter<>).MakeGenericType(typeToConvert))!;
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        try
+        {
+            return (JsonConverter)Activator.CreateInstance(typeof(Converter<>).MakeGenericType(typeToConvert))!;
+        }
+        catch (TargetInvocationException exception) when (exception.InnerException is { } inner)
+        {
+            ExceptionDispatchInfo.Throw(inner);
+            throw;
+        }
+    }
 
     private sealed class Converter<TUnion> : JsonConverter<TUnion> where TUnion : struct, IUnion
     {
@@ -65,18 +76,24 @@ public sealed class UnionJsonConverter : JsonConverterFactory
             using var document = JsonDocument.ParseValue(ref reader);
             var root = document.RootElement;
 
-            if (!root.TryGetProperty(TypeProperty, out var typeName) || typeName.GetString() is not { } name)
+            if (root.ValueKind != JsonValueKind.Object)
+                throw new JsonException($"A {typeof(TUnion).Name} must be a JSON object or null.");
+
+            if (!root.TryGetProperty(TypeProperty, out var typeName) || typeName.ValueKind != JsonValueKind.String || typeName.GetString() is not { } name)
                 throw new JsonException($"A {typeof(TUnion).Name} needs a '{TypeProperty}' property.");
 
             if (!casesByName.TryGetValue(name, out var constructor))
                 throw new JsonException($"'{name}' is not a case of {typeof(TUnion).Name}.");
 
-            var caseType = constructor.GetParameters()[0].ParameterType;
-            var value = root.TryGetProperty(ValueProperty, out var element)
-                ? element.Deserialize(caseType, options)
-                : null;
+            if (!root.TryGetProperty(ValueProperty, out var element))
+                throw new JsonException($"A {typeof(TUnion).Name} needs a '{ValueProperty}' property.");
 
-            return (TUnion)constructor.Invoke([value]);
+            var caseType = constructor.GetParameters()[0].ParameterType;
+            var union = (TUnion)constructor.Invoke([element.Deserialize(caseType, options)]);
+
+            return union.Value is null
+                ? throw new JsonException($"The '{ValueProperty}' of case '{name}' is null. An empty {typeof(TUnion).Name} is written as null.")
+                : union;
         }
 
         public override void Write(Utf8JsonWriter writer, TUnion value, JsonSerializerOptions options)

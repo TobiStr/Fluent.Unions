@@ -123,6 +123,21 @@ public class UnionJsonConverterTests
     }
 
     [Test]
+    public void MissingValueThrows()
+    {
+        var thrown = Assert.Throws<JsonSerializationException>(() => JsonConvert.DeserializeObject<Shape>("""{"$type":"Int32"}"""));
+
+        Assert.That(thrown!.Message, Does.Contain("needs a '$value' property"));
+    }
+
+    [Test]
+    public void NullValueThatWouldGiveAnEmptyUnionThrows()
+    {
+        var thrown = Assert.Throws<JsonSerializationException>(() => JsonConvert.DeserializeObject<Shape>("""{"$type":"Circle","$value":null}"""));
+
+        Assert.That(thrown!.Message, Does.Contain("An empty Shape is written as null"));
+    }
+    [Test]
     public void NonObjectTokenThrows() =>
         Assert.Throws<JsonSerializationException>(() => JsonConvert.DeserializeObject<Shape>("5"));
 
