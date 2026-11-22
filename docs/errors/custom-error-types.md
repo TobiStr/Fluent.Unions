@@ -56,7 +56,7 @@ public readonly partial struct PaymentResult<T>
 | --- | --- |
 | The union | Constructors for the value and the error, implicit conversions, `Value`, `IsSuccess`, `IsError`, `TryGetValue`, `TryGetError`, `GetValue`, `GetError`, `Deconstruct`, `Ok(value)`, `Error(error)` |
 | `Result` without a value | The same members with `Ok` as the success case, plus `Result.From`, `Try`, `TryAsync`, `WhenAll`, `Retry`, `RetryAsync`, `CombineAll` and `CombineAllAsync` |
-| Operators | Every operator of the default type: `Select`, `Chain`, `Ensure`, `Validate`, `Zip`, `ChainAppend`, `Do`, `OnErrorDo`, `Finally`, `Out`, `Catch`, `Match`, `GetValueOrDefault`, `Check`, `Combine`, `CombineAll`, `Partition`, `ToOption`, `ToLoadable`, `Transpose`, `Unwrap`, `WithValue`, `DiscardValue`, query syntax, every `Task` overload and every `...Await` operator |
+| Operators | Every operator of the default type: `Select`, `Chain`, `Ensure`, `Validate`, `Zip`, `ChainAppend`, `Do`, `OnErrorDo`, `Tap`, `TapError`, `TapAwait`, `Finally`, `Out`, `Catch`, `MapError`, `Match`, `GetValueOrDefault`, `Check`, `Combine`, `CombineAll`, `Partition`, `ToOption`, `ToLoadable`, `Transpose`, `Unwrap`, `WithValue`, `DiscardValue`, query syntax, every `Task` overload and every `...Await` operator |
 
 Type inference works as with the default type, so no operator needs explicit type arguments:
 
@@ -197,7 +197,7 @@ From `Result<T, TError>`:
 
 1. Declare a type for the error: `[FluentResult<CheckoutError>] public readonly partial struct Outcome<T>;`.
 2. Replace `Result<Order, CheckoutError>` with `Outcome<Order>`. The `(CheckoutError)` casts on errors are no longer needed.
-3. Replace `MapError` with `Match`, see [Errors as data](errors-as-data.md#translating-errors-between-layers).
+3. `MapError` now names the target type: `outcome.MapError<ClientResult<Order>, ClientError>(...)`, see [Errors as data](errors-as-data.md#translating-errors-between-layers).
 4. Replace `Catch<TCase>` on a record case with the general `Catch`. The typed `Catch<TCase>` takes exception cases only.
 
 The generated type does not box and has the `Task` overloads.

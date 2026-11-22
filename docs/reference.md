@@ -70,6 +70,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `Catch(e => ...)`, `Catch((IOException e) => ...)`, `Catch(fallback)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `OnErrorDo(e => ...)`, `Do(v => ..., e => ...)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `TapError(e => ...)`, `Tap(v => ..., e => ...)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md#do-or-tap) |
+| `MapError<TTarget, TTargetError>(e => ...)` | results and custom types, not `Task` | [Errors as data](errors/errors-as-data.md#translating-errors-between-layers) |
 | `Validate(rules...)` | `Result<T>`, `Task<Result<T>>`, your own result types | [Validation](validation/README.md), [Your own Result type](errors/custom-error-types.md) |
 | `ValidateAnnotations()` | `Result<T>`, `Task<Result<T>>` | [Validation](validation/README.md#dataannotations) |
 

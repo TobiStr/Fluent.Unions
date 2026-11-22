@@ -111,7 +111,7 @@ catch (ResultErrorException ex)
 
 ## Translating errors between layers
 
-A declared type has no `MapError`. Use `Match` to move to the result type of another layer and switch over the error:
+`MapError` moves a result to the result type of another layer. It keeps the value and maps the error. Name the target type and its error type:
 
 ```csharp
 public sealed record BadRequest(string Message);
@@ -125,18 +125,25 @@ public union ClientError(BadRequest, ServerError) : IFromException<ClientError>
 [FluentResult<ClientError>]
 public readonly partial struct ClientResult<T>;
 
-ClientResult<Order> ForClient(Outcome<Order> outcome) => outcome.Match(
-    order => (ClientResult<Order>)order,
-    error => (ClientError)(error switch
-    {
-        CustomerNotFound missing => new BadRequest($"No customer {missing.Id}."),
-        CartEmpty => new BadRequest("The cart is empty."),
-        PaymentDeclined declined => new BadRequest(declined.Reason),
-        Unexpected => new ServerError()
-    }));
+ClientResult<Order> ForClient(Outcome<Order> outcome) => outcome.MapError<ClientResult<Order>, ClientError>(error => error switch
+{
+    CustomerNotFound missing => new BadRequest($"No customer {missing.Id}."),
+    CartEmpty => new BadRequest("The cart is empty."),
+    PaymentDeclined declined => new BadRequest(declined.Reason),
+    Unexpected => new ServerError()
+});
 ```
 
-The `switch` has to cover every case, so a new case in `CheckoutError` fails the build here.
+The `switch` has to cover every case, so a new case in `CheckoutError` fails the build here. The lambda returns `ClientError`, so the arms need no cast.
+
+| Situation | Behavior |
+| --- | --- |
+| The result holds a value | The value moves to the target type, and the map does not run |
+| The map throws | The exception becomes an error of the target type, through its `FromException`. `OperationCanceledException` propagates. |
+| The map returns `null` | An empty result of the target type, which counts as an error |
+| A `default` result | The map receives the error for an uninitialized result |
+
+Both types must have the same value type, otherwise the call does not compile. The result types without a value have `MapError` too: `outcome.MapError<ClientResult, ClientError>(...)`. The library's `Result<T>` and `Result` work as source and as target. To map a `Task` of a result, await it first: `(await PlaceAsync(cart)).MapError<ClientResult<Order>, ClientError>(...)`. To replace the error without changing the type, use `Catch`.
 
 To recover from one case and keep the others, use the general `Catch`: `.Catch(error => error is PaymentDeclined declined ? Retry(declined.Reason) : error)`. The typed `Catch<TCase>` is for exception cases only.
 
