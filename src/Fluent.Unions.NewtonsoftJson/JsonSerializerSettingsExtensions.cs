@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
 
 namespace Fluent.Unions.NewtonsoftJson;
@@ -10,6 +11,8 @@ public static class JsonSerializerSettingsExtensions
     /// <summary>
     /// Adds <see cref="OptionJsonConverter"/> and <see cref="ResultJsonConverter"/>. Calling it again changes nothing.
     /// </summary>
+    [RequiresUnreferencedCode("Creates converters through reflection. Not supported in trimmed or native AOT apps; see the AOT and trimming page of the docs.")]
+    [RequiresDynamicCode("Creates converters through reflection. Not supported in trimmed or native AOT apps; see the AOT and trimming page of the docs.")]
     public static JsonSerializerSettings AddFluentUnions(this JsonSerializerSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
