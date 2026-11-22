@@ -67,6 +67,7 @@ public class JsonTests
 
         var write = Assert.Throws<NotSupportedException>(() => JsonSerializer.Serialize(error));
         Assert.Throws<NotSupportedException>(() => JsonSerializer.Serialize((Result<int>)5));
+        Assert.Throws<NotSupportedException>(() => JsonSerializer.Serialize((new Result<int>[1])[0]));
         Assert.Throws<NotSupportedException>(() => JsonSerializer.Serialize(Result.Ok));
         Assert.Throws<NotSupportedException>(() => JsonSerializer.Deserialize<Result<int>>("5"));
 

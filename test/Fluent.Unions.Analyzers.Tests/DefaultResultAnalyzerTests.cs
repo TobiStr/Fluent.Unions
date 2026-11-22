@@ -73,6 +73,17 @@ public class DefaultResultAnalyzerTests
         Assert.That(diagnostics, Is.Empty);
     }
 
+    [TestCase("Result<int>[] M() => new Result<int>[1];")]
+    [TestCase("Result<int> F;")]
+    [TestCase("Result<int> M(List<Result<int>> list) => list.FirstOrDefault();")]
+    [TestCase("T M<T>() where T : struct => default;")]
+    public async Task DoesNotReportDefaultsItCannotSee(string member)
+    {
+        var diagnostics = await Analyze(member);
+
+        Assert.That(diagnostics, Is.Empty);
+    }
+
     private static Task<ImmutableArray<Diagnostic>> Analyze(string member) =>
         AnalyzerTest.Analyze(new DefaultResultAnalyzer(), $$"""
             public class MyError : IFromException<MyError>
