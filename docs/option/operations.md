@@ -42,7 +42,7 @@ Option<Customer> adult = FindCustomer(id).Where(c => c.Age >= 18);
 
 ## Zip
 
-Combines two options. The result holds a value only when both do.
+Combines two options. The result holds a value only when both do. Both options are evaluated before `Zip` runs; when the second lookup should only run after the first found a value, use `Chain` or query syntax.
 
 ```csharp
 Option<Customer> customer = FindCustomer(id);

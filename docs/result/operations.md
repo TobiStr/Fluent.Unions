@@ -67,24 +67,34 @@ Result<Customer> checkedEmail = GetCustomer(id)
     .Chain(GetCustomer);
 ```
 
+### Combine with the previous value
+
+`Chain(step, combine)` runs the step and then combines its value with the previous one. The step runs only when the result is ok, and `combine` only when both are:
+
+```csharp
+Result<string> summary = GetCustomer(id).Chain(
+    GetCart,
+    (customer, cart) => $"{customer.Name}: {cart.Items.Sum(i => i.Price)}");
+```
+
+`ChainAwait(step, combine)` takes an asynchronous step. To keep both values as a tuple instead, use `ChainAppend`.
+
 ## Zip
 
-Combines two results. The first error wins. Both sides must be ok to produce a value.
+Combines two results that already exist. The first error wins. Both sides must be ok to produce a value.
 
 ```csharp
-Result<(Customer First, Cart Second)> pair =
-    GetCustomer(id).Zip(GetCustomer(id).Chain(GetCart));
+Result<(Customer First, Customer Second)> pair = GetCustomer(buyer).Zip(GetCustomer(recipient));
+Result<string> line = GetCustomer(buyer).Zip(GetCustomer(recipient), (b, r) => $"{b.Name} sends to {r.Name}");
 ```
 
-With a selector, the pair becomes one value:
+Both arguments are evaluated before `Zip` runs, as with any C# method call. `GetCustomer(recipient)` runs even when `GetCustomer(buyer)` failed. Use `Zip` for independent inputs. When the second call should only run after the first succeeded, or needs its value, use [`Chain(step, combine)`](#combine-with-the-previous-value), `ChainAppend` or query syntax:
 
 ```csharp
-Result<decimal> total = GetCustomer(id).Chain(GetCart).Zip(
-    GetCustomer(id).Chain(Shipping),
-    (cart, shipping) => cart.Items.Sum(i => i.Price) + shipping);
+Result<string> lazy = GetCustomer(buyer).Chain(_ => GetCustomer(recipient), (b, r) => $"{b.Name} sends to {r.Name}");
 ```
 
-`Zip` is the right tool for independent inputs. For steps that depend on each other, use `Chain`.
+As a rule, an argument that is a value, as in `Zip`, `CombineAll` or `Catch(fallback)`, is already evaluated. An argument that is a lambda runs only when the operator needs it.
 
 ## Ensure
 

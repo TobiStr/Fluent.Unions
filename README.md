@@ -189,7 +189,7 @@ public static Result<Receipt> PlaceOrder(Shop shop, ILogger logger, CheckoutRequ
             r => r.Sku.EnsureNotWhiteSpace(),
             r => r.Quantity.EnsureInRange(1, 10))
         .Chain(r => FindCustomer(shop, r.CustomerId)
-            .Zip(FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
+            .Chain(_ => FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
         .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}."))
             .Out(out var order) // makes the order accessible from steps below
         .Chain(o => Result.Try(() => shop.Charge(o.Customer, o.Total))

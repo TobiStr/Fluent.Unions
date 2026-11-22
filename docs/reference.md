@@ -53,7 +53,8 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | `Select` | yes | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Chain` / `SelectMany` | yes | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
 | `Where` | `Option<T>` | yes | yes | [Option](option/operations.md) |
-| `Zip` | `Result<T>` | yes | yes | [Result](result/operations.md), [Option](option/operations.md) |
+| `Chain(step, combine)`, `ChainAwait(step, combine)` | `Result<T>` | | yes | [Result](result/operations.md#combine-with-the-previous-value) |
+| `Zip` (both inputs already evaluated) | `Result<T>` | yes | yes | [Result](result/operations.md#zip), [Option](option/operations.md) |
 | `Ensure(predicate, message)`, `Ensure(predicate, v => exception)`, `EnsureAwait(...)` | `Result<T>` | | yes | [Result](result/operations.md) |
 | `Result.CombineAll(a, b[, c[, d]])`, `Result.CombineAllAsync(...)` | `Result<T>` | | tasks | [Result](result/operations.md) |
 | `ChainAppend(v => ...)`, `ChainAppend((a, b) => ...)`, `ChainAppendAwait(...)` | `Result<T>`, tuples up to three elements | | yes | [Result](result/operations.md) |

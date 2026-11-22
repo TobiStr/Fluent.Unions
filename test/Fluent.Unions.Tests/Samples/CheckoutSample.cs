@@ -75,7 +75,7 @@ public static class ResultCheckout
                 r => r.Sku.EnsureNotWhiteSpace(),
                 r => r.Quantity.EnsureInRange(1, 10))
             .Chain(r => FindCustomer(shop, r.CustomerId)
-                .Zip(FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
+                .Chain(_ => FindProduct(shop, r.Sku), (customer, product) => new Order(customer, product, r.Quantity)))
             .Ensure(o => o.Product.Stock >= o.Quantity, o => new OutOfStockException($"Only {o.Product.Stock} left of {o.Product.Sku}.")).Out(out var order)
             .Chain(o => Result.Try(() => shop.Charge(o.Customer, o.Total))
                 .Select(paymentId => new Receipt(o.Customer.Name, o.Product.Sku, o.Total, paymentId)))
