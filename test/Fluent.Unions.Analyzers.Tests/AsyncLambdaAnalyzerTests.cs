@@ -82,6 +82,8 @@ public class AsyncLambdaAnalyzerTests
     [TestCase("void M(Result r) { r.Do(async () => await SaveAsync()); }", "Do", "DoAwait")]
     [TestCase("void M(Option<int> o) { o.Do(async x => await SaveAsync()); }", "Do", "DoAwait")]
     [TestCase("void M(Task<Result<int>> t) { t.Do(async x => await SaveAsync()); }", "Do", "DoAwait")]
+    [TestCase("void M(Result<int> r) { r.Tap(async x => await SaveAsync()); }", "Tap", "TapAwait")]
+    [TestCase("void M(Task<Result> t) { t.Tap(async () => await SaveAsync()); }", "Tap", "TapAwait")]
     [TestCase("void M(Task<Result> t) { t.Do(async () => await SaveAsync()); }", "Do", "DoAwait")]
     [TestCase("void M(Task<Option<int>> t) { t.Do(async x => await SaveAsync()); }", "Do", "DoAwait")]
     [TestCase("void M(Result<int>? r) { r?.Do(async x => await SaveAsync()); }", "Do", "DoAwait")]

@@ -107,6 +107,137 @@ public class SideEffectOperatorTests
     }
 
     [Test]
+    public void TapRunsTheObserverAndReturnsTheSameResult()
+    {
+        Result<int> ok = 5;
+        Result<int> error = Failure;
+        var seen = new List<int>();
+
+        Assert.That(ok.Tap(seen.Add).GetValue(), Is.EqualTo(5));
+        Assert.That(error.Tap(seen.Add).GetError(), Is.SameAs(Failure));
+        Assert.That(seen, Is.EqualTo(new[] { 5 }));
+    }
+
+    [Test]
+    public void TapThatThrowsPropagatesAndDoesNotReplaceTheResult()
+    {
+        Result<int> saved = 5;
+        var loggingFailure = new TimeoutException("Logging failed.");
+
+        var thrown = Assert.Throws<TimeoutException>(() => saved.Tap(_ => throw loggingFailure));
+
+        Assert.That(thrown, Is.SameAs(loggingFailure));
+    }
+
+    [Test]
+    public void TapErrorRunsOnlyForErrorsAndKeepsTheOriginalError()
+    {
+        Result<int> ok = 5;
+        Result<int> error = Failure;
+        var seen = new List<Exception>();
+
+        Assert.That(ok.TapError(seen.Add).GetValue(), Is.EqualTo(5));
+        Assert.That(error.TapError(seen.Add).GetError(), Is.SameAs(Failure));
+        Assert.That(default(Result<int>).TapError(seen.Add).IsError, Is.True);
+        Assert.That(seen, Has.Count.EqualTo(2));
+        Assert.That(seen[0], Is.SameAs(Failure));
+    }
+
+    [Test]
+    public void TapErrorThatThrowsPropagatesInsteadOfHidingTheOriginalError()
+    {
+        Result<int> error = Failure;
+
+        Assert.Throws<TimeoutException>(() => error.TapError(_ => throw new TimeoutException("Logging failed.")));
+    }
+
+    [Test]
+    public void TapWithBothCallbacksRunsTheMatchingOne()
+    {
+        Result<int> ok = 5;
+        Result<int> error = Failure;
+        var log = new List<string>();
+
+        ok.Tap(value => log.Add($"ok {value}"), e => log.Add($"error {e.Message}"));
+        error.Tap(value => log.Add($"ok {value}"), e => log.Add($"error {e.Message}"));
+
+        Assert.That(log, Is.EqualTo(new[] { "ok 5", "error Failure" }));
+    }
+
+    [Test]
+    public void TapOnAResultWithoutAValue()
+    {
+        Result ok = Result.Ok;
+        Result error = Failure;
+        var log = new List<string>();
+
+        ok.Tap(() => log.Add("ok")).TapError(_ => log.Add("error"));
+        error.Tap(() => log.Add("ok")).TapError(_ => log.Add("error"));
+        error.Tap(() => log.Add("ok"), _ => log.Add("both"));
+
+        Assert.That(log, Is.EqualTo(new[] { "ok", "error", "both" }));
+        Assert.Throws<TimeoutException>(() => ok.Tap(() => throw new TimeoutException()));
+    }
+
+    [Test]
+    public async Task TapOnAFaultedTaskObservesTheSettledError()
+    {
+        var faulted = Task.FromException<Result<int>>(Failure);
+        Exception? seen = null;
+
+        var result = await faulted.TapError(e => seen = e);
+
+        Assert.That(seen, Is.SameAs(Failure));
+        Assert.That(result.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public void TapOnATaskThatThrowsFaultsTheTask()
+    {
+        var saved = Task.FromResult<Result<int>>(5);
+
+        Assert.ThrowsAsync<TimeoutException>(() => saved.Tap(_ => throw new TimeoutException()));
+    }
+
+    [Test]
+    public async Task TapAwaitRunsTheObserverAndReturnsTheSameResult()
+    {
+        Result<int> ok = 5;
+        var seen = 0;
+
+        var result = await ok.TapAwait(async value =>
+        {
+            await Task.Yield();
+            seen = value;
+        });
+
+        Assert.That(seen, Is.EqualTo(5));
+        Assert.That(result.GetValue(), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void TapAwaitThatThrowsFaultsTheTask()
+    {
+        Result<int> ok = 5;
+        Result unit = Result.Ok;
+
+        Assert.ThrowsAsync<TimeoutException>(() => ok.TapAwait(_ => Task.FromException(new TimeoutException())));
+        Assert.ThrowsAsync<TimeoutException>(() => Task.FromResult(unit).TapAwait(() => Task.FromException(new TimeoutException())));
+    }
+
+    [Test]
+    public void TapWorksOnADeclaredResult()
+    {
+        CheckoutResult<int> declined = (CheckoutError)new PaymentDeclined("Card expired.");
+        CheckoutError? seen = null;
+
+        var result = declined.TapError(error => seen = error);
+
+        Assert.That(seen!.Value.Value, Is.TypeOf<PaymentDeclined>());
+        Assert.That(result.GetError().Value, Is.TypeOf<PaymentDeclined>());
+    }
+
+    [Test]
     public void DoCallsRunInChainOrder()
     {
         Result<int> result = 1;

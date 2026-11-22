@@ -152,6 +152,105 @@ public static class ResultSideEffectCore
     }
 
     /// <summary>
+    /// Observes the value and returns the same result. Unlike <c>Do</c>, an exception thrown by
+    /// <paramref name="onSuccess"/> is not captured: it propagates and never replaces the result.
+    /// </summary>
+    public static TSelf Tap<TSelf, T, TError>(TSelf result, Action<T> onSuccess)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+
+        if (result.TryGetValue(out var value))
+            onSuccess(value);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Observes the value or the error and returns the same result. An exception thrown by a callback propagates.
+    /// </summary>
+    public static TSelf Tap<TSelf, T, TError>(TSelf result, Action<T> onSuccess, Action<TError> onError)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onError);
+
+        if (result.TryGetValue(out var value))
+            onSuccess(value);
+        else
+            onError(Flow.ErrorOf<TSelf, T, TError>(result));
+
+        return result;
+    }
+
+    /// <summary>
+    /// Observes the error and returns the same result, so the original error is kept. An exception thrown by
+    /// <paramref name="onError"/> propagates.
+    /// </summary>
+    public static TSelf TapError<TSelf, T, TError>(TSelf result, Action<TError> onError)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onError);
+
+        if (!result.TryGetValue(out _))
+            onError(Flow.ErrorOf<TSelf, T, TError>(result));
+
+        return result;
+    }
+
+    /// <summary>
+    /// Observes a successful result without a value and returns the same result. An exception thrown by
+    /// <paramref name="onSuccess"/> propagates.
+    /// </summary>
+    public static TSelf Tap<TSelf, TError>(TSelf result, Action onSuccess)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+
+        if (result.IsSuccess)
+            onSuccess();
+
+        return result;
+    }
+
+    /// <summary>
+    /// Observes success or the error and returns the same result. An exception thrown by a callback propagates.
+    /// </summary>
+    public static TSelf Tap<TSelf, TError>(TSelf result, Action onSuccess, Action<TError> onError)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onError);
+
+        if (result.TryGetError(out var error))
+            onError(error);
+        else
+            onSuccess();
+
+        return result;
+    }
+
+    /// <summary>
+    /// Observes the error and returns the same result. An exception thrown by <paramref name="onError"/> propagates.
+    /// </summary>
+    public static TSelf TapError<TSelf, TError>(TSelf result, Action<TError> onError)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onError);
+
+        if (result.TryGetError(out var error))
+            onError(error);
+
+        return result;
+    }
+
+    /// <summary>
     /// Captures the value for later steps of the chain and returns the same result.
     /// <paramref name="value"/> is filled only when the result holds a value.
     /// </summary>

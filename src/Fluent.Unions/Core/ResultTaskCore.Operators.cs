@@ -544,6 +544,92 @@ public static partial class ResultTaskCore
             ResultSideEffectCore.OnErrorDo<TSelf, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onError);
     }
 
+    /// <inheritdoc cref="ResultSideEffectCore.Tap{TSelf, T, TError}(TSelf, Action{T})"/>
+    public static Task<TSelf> Tap<TSelf, T, TError>(Task<TSelf> task, Action<T> onSuccess)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(task);
+
+        return Run(task, onSuccess);
+
+        static async Task<TSelf> Run(Task<TSelf> task, Action<T> onSuccess) =>
+            ResultSideEffectCore.Tap<TSelf, T, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onSuccess);
+    }
+
+    /// <inheritdoc cref="ResultSideEffectCore.Tap{TSelf, T, TError}(TSelf, Action{T}, Action{TError})"/>
+    public static Task<TSelf> Tap<TSelf, T, TError>(Task<TSelf> task, Action<T> onSuccess, Action<TError> onError)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onError);
+        ArgumentNullException.ThrowIfNull(task);
+
+        return Run(task, onSuccess, onError);
+
+        static async Task<TSelf> Run(Task<TSelf> task, Action<T> onSuccess, Action<TError> onError) =>
+            ResultSideEffectCore.Tap<TSelf, T, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onSuccess, onError);
+    }
+
+    /// <inheritdoc cref="ResultSideEffectCore.TapError{TSelf, T, TError}(TSelf, Action{TError})"/>
+    public static Task<TSelf> TapError<TSelf, T, TError>(Task<TSelf> task, Action<TError> onError)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onError);
+        ArgumentNullException.ThrowIfNull(task);
+
+        return Run(task, onError);
+
+        static async Task<TSelf> Run(Task<TSelf> task, Action<TError> onError) =>
+            ResultSideEffectCore.TapError<TSelf, T, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onError);
+    }
+
+    /// <inheritdoc cref="ResultSideEffectCore.Tap{TSelf, TError}(TSelf, Action)"/>
+    public static Task<TSelf> Tap<TSelf, TError>(Task<TSelf> task, Action onSuccess)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(task);
+
+        return Run(task, onSuccess);
+
+        static async Task<TSelf> Run(Task<TSelf> task, Action onSuccess) =>
+            ResultSideEffectCore.Tap<TSelf, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onSuccess);
+    }
+
+    /// <inheritdoc cref="ResultSideEffectCore.Tap{TSelf, TError}(TSelf, Action, Action{TError})"/>
+    public static Task<TSelf> Tap<TSelf, TError>(Task<TSelf> task, Action onSuccess, Action<TError> onError)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onError);
+        ArgumentNullException.ThrowIfNull(task);
+
+        return Run(task, onSuccess, onError);
+
+        static async Task<TSelf> Run(Task<TSelf> task, Action onSuccess, Action<TError> onError) =>
+            ResultSideEffectCore.Tap<TSelf, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onSuccess, onError);
+    }
+
+    /// <inheritdoc cref="ResultSideEffectCore.TapError{TSelf, TError}(TSelf, Action{TError})"/>
+    public static Task<TSelf> TapError<TSelf, TError>(Task<TSelf> task, Action<TError> onError)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onError);
+        ArgumentNullException.ThrowIfNull(task);
+
+        return Run(task, onError);
+
+        static async Task<TSelf> Run(Task<TSelf> task, Action<TError> onError) =>
+            ResultSideEffectCore.TapError<TSelf, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onError);
+    }
+
     /// <inheritdoc cref="ResultSideEffectCore.Finally{TSelf, T, TError}(TSelf, Action)"/>
     public static Task<TSelf> Finally<TSelf, T, TError>(Task<TSelf> task, Action action)
         where TSelf : struct, IFluentResult<TSelf, T, TError>

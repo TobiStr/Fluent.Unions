@@ -324,6 +324,47 @@ public static partial class ResultAwaitCore
     }
 
     /// <summary>
+    /// Observes the value asynchronously and returns the same result. An exception thrown by
+    /// <paramref name="onSuccess"/> is not captured: the returned task faults with it.
+    /// </summary>
+    public static Task<TSelf> TapAwait<TSelf, T, TError>(TSelf result, Func<T, Task> onSuccess)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+
+        if (!result.TryGetValue(out var value))
+            return Task.FromResult(result);
+
+        return Run(result, value, onSuccess);
+
+        static async Task<TSelf> Run(TSelf result, T value, Func<T, Task> onSuccess)
+        {
+            await onSuccess(value).ConfigureAwait(false);
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Observes a successful result without a value asynchronously and returns the same result. An exception thrown by
+    /// <paramref name="onSuccess"/> faults the returned task.
+    /// </summary>
+    public static Task<TSelf> TapAwait<TSelf, TError>(TSelf result, Func<Task> onSuccess)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+
+        return result.IsSuccess ? Run(result, onSuccess) : Task.FromResult(result);
+
+        static async Task<TSelf> Run(TSelf result, Func<Task> onSuccess)
+        {
+            await onSuccess().ConfigureAwait(false);
+            return result;
+        }
+    }
+
+    /// <summary>
     /// Handles the error asynchronously. Return a value to recover, or an error to replace it.
     /// </summary>
     public static Task<TSelf> CatchAwait<TSelf, T, TError>(TSelf result, Func<TError, Task<TSelf>> handler)

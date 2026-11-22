@@ -65,6 +65,10 @@ class Fluent.Unions.Captured<T>
   public static System.Threading.Tasks.Task<TSelf> FinallyAwait<TSelf, T, TError>(TSelf result, System.Func<System.Threading.Tasks.Task> action) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static System.Threading.Tasks.Task<TSelf> FinallyAwait<TSelf, TError>(System.Threading.Tasks.Task<TSelf> task, System.Func<System.Threading.Tasks.Task> action) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
   public static System.Threading.Tasks.Task<TSelf> FinallyAwait<TSelf, TError>(TSelf result, System.Func<System.Threading.Tasks.Task> action) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> TapAwait<TSelf, T, TError>(System.Threading.Tasks.Task<TSelf> task, System.Func<T, System.Threading.Tasks.Task> onSuccess) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> TapAwait<TSelf, T, TError>(TSelf result, System.Func<T, System.Threading.Tasks.Task> onSuccess) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> TapAwait<TSelf, TError>(System.Threading.Tasks.Task<TSelf> task, System.Func<System.Threading.Tasks.Task> onSuccess) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> TapAwait<TSelf, TError>(TSelf result, System.Func<System.Threading.Tasks.Task> onSuccess) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
   public static System.Threading.Tasks.Task<TUnit> ChainAwait<TSelf, T, TError, TUnit>(System.Threading.Tasks.Task<TSelf> task, System.Func<T, System.Threading.Tasks.Task<TUnit>> selector) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull where TUnit : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TUnit, TError>
   public static System.Threading.Tasks.Task<TUnit> ChainAwait<TSelf, T, TError, TUnit>(TSelf result, System.Func<T, System.Threading.Tasks.Task<TUnit>> selector) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull where TUnit : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TUnit, TError>
 
@@ -148,6 +152,12 @@ class Fluent.Unions.Captured<T>
   public static TSelf OnErrorDo<TSelf, T, TError>(TSelf result, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static TSelf OnErrorDo<TSelf, TError>(TSelf result, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
   public static TSelf Out<TSelf, T, TError>(TSelf result, out Fluent.Unions.Captured<T> value) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TSelf Tap<TSelf, T, TError>(TSelf result, System.Action<T> onSuccess) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TSelf Tap<TSelf, T, TError>(TSelf result, System.Action<T> onSuccess, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TSelf Tap<TSelf, TError>(TSelf result, System.Action onSuccess) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static TSelf Tap<TSelf, TError>(TSelf result, System.Action onSuccess, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static TSelf TapError<TSelf, T, TError>(TSelf result, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static TSelf TapError<TSelf, TError>(TSelf result, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
 
 [EditorBrowsable] class Fluent.Unions.Core.ResultStaticCore
   public static System.Threading.Tasks.Task<TOutResult> CombineAllAsync<TFirst, T1, TSecond, T2, TError, TOutResult>(System.Threading.Tasks.Task<TFirst> first, System.Threading.Tasks.Task<TSecond> second) where TFirst : struct, Fluent.Unions.Abstractions.IFluentResult<TFirst, T1, TError> where TSecond : struct, Fluent.Unions.Abstractions.IFluentResult<TSecond, T2, TError> where TError : notnull where TOutResult : struct, Fluent.Unions.Abstractions.IFluentResult<TOutResult, (T1, T2), TError>
@@ -211,6 +221,12 @@ class Fluent.Unions.Captured<T>
   public static System.Threading.Tasks.Task<TSelf> OnErrorDo<TSelf, T, TError>(System.Threading.Tasks.Task<TSelf> task, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static System.Threading.Tasks.Task<TSelf> OnErrorDo<TSelf, TError>(System.Threading.Tasks.Task<TSelf> task, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
   public static System.Threading.Tasks.Task<TSelf> Out<TSelf, T, TError>(System.Threading.Tasks.Task<TSelf> task, out Fluent.Unions.Captured<T> value) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> Tap<TSelf, T, TError>(System.Threading.Tasks.Task<TSelf> task, System.Action<T> onSuccess) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> Tap<TSelf, T, TError>(System.Threading.Tasks.Task<TSelf> task, System.Action<T> onSuccess, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> Tap<TSelf, TError>(System.Threading.Tasks.Task<TSelf> task, System.Action onSuccess) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> Tap<TSelf, TError>(System.Threading.Tasks.Task<TSelf> task, System.Action onSuccess, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> TapError<TSelf, T, TError>(System.Threading.Tasks.Task<TSelf> task, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
+  public static System.Threading.Tasks.Task<TSelf> TapError<TSelf, TError>(System.Threading.Tasks.Task<TSelf> task, System.Action<TError> onError) where TSelf : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TSelf, TError> where TError : notnull
   public static System.Threading.Tasks.Task<TSelf> Validate<TSelf, T, TError, TRule>(System.Threading.Tasks.Task<TSelf> task, params System.Func<T, TRule>[] rules) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull where TRule : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TRule, TError>
   public static System.Threading.Tasks.Task<TSelf> ValidateAnnotations<TSelf, T, TError>(System.Threading.Tasks.Task<TSelf> task) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull
   public static System.Threading.Tasks.Task<TUnit> Chain<TSelf, T, TError, TUnit>(System.Threading.Tasks.Task<TSelf> task, System.Func<T, TUnit> selector) where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull where TUnit : struct, Fluent.Unions.Abstractions.IFluentUnitResult<TUnit, TError>
@@ -351,6 +367,8 @@ class Fluent.Unions.ResultAwaitOperators
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> EnsureAwait<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Func<T, System.Threading.Tasks.Task<bool>> predicate, string message)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> FinallyAwait<T>(this Fluent.Unions.Result<T> result, System.Func<System.Threading.Tasks.Task> action)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> FinallyAwait<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Func<System.Threading.Tasks.Task> action)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> TapAwait<T>(this Fluent.Unions.Result<T> result, System.Func<T, System.Threading.Tasks.Task> onSuccess)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> TapAwait<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Func<T, System.Threading.Tasks.Task> onSuccess)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<TOut>> ChainAwait<T, TOut>(this Fluent.Unions.Result<T> result, System.Func<T, System.Threading.Tasks.Task<Fluent.Unions.Result<TOut>>> selector)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<TOut>> ChainAwait<T, TOut>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Func<T, System.Threading.Tasks.Task<Fluent.Unions.Result<TOut>>> selector)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<TOut>> ChainAwait<TOut>(this Fluent.Unions.Result result, System.Func<System.Threading.Tasks.Task<Fluent.Unions.Result<TOut>>> selector)
@@ -371,6 +389,8 @@ class Fluent.Unions.ResultAwaitOperators
   public static System.Threading.Tasks.Task<Fluent.Unions.Result> DoAwait(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Func<System.Threading.Tasks.Task> onSuccess)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result> FinallyAwait(this Fluent.Unions.Result result, System.Func<System.Threading.Tasks.Task> action)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result> FinallyAwait(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Func<System.Threading.Tasks.Task> action)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result> TapAwait(this Fluent.Unions.Result result, System.Func<System.Threading.Tasks.Task> onSuccess)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result> TapAwait(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Func<System.Threading.Tasks.Task> onSuccess)
 
 class Fluent.Unions.ResultCollectionOperators
   public static (System.Collections.Generic.IReadOnlyList<T> Values, System.Collections.Generic.IReadOnlyList<System.Exception> Errors) Partition<T>(this System.Collections.Generic.IEnumerable<Fluent.Unions.Result<T>> results)
@@ -426,11 +446,17 @@ class Fluent.Unions.ResultSideEffectOperators
   public static Fluent.Unions.Result Do(this Fluent.Unions.Result result, System.Action onSuccess, System.Action<System.Exception> onError)
   public static Fluent.Unions.Result Finally(this Fluent.Unions.Result result, System.Action action)
   public static Fluent.Unions.Result OnErrorDo(this Fluent.Unions.Result result, System.Action<System.Exception> onError)
+  public static Fluent.Unions.Result Tap(this Fluent.Unions.Result result, System.Action onSuccess)
+  public static Fluent.Unions.Result Tap(this Fluent.Unions.Result result, System.Action onSuccess, System.Action<System.Exception> onError)
+  public static Fluent.Unions.Result TapError(this Fluent.Unions.Result result, System.Action<System.Exception> onError)
   public static Fluent.Unions.Result<T> Do<T>(this Fluent.Unions.Result<T> result, System.Action<T> onSuccess)
   public static Fluent.Unions.Result<T> Do<T>(this Fluent.Unions.Result<T> result, System.Action<T> onSuccess, System.Action<System.Exception> onError)
   public static Fluent.Unions.Result<T> Finally<T>(this Fluent.Unions.Result<T> result, System.Action action)
   public static Fluent.Unions.Result<T> OnErrorDo<T>(this Fluent.Unions.Result<T> result, System.Action<System.Exception> onError)
   public static Fluent.Unions.Result<T> Out<T>(this Fluent.Unions.Result<T> result, out Fluent.Unions.Captured<T> value)
+  public static Fluent.Unions.Result<T> Tap<T>(this Fluent.Unions.Result<T> result, System.Action<T> onSuccess)
+  public static Fluent.Unions.Result<T> Tap<T>(this Fluent.Unions.Result<T> result, System.Action<T> onSuccess, System.Action<System.Exception> onError)
+  public static Fluent.Unions.Result<T> TapError<T>(this Fluent.Unions.Result<T> result, System.Action<System.Exception> onError)
 
 class Fluent.Unions.ResultTaskOperators
   [EditorBrowsable] public static System.Threading.Tasks.Task<Fluent.Unions.Result<TOut>> SelectMany<T, TMid, TOut>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Func<T, Fluent.Unions.Result<TMid>> selector, System.Func<T, TMid, TOut> resultSelector)
@@ -454,6 +480,9 @@ class Fluent.Unions.ResultTaskOperators
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> Finally<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Action action)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> OnErrorDo<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Action<System.Exception> onError)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> Out<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, out Fluent.Unions.Captured<T> value)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> Tap<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Action<T> onSuccess)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> Tap<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Action<T> onSuccess, System.Action<System.Exception> onError)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> TapError<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Action<System.Exception> onError)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> Validate<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, params System.Func<T, Fluent.Unions.Result>[] rules)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> ValidateAnnotations<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result<T>> WithValue<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, T value)
@@ -473,6 +502,9 @@ class Fluent.Unions.ResultTaskOperators
   public static System.Threading.Tasks.Task<Fluent.Unions.Result> Do(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Action onSuccess, System.Action<System.Exception> onError)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result> Finally(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Action action)
   public static System.Threading.Tasks.Task<Fluent.Unions.Result> OnErrorDo(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Action<System.Exception> onError)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result> Tap(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Action onSuccess)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result> Tap(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Action onSuccess, System.Action<System.Exception> onError)
+  public static System.Threading.Tasks.Task<Fluent.Unions.Result> TapError(this System.Threading.Tasks.Task<Fluent.Unions.Result> task, System.Action<System.Exception> onError)
   public static System.Threading.Tasks.Task<T> GetValueOrDefault<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Func<T> defaultValueFactory)
   public static System.Threading.Tasks.Task<T?> GetValueOrDefault<T>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task)
   public static System.Threading.Tasks.Task<TOut> Match<T, TOut>(this System.Threading.Tasks.Task<Fluent.Unions.Result<T>> task, System.Func<T, TOut> onSuccess, System.Func<System.Exception, TOut> onError)

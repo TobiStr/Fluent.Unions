@@ -19,7 +19,8 @@ public sealed class AsyncLambdaAnalyzer : DiagnosticAnalyzer
         .Add("Select", "SelectAwait")
         .Add("Chain", "ChainAwait")
         .Add("SelectMany", "ChainAwait")
-        .Add("Do", "DoAwait");
+        .Add("Do", "DoAwait")
+        .Add("Tap", "TapAwait");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

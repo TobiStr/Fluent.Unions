@@ -199,6 +199,34 @@ public static partial class ResultAwaitCore
             await ResultAwaitCore.DoAwait<TSelf, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onSuccess).ConfigureAwait(false);
     }
 
+    /// <inheritdoc cref="TapAwait{TSelf, T, TError}(TSelf, Func{T, Task})"/>
+    public static Task<TSelf> TapAwait<TSelf, T, TError>(Task<TSelf> task, Func<T, Task> onSuccess)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(task);
+
+        return Run(task, onSuccess);
+
+        static async Task<TSelf> Run(Task<TSelf> task, Func<T, Task> onSuccess) =>
+            await ResultAwaitCore.TapAwait<TSelf, T, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onSuccess).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc cref="TapAwait{TSelf, TError}(TSelf, Func{Task})"/>
+    public static Task<TSelf> TapAwait<TSelf, TError>(Task<TSelf> task, Func<Task> onSuccess)
+        where TSelf : struct, IFluentUnitResult<TSelf, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(task);
+
+        return Run(task, onSuccess);
+
+        static async Task<TSelf> Run(Task<TSelf> task, Func<Task> onSuccess) =>
+            await ResultAwaitCore.TapAwait<TSelf, TError>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), onSuccess).ConfigureAwait(false);
+    }
+
     /// <inheritdoc cref="CatchAwait{TSelf, T, TError}(TSelf, Func{TError, Task{TSelf}})"/>
     public static Task<TSelf> CatchAwait<TSelf, T, TError>(Task<TSelf> task, Func<TError, Task<TSelf>> handler)
         where TSelf : struct, IFluentResult<TSelf, T, TError>
