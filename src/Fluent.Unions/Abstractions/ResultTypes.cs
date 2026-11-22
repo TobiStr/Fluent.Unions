@@ -8,36 +8,41 @@ namespace Fluent.Unions.Abstractions;
 /// </summary>
 public static class ResultTypes
 {
+    private const DynamicallyAccessedMemberTypes Contracts = DynamicallyAccessedMemberTypes.Interfaces;
+
     private static readonly ConcurrentDictionary<Type, Type?> ErrorTypes = new();
     private static readonly ConcurrentDictionary<Type, Type?> ValueTypes = new();
 
     /// <summary>
     /// Indicates whether <paramref name="type"/> is a result type.
     /// </summary>
-    public static bool IsResult(Type type) => ErrorType(type) is not null;
+    public static bool IsResult([DynamicallyAccessedMembers(Contracts)] Type type) => ErrorType(type) is not null;
 
     /// <summary>
     /// The error type of a result type, or <c>null</c> when <paramref name="type"/> is not a result type.
     /// </summary>
-    public static Type? ErrorType(Type type)
+    public static Type? ErrorType([DynamicallyAccessedMembers(Contracts)] Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
 
-        return ErrorTypes.GetOrAdd(type, static type => type.IsValueType ? Contract(type, typeof(IErrorResult<,>))?.GetGenericArguments()[1] : null);
+        return ErrorTypes.TryGetValue(type, out var error)
+            ? error
+            : ErrorTypes.GetOrAdd(type, type.IsValueType ? Contract(type, typeof(IErrorResult<,>))?.GetGenericArguments()[1] : null);
     }
 
     /// <summary>
     /// The value type of a result type, or <c>null</c> for a result type without a value or a type that is not a result type.
     /// </summary>
-    public static Type? ValueType(Type type)
+    public static Type? ValueType([DynamicallyAccessedMembers(Contracts)] Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
 
-        return ValueTypes.GetOrAdd(type, static type => type.IsValueType ? Contract(type, typeof(IResult<,,>))?.GetGenericArguments()[1] : null);
+        return ValueTypes.TryGetValue(type, out var value)
+            ? value
+            : ValueTypes.GetOrAdd(type, type.IsValueType ? Contract(type, typeof(IResult<,,>))?.GetGenericArguments()[1] : null);
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "The operators use the result interfaces through generic constraints, so the trimmer keeps them on every result type.")]
-    private static Type? Contract(Type type, Type definition) =>
+    private static Type? Contract([DynamicallyAccessedMembers(Contracts)] Type type, Type definition) =>
         type.GetInterfaces().FirstOrDefault(contract => contract.IsGenericType
             && contract.GetGenericTypeDefinition() == definition
             && contract.GetGenericArguments()[0] == type);

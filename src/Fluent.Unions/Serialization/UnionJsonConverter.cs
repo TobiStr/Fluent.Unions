@@ -26,6 +26,7 @@ public sealed class UnionJsonConverter : JsonConverterFactory
     public const string ValueProperty = "$value";
 
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "System.Text.Json asks only about types it serializes, and a result type that is serialized keeps its interfaces.")]
     public override bool CanConvert(Type typeToConvert) =>
         typeToConvert.IsValueType
         && typeof(IUnion).IsAssignableFrom(typeToConvert)

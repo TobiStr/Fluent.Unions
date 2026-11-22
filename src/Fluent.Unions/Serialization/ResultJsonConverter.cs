@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -11,6 +12,7 @@ namespace Fluent.Unions.Serialization;
 public sealed class ResultJsonConverter : JsonConverterFactory
 {
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "System.Text.Json asks only about types it serializes, and a result type that is serialized keeps its interfaces.")]
     public override bool CanConvert(Type typeToConvert) => Abstractions.ResultTypes.IsResult(typeToConvert);
 
     /// <inheritdoc />
