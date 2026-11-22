@@ -136,6 +136,14 @@ public static partial class ResultTaskCore
             ResultQueryCore.Chain<TSelf, T, TError, TOutResult, TOut>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), selector);
     }
 
+    /// <inheritdoc cref="ResultQueryCore.Chain{TSelf, T, TError, TMidResult, TMid, TOutResult, TOut}(TSelf, Func{T, TMidResult}, Func{T, TMid, TOut})"/>
+    public static Task<TOutResult> Chain<TSelf, T, TError, TMidResult, TMid, TOutResult, TOut>(Task<TSelf> task, Func<T, TMidResult> selector, Func<T, TMid, TOut> resultSelector)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TMidResult : struct, IFluentResult<TMidResult, TMid, TError>
+        where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
+        where TError : notnull =>
+        SelectMany<TSelf, T, TError, TMidResult, TMid, TOutResult, TOut>(task, selector, resultSelector);
+
     /// <inheritdoc cref="ResultQueryCore.Chain{TSelf, T, TError, TUnit}(TSelf, Func{T, TUnit})"/>
     public static Task<TUnit> Chain<TSelf, T, TError, TUnit>(Task<TSelf> task, Func<T, TUnit> selector)
         where TSelf : struct, IFluentResult<TSelf, T, TError>

@@ -291,6 +291,94 @@ public class QueryOperatorTests
         Assert.That(combined.GetError(), Is.SameAs(Failure));
     }
 
+    [Test]
+    public void ChainWithResultSelectorCombinesBothValues()
+    {
+        Result<int> one = 1;
+
+        var combined = one.Chain(value => Result<string>.Ok($"#{value}"), (value, text) => $"{text}={value}");
+
+        Assert.That(combined.GetValue(), Is.EqualTo("#1=1"));
+    }
+
+    [Test]
+    public void ChainWithResultSelectorSkipsBothLambdasOnError()
+    {
+        Result<int> failed = Failure;
+        var steps = 0;
+        var combines = 0;
+
+        var combined = failed.Chain(_ => { steps++; return Result<int>.Ok(2); }, (a, b) => { combines++; return a + b; });
+
+        Assert.That((steps, combines), Is.EqualTo((0, 0)));
+        Assert.That(combined.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public void ChainWithResultSelectorSkipsTheResultSelectorWhenTheStepFails()
+    {
+        Result<int> one = 1;
+        var combines = 0;
+
+        var combined = one.Chain(_ => Result<int>.Error(Failure), (a, b) => { combines++; return a + b; });
+
+        Assert.That(combines, Is.Zero);
+        Assert.That(combined.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public void ChainWithResultSelectorCapturesAThrowingStepAndSelector()
+    {
+        Result<int> one = 1;
+
+        var throwingStep = one.Chain(_ => FailingStep(), (a, b) => a + b);
+        var throwingSelector = one.Chain(_ => Result<int>.Ok(2), (int _, int _) => FailingCombine());
+
+        Assert.That(throwingStep.GetError(), Is.SameAs(Failure));
+        Assert.That(throwingSelector.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public void ChainWithResultSelectorRejectsNullDelegates()
+    {
+        Result<int> one = 1;
+
+        Assert.Throws<ArgumentNullException>(() => one.Chain(null!, (int a, int b) => a + b));
+        Assert.Throws<ArgumentNullException>(() => one.Chain(_ => Result<int>.Ok(2), (Func<int, int, int>)null!));
+    }
+
+    [Test]
+    public async Task ChainWithResultSelectorOnATaskReceiver()
+    {
+        var one = Task.FromResult<Result<int>>(1);
+
+        var combined = await one.Chain(value => Result<int>.Ok(value + 1), (a, b) => a + b);
+
+        Assert.That(combined.GetValue(), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void ChainWithResultSelectorPropagatesCancellation()
+    {
+        Result<int> one = 1;
+
+        Assert.Throws<OperationCanceledException>(() => one.Chain(_ => CancelledStep(), (a, b) => a + b));
+    }
+    [Test]
+    public void ChainWithResultSelectorWorksOnADeclaredResult()
+    {
+        CheckoutResult<int> one = 1;
+        CheckoutResult<int> empty = (CheckoutError)new CartEmpty();
+
+        Assert.That(one.Chain(value => (CheckoutResult<int>)(value + 1), (a, b) => a + b).GetValue(), Is.EqualTo(3));
+        Assert.That(one.Chain(_ => empty, (a, b) => a + b).GetError().Value, Is.TypeOf<CartEmpty>());
+    }
+    private static Result<int> FailingStep() => throw Failure;
+
+    private static int FailingCombine() => throw Failure;
+
+    private static Result<int> CancelledStep() => throw new OperationCanceledException();
+
     private static Result<int> Counted(ref int calls)
     {
         calls++;

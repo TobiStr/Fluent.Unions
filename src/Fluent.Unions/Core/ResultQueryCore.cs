@@ -220,7 +220,22 @@ public static class ResultQueryCore
         SelectMany<TSelf, TError, TOutResult, TOut>(result, selector);
 
     /// <summary>
-    /// Combines two results into a tuple. The first error wins.
+    /// Chains an operation and combines its value with the previous one. <paramref name="selector"/> runs only when the
+    /// result holds a value, and <paramref name="resultSelector"/> only when both hold one.
+    /// </summary>
+    public static TOutResult Chain<TSelf, T, TError, TMidResult, TMid, TOutResult, TOut>(
+        TSelf result,
+        Func<T, TMidResult> selector,
+        Func<T, TMid, TOut> resultSelector)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TMidResult : struct, IFluentResult<TMidResult, TMid, TError>
+        where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
+        where TError : notnull =>
+        SelectMany<TSelf, T, TError, TMidResult, TMid, TOutResult, TOut>(result, selector, resultSelector);
+
+    /// <summary>
+    /// Combines two results into a tuple. The first error wins. Both results are already evaluated;
+    /// use <c>ChainAppend</c> or <c>Chain(step, combine)</c> when the second should only run after the first succeeded.
     /// </summary>
     public static TOutResult Zip<TFirst, T1, TSecond, T2, TError, TOutResult>(TFirst first, TSecond second)
         where TFirst : struct, IFluentResult<TFirst, T1, TError>
@@ -238,7 +253,8 @@ public static class ResultQueryCore
     }
 
     /// <summary>
-    /// Combines two results with a selector. The first error wins.
+    /// Combines two results with a selector. The first error wins. Both results are already evaluated;
+    /// use <c>Chain(step, combine)</c> when the second should only run after the first succeeded.
     /// </summary>
     public static TOutResult Zip<TFirst, T1, TSecond, T2, TError, TOutResult, TOut>(
         TFirst first,
