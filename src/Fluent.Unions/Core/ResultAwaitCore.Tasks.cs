@@ -50,6 +50,17 @@ public static partial class ResultAwaitCore
             await ResultAwaitCore.ChainAwait<TSelf, T, TError, TOutResult, TOut>(await Flow.Settle<TSelf, TError>(task).ConfigureAwait(false), selector).ConfigureAwait(false);
     }
 
+    /// <inheritdoc cref="ChainAwait{TSelf, T, TError, TMidResult, TMid, TOutResult, TOut}(TSelf, Func{T, Task{TMidResult}}, Func{T, TMid, TOut})"/>
+    public static Task<TOutResult> ChainAwait<TSelf, T, TError, TMidResult, TMid, TOutResult, TOut>(
+        Task<TSelf> task,
+        Func<T, Task<TMidResult>> selector,
+        Func<T, TMid, TOut> resultSelector)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TMidResult : struct, IFluentResult<TMidResult, TMid, TError>
+        where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
+        where TError : notnull =>
+        ResultTaskCore.SelectMany<TSelf, T, TError, TMidResult, TMid, TOutResult, TOut>(task, selector, resultSelector);
+
     /// <inheritdoc cref="ChainAwait{TSelf, T, TError, TUnit}(TSelf, Func{T, Task{TUnit}})"/>
     public static Task<TUnit> ChainAwait<TSelf, T, TError, TUnit>(Task<TSelf> task, Func<T, Task<TUnit>> selector)
         where TSelf : struct, IFluentResult<TSelf, T, TError>

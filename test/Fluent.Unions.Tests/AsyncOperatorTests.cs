@@ -1,4 +1,4 @@
-﻿namespace Fluent.Unions.Tests;
+namespace Fluent.Unions.Tests;
 
 public class AsyncOperatorTests
 {
@@ -217,4 +217,54 @@ public class AsyncOperatorTests
     }
 
     private static Task<Result> SaveAsync(string name) => Task.FromResult(Result.Ok);
-}
+
+    [Test]
+    public async Task ChainAwaitWithResultSelectorCombinesBothValues()
+    {
+        Result<string> name = "Ada";
+
+        var described = await name.ChainAwait(GetAgeAsync, (n, age) => $"{n} is {age}");
+
+        Assert.That(described.GetValue(), Is.EqualTo("Ada is 36"));
+    }
+
+    [Test]
+    public async Task ChainAwaitWithResultSelectorSkipsTheStepOnError()
+    {
+        Result<string> failed = Failure;
+        var steps = 0;
+
+        var described = await failed.ChainAwait(n => { steps++; return GetAgeAsync(n); }, (n, age) => $"{n} is {age}");
+
+        Assert.That(steps, Is.Zero);
+        Assert.That(described.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public async Task ChainAwaitWithResultSelectorCapturesAFaultedTask()
+    {
+        Result<string> name = "Ada";
+
+        var described = await name.ChainAwait(_ => Task.FromException<Result<int>>(Failure), (n, age) => $"{n} is {age}");
+
+        Assert.That(described.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public async Task ChainAwaitWithResultSelectorOnATaskReceiver()
+    {
+        var name = Task.FromResult<Result<string>>("Ada");
+
+        var described = await name.ChainAwait(GetAgeAsync, (n, age) => $"{n} is {age}");
+
+        Assert.That(described.GetValue(), Is.EqualTo("Ada is 36"));
+    }
+
+    [Test]
+    public void ChainAwaitWithResultSelectorPropagatesCancellation()
+    {
+        Result<string> name = "Ada";
+
+        Assert.ThrowsAsync<TaskCanceledException>(() =>
+            name.ChainAwait(_ => Task.FromCanceled<Result<int>>(new CancellationToken(true)), (n, age) => $"{n} is {age}"));
+    }}

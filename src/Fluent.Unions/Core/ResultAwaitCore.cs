@@ -82,6 +82,53 @@ public static partial class ResultAwaitCore
     }
 
     /// <summary>
+    /// Chains an asynchronous operation and combines its value with the previous one. <paramref name="selector"/> runs only
+    /// when the result holds a value, and <paramref name="resultSelector"/> only when both hold one.
+    /// </summary>
+    public static Task<TOutResult> ChainAwait<TSelf, T, TError, TMidResult, TMid, TOutResult, TOut>(
+        TSelf result,
+        Func<T, Task<TMidResult>> selector,
+        Func<T, TMid, TOut> resultSelector)
+        where TSelf : struct, IFluentResult<TSelf, T, TError>
+        where TMidResult : struct, IFluentResult<TMidResult, TMid, TError>
+        where TOutResult : struct, IFluentResult<TOutResult, TOut, TError>
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+        ArgumentNullException.ThrowIfNull(resultSelector);
+
+        if (!result.TryGetValue(out var value))
+            return Task.FromResult(TOutResult.FromError(Flow.ErrorOf<TSelf, T, TError>(result)));
+
+        return Run(value, selector, resultSelector);
+
+        static async Task<TOutResult> Run(T value, Func<T, Task<TMidResult>> selector, Func<T, TMid, TOut> resultSelector)
+        {
+            TMidResult middle;
+            try
+            {
+                middle = await Flow.Settle<TMidResult, TError>(selector(value)).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
+            {
+                return Flow.Thrown<TOutResult, TError>(exception);
+            }
+
+            if (!middle.TryGetValue(out var mid))
+                return TOutResult.FromError(Flow.ErrorOf<TMidResult, TMid, TError>(middle));
+
+            try
+            {
+                return TOutResult.FromValue(resultSelector(value, mid));
+            }
+            catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
+            {
+                return Flow.Thrown<TOutResult, TError>(exception);
+            }
+        }
+    }
+
+    /// <summary>
     /// Chains an asynchronous operation that returns a result without a value.
     /// </summary>
     public static Task<TUnit> ChainAwait<TSelf, T, TError, TUnit>(TSelf result, Func<T, Task<TUnit>> selector)
