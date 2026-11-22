@@ -46,13 +46,15 @@ public class ExceptionMappingTests
     private static readonly ArgumentException Original = new("Original failure.");
 
     [Test]
-    public void FromExceptionThatThrowsEscapesTheChain()
+    public void FromExceptionThatThrowsEscapesWithTheOriginalAndTheMappingFailure()
     {
         BrokenMappingResult<int> result = 1;
 
         var thrown = Assert.Throws<InvalidOperationException>(() => result.Select(_ => ThrowOriginal()));
 
-        Assert.That(thrown, Is.SameAs(BrokenMappingError.MappingFailure));
+        Assert.That(thrown!.Message, Does.Contain("FromException threw while mapping ArgumentException"));
+        var inner = (AggregateException)thrown.InnerException!;
+        Assert.That(inner.InnerExceptions, Is.EqualTo(new Exception[] { Original, BrokenMappingError.MappingFailure }));
     }
 
     [Test]

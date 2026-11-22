@@ -90,7 +90,17 @@ internal static class Capture
         if (exception is TError error)
             return error;
 
-        var mapped = TResult.FromException(exception);
+        TError mapped;
+        try
+        {
+            mapped = TResult.FromException(exception);
+        }
+        catch (Exception mappingFailure) when (mappingFailure is not OperationCanceledException)
+        {
+            throw new InvalidOperationException(
+                $"{typeof(TResult)}.FromException threw while mapping {exception.GetType().Name}. The inner exception holds the original exception and the failure of FromException.",
+                new AggregateException(exception, mappingFailure));
+        }
 
         return mapped is null
             ? throw new InvalidOperationException($"{typeof(TResult)}.FromException returned null.", exception)
