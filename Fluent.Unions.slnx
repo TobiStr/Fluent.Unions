@@ -62,6 +62,7 @@
     <Project Path="test/Fluent.Unions.Orleans.Tests/Fluent.Unions.Orleans.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Grpc.Tests/Fluent.Unions.Grpc.Tests.csproj" />
     <Project Path="test/Fluent.Unions.Verify.Tests/Fluent.Unions.Verify.Tests.csproj" />
+    <Project Path="test/Fluent.Unions.Aot/Fluent.Unions.Aot.csproj" />
     <Project Path="test/Fluent.Unions.Scenarios.Tests/Fluent.Unions.Scenarios.Tests.csproj" />
   </Folder>
   <Folder Name="/bench/">
