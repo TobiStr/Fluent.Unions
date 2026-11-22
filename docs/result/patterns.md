@@ -160,7 +160,7 @@ The `GetValue()` in the repository sits inside `TryAsync`, so a failed `ToResult
 ## Pitfalls
 
 - Ending a pipeline without looking at the result gives warning FLU0001. Assign it, return it or finish with `Check()`.
-- A `switch` on a `default` result throws at runtime. Always return an initialized result.
+- A `switch` expression on a `default` result throws at runtime, and a `switch` statement runs no branch. Always return an initialized result. See [The default result](core-concepts.md#the-default-result).
 - Mixing `Out` with a chain that may fail: read `HasValue` before `.Value` outside the chain.
 
 ## See also

@@ -156,7 +156,7 @@ An error that `shouldRetry` rejects ends the loop after one attempt. Cancellatio
 | `Match` callbacks | whatever your callback throws |
 | `GetValueOrDefault(() => ...)` factory | whatever your factory throws |
 | `Result<T>.Ok(null)` | `ArgumentNullException` |
-| `switch` over a `default` result | `SwitchExpressionException` |
+| `switch` expression over a `default` result | `SwitchExpressionException`, see [The default result](core-concepts.md#the-default-result) |
 | Any operator whose lambda is cancelled | `OperationCanceledException` |
 
 Operators that leave the chain, `Match` and the `GetValueOrDefault` factory, do not catch because there is no result left to hold the error.

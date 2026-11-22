@@ -95,7 +95,7 @@ Results store their value without boxing. Creating a `Result<int>` and calling `
 
 ## Common scenarios
 
-**Return a value or an error, and handle both.** A result is always one of the two, and the compiler reports a `switch` that misses a case:
+**Return a value or an error, and handle both.** A result is always one of the two (except a `default` one, see [The default result](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/core-concepts.md#the-default-result)), and the compiler reports a `switch` that misses a case:
 
 ```csharp
 Result<Customer> GetCustomer(Guid id) =>

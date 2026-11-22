@@ -113,7 +113,7 @@ The text is safe to log or to return in a response. An error union with an excep
 - An exception thrown inside a step that already is a `DomainException` is kept as it is.
 - Any other exception goes through `FromException`. That includes the `ValidationError` from `Ensure(predicate, "message")` and the `ValidationErrors` from `Validate`, so `FromException` is the place to map them to your own validation type.
 - An `OperationCanceledException` is never turned into an error. It propagates.
-- A `default` result counts as an error: `FromException` receives an `InvalidOperationException` that says the result is empty.
+- A `default` result counts as an error: `FromException` receives an `InvalidOperationException` that says the result is empty. Native pattern matching sees no case, as with the default type; see [The default result](../result/core-concepts.md#the-default-result).
 
 `FromException` must not throw and must not return `null`. Test it with an exception that is not yours.
 

@@ -57,7 +57,7 @@ Each step runs only if the previous one succeeded. The first error ends the chai
 
 ## Rules
 
-- A `Result` is a struct. `default(Result<T>)` is not a third state: it counts as an error.
+- A `Result` is a struct. `default(Result<T>)` is not a third state for the library: it counts as an error. A native `switch` sees no case for it; see [The default result](../result/core-concepts.md#the-default-result).
 - Operators on results never throw for failures inside your lambdas. They turn the exception into the error. Only `Check()` throws on purpose.
 - Operators on options do not catch exceptions, because an option has no error state.
 

@@ -54,7 +54,7 @@ if (loaded.TryGetValue(out var o))
 
 ```csharp
 Loadable<Order> fromResult = await LoadOrderAsync(id).ToLoadable();
-Loadable<Order> fromEmpty = default(Result<Order>).ToLoadable(); // not loaded
+Loadable<Order> fromEmpty = default(Result<Order>).ToLoadable(); // failed: a default result is an error
 ```
 
 ## A Blazor component
