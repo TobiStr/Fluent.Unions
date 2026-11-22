@@ -133,6 +133,14 @@ public class OptionSerializerTests
         Assert.That(document["Value"].AsInt32, Is.EqualTo(5));
         Assert.That(BsonSerializer.Deserialize<Wrapper<Option<int>>>(document).Value.GetValue(), Is.EqualTo(5));
     }
+    [Test]
+    public void Nested_option_loses_its_levels()
+    {
+        var document = new Wrapper<Option<Option<int>>> { Value = Option.Some<Option<int>>(Option.None) }.ToBsonDocument();
+
+        Assert.That(document["Value"], Is.EqualTo(BsonNull.Value));
+        Assert.That(BsonSerializer.Deserialize<Wrapper<Option<Option<int>>>>(document).Value.HasValue, Is.False);
+    }
 
     [Test]
     public void Options_in_a_list_round_trip()

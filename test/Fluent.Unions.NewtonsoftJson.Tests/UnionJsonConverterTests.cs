@@ -27,6 +27,9 @@ public class Second
 [JsonConverter(typeof(UnionJsonConverter))]
 public union Ambiguous(First.Item, Second.Item);
 
+[JsonConverter(typeof(UnionJsonConverter))]
+public union Bag(List<int>, string);
+
 public class UnionJsonConverterTests
 {
     private record Drawing(string Name, Shape Shape, Shape? Maybe);
@@ -184,4 +187,24 @@ public class UnionJsonConverterTests
         Assert.That(UnionJsonConverter.TypeProperty, Is.EqualTo("$type"));
         Assert.That(UnionJsonConverter.ValueProperty, Is.EqualTo("$value"));
     }
-}
+
+    [TestCase("""{"$type":"Circle","$value":{"Radius":2.0}}""", TestName = "v1.0.0 class case")]
+    [TestCase("""{"$type":"Int32","$value":7}""", TestName = "v1.0.0 value case")]
+    public void ReadsAndWritesTheV1WireFormatOfAUnion(string json) =>
+        Assert.That(JsonConvert.SerializeObject(JsonConvert.DeserializeObject<Shape>(json)), Is.EqualTo(json));
+
+    [Test]
+    public void ReadsAndWritesTheV1WireFormatOfAGenericCase()
+    {
+        const string json = """{"$type":"List`1","$value":[1,2]}""";
+
+        Assert.That(JsonConvert.SerializeObject(JsonConvert.DeserializeObject<Bag>(json)), Is.EqualTo(json));
+    }
+
+    [Test]
+    public void ReadsAndWritesTheV1WireFormatOfAnEmptyUnion()
+    {
+        const string json = """{"Name":"Sketch","Shape":null,"Maybe":null}""";
+
+        Assert.That(JsonConvert.SerializeObject(JsonConvert.DeserializeObject<Drawing>(json)), Is.EqualTo(json));
+    }}

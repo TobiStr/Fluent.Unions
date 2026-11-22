@@ -51,6 +51,14 @@ public class UnionsSerializationTests
     [Test]
     public void OptionOfComplexType_RoundTrips() =>
         Assert.That(RoundTrip<Option<Customer>>(new Customer("Ada", Option.None)).GetValue().Name, Is.EqualTo("Ada"));
+    [Test]
+    public void NestedOption_KeepsItsLevels()
+    {
+        var someNone = RoundTrip(Option.Some<Option<int>>(Option.None));
+
+        Assert.That(someNone.HasValue, Is.True);
+        Assert.That(someNone.GetValue().HasValue, Is.False);
+    }
 
     [Test]
     public void OptionsInCollections_RoundTrip()

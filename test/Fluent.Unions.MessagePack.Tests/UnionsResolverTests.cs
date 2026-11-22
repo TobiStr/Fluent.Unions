@@ -79,6 +79,14 @@ public class UnionsResolverTests
         Assert.That(RoundTrip<Option<string>>("Ada").GetValue(), Is.EqualTo("Ada"));
         Assert.That(RoundTrip<Option<string>>(Option.None).HasValue, Is.False);
     }
+    [Test]
+    public void NestedOption_LosesItsLevels()
+    {
+        var someNone = Option.Some<Option<int>>(Option.None);
+
+        Assert.That(MessagePackSerializer.Serialize(someNone, Options), Is.EqualTo(Nil));
+        Assert.That(RoundTrip(someNone).HasValue, Is.False);
+    }
 
     [Test]
     public void OptionOfComplexType_RoundTrips()
