@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace Fluent.Unions.Serialization;
 
 /// <summary>
-/// Serializes your own unions with the case name, so they can be read back:
+/// Serializes your own unions with the case name, so they can be read back. Give a case a stable name with <see cref="UnionCaseNameAttribute"/>:
 /// <c>{"$type":"Circle","$value":{"Radius":2}}</c>. Apply it with <c>[JsonConverter(typeof(UnionJsonConverter))]</c>.
 /// An empty union is written as <c>null</c>. Result types and <see cref="Option{T}"/> keep their own converters.
 /// </summary>
@@ -46,25 +46,11 @@ public sealed class UnionJsonConverter : JsonConverterFactory
 
     private sealed class Converter<TUnion> : JsonConverter<TUnion> where TUnion : struct, IUnion
     {
-        private readonly Dictionary<string, ConstructorInfo> casesByName;
-        private readonly Dictionary<Type, string> namesByType;
-
-        public Converter()
-        {
-            var constructors = typeof(TUnion)
-                .GetConstructors()
-                .Where(c => c.GetParameters().Length == 1)
-                .ToList();
-            var duplicate = constructors
-                .GroupBy(c => c.GetParameters()[0].ParameterType.Name)
-                .FirstOrDefault(g => g.Count() > 1);
-
-            if (duplicate is not null)
-                throw new InvalidOperationException($"{typeof(TUnion)} has several cases named '{duplicate.Key}'.");
-
-            casesByName = constructors.ToDictionary(c => c.GetParameters()[0].ParameterType.Name);
-            namesByType = constructors.ToDictionary(c => c.GetParameters()[0].ParameterType, c => c.GetParameters()[0].ParameterType.Name);
-        }
+        private readonly UnionCaseNames names = UnionCaseNames.For(typeof(TUnion));
+        private readonly Dictionary<Type, ConstructorInfo> constructors = typeof(TUnion)
+            .GetConstructors()
+            .Where(c => c.GetParameters().Length == 1)
+            .ToDictionary(c => c.GetParameters()[0].ParameterType);
 
         public override bool HandleNull => true;
 
@@ -82,14 +68,13 @@ public sealed class UnionJsonConverter : JsonConverterFactory
             if (!root.TryGetProperty(TypeProperty, out var typeName) || typeName.ValueKind != JsonValueKind.String || typeName.GetString() is not { } name)
                 throw new JsonException($"A {typeof(TUnion).Name} needs a '{TypeProperty}' property.");
 
-            if (!casesByName.TryGetValue(name, out var constructor))
+            if (!names.TryGetCaseType(name, out var caseType))
                 throw new JsonException($"'{name}' is not a case of {typeof(TUnion).Name}.");
 
             if (!root.TryGetProperty(ValueProperty, out var element))
                 throw new JsonException($"A {typeof(TUnion).Name} needs a '{ValueProperty}' property.");
 
-            var caseType = constructor.GetParameters()[0].ParameterType;
-            var union = (TUnion)constructor.Invoke([element.Deserialize(caseType, options)]);
+            var union = (TUnion)constructors[caseType].Invoke([element.Deserialize(caseType, options)]);
 
             return union.Value is null
                 ? throw new JsonException($"The '{ValueProperty}' of case '{name}' is null. An empty {typeof(TUnion).Name} is written as null.")
@@ -104,11 +89,11 @@ public sealed class UnionJsonConverter : JsonConverterFactory
                 return;
             }
 
-            var caseType = namesByType.Keys.FirstOrDefault(t => t == payload.GetType())
-                ?? namesByType.Keys.First(t => t.IsInstanceOfType(payload));
+            var caseType = names.CaseTypes.FirstOrDefault(t => t == payload.GetType())
+                ?? names.CaseTypes.First(t => t.IsInstanceOfType(payload));
 
             writer.WriteStartObject();
-            writer.WriteString(TypeProperty, namesByType[caseType]);
+            writer.WriteString(TypeProperty, names.NameOf(caseType));
             writer.WritePropertyName(ValueProperty);
             JsonSerializer.Serialize(writer, payload, caseType, options);
             writer.WriteEndObject();

@@ -540,6 +540,18 @@ class Fluent.Unions.Serialization.ResultJsonConverter : class System.Text.Json.S
   public override System.Text.Json.Serialization.JsonConverter CreateConverter(System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
   public override bool CanConvert(System.Type typeToConvert)
 
+class Fluent.Unions.Serialization.UnionCaseNameAttribute : class System.Attribute
+  public System.Type CaseType { get; }
+  public UnionCaseNameAttribute(System.Type caseType, string name)
+  public string Name { get; }
+  public string[] Aliases { get; init; }
+
+class Fluent.Unions.Serialization.UnionCaseNames
+  public System.Collections.Generic.IReadOnlyCollection<System.Type> CaseTypes { get; }
+  public bool TryGetCaseType(string name, out System.Type? caseType)
+  public static Fluent.Unions.Serialization.UnionCaseNames For(System.Type unionType)
+  public string NameOf(System.Type caseType)
+
 class Fluent.Unions.Serialization.UnionJsonConverter : class System.Text.Json.Serialization.JsonConverterFactory
   public UnionJsonConverter()
   public const string TypeProperty = "$type"

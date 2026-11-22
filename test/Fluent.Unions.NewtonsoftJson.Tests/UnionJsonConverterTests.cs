@@ -30,6 +30,12 @@ public union Ambiguous(First.Item, Second.Item);
 [JsonConverter(typeof(UnionJsonConverter))]
 public union Bag(List<int>, string);
 
+[JsonConverter(typeof(UnionJsonConverter))]
+[Fluent.Unions.Serialization.UnionCaseName(typeof(Circle), "circle", Aliases = ["Circle"])]
+[Fluent.Unions.Serialization.UnionCaseName(typeof(List<int>), "numbers")]
+[Fluent.Unions.Serialization.UnionCaseName(typeof(List<string>), "words")]
+public union NamedShape(Circle, List<int>, List<string>);
+
 public class UnionJsonConverterTests
 {
     private record Drawing(string Name, Shape Shape, Shape? Maybe);
@@ -222,4 +228,20 @@ public class UnionJsonConverterTests
         const string json = """{"Name":"Sketch","Shape":null,"Maybe":null}""";
 
         Assert.That(JsonConvert.SerializeObject(JsonConvert.DeserializeObject<Drawing>(json)), Is.EqualTo(json));
+    }
+
+    [Test]
+    public void ConfiguredNameIsWrittenAndAliasIsRead()
+    {
+        Assert.That(JsonConvert.SerializeObject((NamedShape)new Circle(2)), Is.EqualTo("""{"$type":"circle","$value":{"Radius":2.0}}"""));
+        Assert.That(JsonConvert.DeserializeObject<NamedShape>("""{"$type":"Circle","$value":{"Radius":2.0}}""").Value, Is.EqualTo(new Circle(2)));
+    }
+
+    [Test]
+    public void ClosedGenericCasesWithNamesRoundTrip()
+    {
+        var json = JsonConvert.SerializeObject((NamedShape)new List<string> { "a" });
+
+        Assert.That(json, Is.EqualTo("""{"$type":"words","$value":["a"]}"""));
+        Assert.That(JsonConvert.DeserializeObject<NamedShape>(json).Value, Is.EqualTo(new List<string> { "a" }));
     }}

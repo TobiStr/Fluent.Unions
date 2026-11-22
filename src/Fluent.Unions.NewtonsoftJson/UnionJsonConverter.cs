@@ -2,13 +2,14 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Fluent.Unions.Abstractions;
+using Fluent.Unions.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Fluent.Unions.NewtonsoftJson;
 
 /// <summary>
-/// Serializes your own unions with the case name, so they can be read back:
+/// Serializes your own unions with the case name, so they can be read back. Give a case a stable name with <see cref="UnionCaseNameAttribute"/>:
 /// <c>{"$type":"Circle","$value":{"Radius":2}}</c>. Apply it with <c>[JsonConverter(typeof(UnionJsonConverter))]</c>.
 /// An empty union is written as <c>null</c>. Results and <see cref="Option{T}"/> are never handled here, so they keep their own converters.
 /// </summary>
@@ -65,8 +66,10 @@ public sealed class UnionJsonConverter : JsonConverter
                 if (name is null)
                     throw new JsonSerializationException($"A {unionType.Name} needs a '{TypeProperty}' property.");
 
-                if (!cases.ByName.TryGetValue(name, out constructor))
+                if (!cases.Names.TryGetCaseType(name, out var caseType))
                     throw new JsonSerializationException($"'{name}' is not a case of {unionType.Name}.");
+
+                constructor = cases.Constructors[caseType];
             }
             else if (property == ValueProperty)
             {
@@ -92,7 +95,7 @@ public sealed class UnionJsonConverter : JsonConverter
         var union = constructor.Invoke([value]);
 
         return ((IUnion)union).Value is null
-            ? throw new JsonSerializationException($"The '{ValueProperty}' of case '{constructor.GetParameters()[0].ParameterType.Name}' is null. An empty {unionType.Name} is written as null.")
+            ? throw new JsonSerializationException($"The '{ValueProperty}' of case '{cases.Names.NameOf(constructor.GetParameters()[0].ParameterType)}' is null. An empty {unionType.Name} is written as null.")
             : union;
     }
 
@@ -105,13 +108,13 @@ public sealed class UnionJsonConverter : JsonConverter
             return;
         }
 
-        var cases = GetCases(union.GetType());
-        var caseType = cases.NamesByType.Keys.FirstOrDefault(t => t == payload.GetType())
-            ?? cases.NamesByType.Keys.First(t => t.IsInstanceOfType(payload));
+        var names = GetCases(union.GetType()).Names;
+        var caseType = names.CaseTypes.FirstOrDefault(t => t == payload.GetType())
+            ?? names.CaseTypes.First(t => t.IsInstanceOfType(payload));
 
         writer.WriteStartObject();
         writer.WritePropertyName(TypeProperty);
-        writer.WriteValue(cases.NamesByType[caseType]);
+        writer.WriteValue(names.NameOf(caseType));
         writer.WritePropertyName(ValueProperty);
         serializer.Serialize(writer, payload, caseType);
         writer.WriteEndObject();
@@ -133,23 +136,11 @@ public sealed class UnionJsonConverter : JsonConverter
     }
 
     private static Cases GetCases(Type unionType) =>
-        CasesByUnion.GetOrAdd(unionType, static type =>
-        {
-            var constructors = type
-                .GetConstructors()
+        CasesByUnion.GetOrAdd(unionType, static type => new Cases(
+            UnionCaseNames.For(type),
+            type.GetConstructors()
                 .Where(c => c.GetParameters().Length == 1)
-                .ToList();
-            var duplicate = constructors
-                .GroupBy(c => c.GetParameters()[0].ParameterType.Name)
-                .FirstOrDefault(g => g.Count() > 1);
+                .ToDictionary(c => c.GetParameters()[0].ParameterType)));
 
-            if (duplicate is not null)
-                throw new InvalidOperationException($"{type} has several cases named '{duplicate.Key}'.");
-
-            return new Cases(
-                constructors.ToDictionary(c => c.GetParameters()[0].ParameterType.Name),
-                constructors.ToDictionary(c => c.GetParameters()[0].ParameterType, c => c.GetParameters()[0].ParameterType.Name));
-        });
-
-    private sealed record Cases(Dictionary<string, ConstructorInfo> ByName, Dictionary<Type, string> NamesByType);
+    private sealed record Cases(UnionCaseNames Names, Dictionary<Type, ConstructorInfo> Constructors);
 }
