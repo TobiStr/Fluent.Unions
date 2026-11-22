@@ -185,6 +185,15 @@ return new Result<int>();          // warning
 
 Create a result from a value or an exception instead. `Option<T>` and `Loadable<T>` are not reported, because their `default` is a valid `None` and not loaded.
 
+The rule sees `default` and `new()` of a result type only. It does not report an element of a new array, a field that is never assigned, `FirstOrDefault()` on a sequence of results, or `default(T)` in generic code. See [The default result](../result/core-concepts.md#the-default-result) for how such a result behaves.
+
+To fail the build on it, raise the rule to an error:
+
+```ini
+[*.cs]
+dotnet_diagnostic.FLU0007.severity = error
+```
+
 <a id="flu0008"></a>
 
 ## FLU0008: Result is serialized
