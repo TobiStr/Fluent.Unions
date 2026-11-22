@@ -1,4 +1,4 @@
-﻿namespace Fluent.Unions.Tests;
+namespace Fluent.Unions.Tests;
 
 public class QueryOperatorTests
 {
@@ -252,4 +252,47 @@ public class QueryOperatorTests
             return ex;
         }
     }
-}
+
+    [Test]
+    public void ZipEvaluatesItsArgumentEvenWhenTheReceiverFailed()
+    {
+        Result<int> failed = Failure;
+        var calls = 0;
+
+        var zipped = failed.Zip(Counted(ref calls));
+
+        Assert.That(calls, Is.EqualTo(1));
+        Assert.That(zipped.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public void ChainAppendDoesNotRunTheStepWhenTheReceiverFailed()
+    {
+        Result<int> failed = Failure;
+        var calls = 0;
+
+        var appended = failed.ChainAppend(_ => Counted(ref calls));
+
+        Assert.That(calls, Is.Zero);
+        Assert.That(appended.GetError(), Is.SameAs(Failure));
+    }
+
+    [Test]
+    public void QuerySyntaxDoesNotRunTheSecondSourceWhenTheFirstFailed()
+    {
+        Result<int> failed = Failure;
+        var calls = 0;
+
+        var combined = from first in failed
+                       from second in Counted(ref calls)
+                       select first + second;
+
+        Assert.That(calls, Is.Zero);
+        Assert.That(combined.GetError(), Is.SameAs(Failure));
+    }
+
+    private static Result<int> Counted(ref int calls)
+    {
+        calls++;
+        return 2;
+    }}
