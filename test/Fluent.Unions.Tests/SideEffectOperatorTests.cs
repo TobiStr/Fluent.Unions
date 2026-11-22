@@ -53,6 +53,60 @@ public class SideEffectOperatorTests
     }
 
     [Test]
+    public void OnErrorDoThatThrowsReplacesTheOriginalError()
+    {
+        Result<int> result = Failure;
+        var callbackFailure = new TimeoutException("Logging failed.");
+
+        var observed = result.OnErrorDo(_ => throw callbackFailure);
+
+        Assert.That(observed.GetError(), Is.SameAs(callbackFailure));
+    }
+
+    [Test]
+    public void DoWithErrorCallbackThatThrowsReplacesTheOriginalError()
+    {
+        Result<int> result = Failure;
+        var callbackFailure = new TimeoutException("Logging failed.");
+
+        var observed = result.Do(_ => { }, _ => throw callbackFailure);
+
+        Assert.That(observed.GetError(), Is.SameAs(callbackFailure));
+    }
+
+    [Test]
+    public void FinallyThatThrowsOnAnErrorReplacesTheOriginalError()
+    {
+        Result<int> result = Failure;
+        Result unit = Failure;
+        var callbackFailure = new TimeoutException("Cleanup failed.");
+
+        Assert.That(result.Finally(() => throw callbackFailure).GetError(), Is.SameAs(callbackFailure));
+        Assert.That(unit.Finally(() => throw callbackFailure).GetError(), Is.SameAs(callbackFailure));
+    }
+
+    [Test]
+    public void DoThatThrowsTurnsASuccessIntoAnError()
+    {
+        Result<int> saved = 5;
+        var loggingFailure = new TimeoutException("Logging failed.");
+
+        var observed = saved.Do(_ => throw loggingFailure);
+
+        Assert.That(observed.GetError(), Is.SameAs(loggingFailure));
+    }
+
+    [Test]
+    public async Task FinallyAwaitThatThrowsReplacesTheResult()
+    {
+        var callbackFailure = new TimeoutException("Cleanup failed.");
+
+        var observed = await Task.FromResult<Result<int>>(5).FinallyAwait(() => Task.FromException(callbackFailure));
+
+        Assert.That(observed.GetError(), Is.SameAs(callbackFailure));
+    }
+
+    [Test]
     public void DoCallsRunInChainOrder()
     {
         Result<int> result = 1;
