@@ -111,6 +111,27 @@ public class UnionJsonConverterTests
         Assert.That(JsonSerializer.Deserialize<Option<Option<int>>>(json).HasValue, Is.False);
     }
 
+    [Test]
+    public void ExplicitOptionConverterWritesTheSameFormat()
+    {
+        var options = new JsonSerializerOptions { Converters = { new OptionJsonConverter<int>(), new OptionJsonConverter<string>() } };
+
+        var json = JsonSerializer.Serialize(new Person("Ada", Option.None, 36), options);
+
+        Assert.That(json, Is.EqualTo("""{"Name":"Ada","Nickname":null,"Age":36}"""));
+        Assert.That(JsonSerializer.Deserialize<Person>(json, options)!.Age.GetValue(), Is.EqualTo(36));
+    }
+
+    [Test]
+    public void ExplicitUnionConverterWritesTheSameFormat()
+    {
+        var options = new JsonSerializerOptions { Converters = { new UnionJsonConverter<Shape>() } };
+
+        var json = JsonSerializer.Serialize<Shape>(new Circle(2), options);
+
+        Assert.That(json, Is.EqualTo("""{"$type":"Circle","$value":{"Radius":2}}"""));
+        Assert.That(JsonSerializer.Deserialize<Shape>(json, options).Value, Is.EqualTo(new Circle(2)));
+    }
     private static void AssertRoundTrip<T>(string json)
     {
         var value = JsonSerializer.Deserialize<T>(json);

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Fluent.Unions.Abstractions;
 
@@ -35,6 +36,7 @@ public static class ResultTypes
         return ValueTypes.GetOrAdd(type, static type => type.IsValueType ? Contract(type, typeof(IResult<,,>))?.GetGenericArguments()[1] : null);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "The operators use the result interfaces through generic constraints, so the trimmer keeps them on every result type.")]
     private static Type? Contract(Type type, Type definition) =>
         type.GetInterfaces().FirstOrDefault(contract => contract.IsGenericType
             && contract.GetGenericTypeDefinition() == definition

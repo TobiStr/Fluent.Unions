@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -13,19 +14,24 @@ public sealed class ResultJsonConverter : JsonConverterFactory
     public override bool CanConvert(Type typeToConvert) => Abstractions.ResultTypes.IsResult(typeToConvert);
 
     /// <inheritdoc />
-    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>
-        (JsonConverter)Activator.CreateInstance(typeof(Rejecting<>).MakeGenericType(typeToConvert))!;
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+            throw NotSupported(typeToConvert);
+
+        return (JsonConverter)Activator.CreateInstance(typeof(Rejecting<>).MakeGenericType(typeToConvert))!;
+    }
+
+    private static NotSupportedException NotSupported(Type resultType) => new(
+        $"{resultType} is not serialized, because an error would expose exception details. " +
+        "Convert it first, for example with Match, GetValueOrDefault or ToOption.");
 
     private sealed class Rejecting<TResult> : JsonConverter<TResult>
     {
         public override TResult Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            throw NotSupported();
+            throw NotSupported(typeof(TResult));
 
         public override void Write(Utf8JsonWriter writer, TResult value, JsonSerializerOptions options) =>
-            throw NotSupported();
-
-        private static NotSupportedException NotSupported() => new(
-            $"{typeof(TResult)} is not serialized, because an error would expose exception details. " +
-            "Convert it first, for example with Match, GetValueOrDefault or ToOption.");
+            throw NotSupported(typeof(TResult));
     }
 }

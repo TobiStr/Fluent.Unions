@@ -52,11 +52,11 @@ public sealed class UnionCaseNames
     /// Gets the names of the cases of <paramref name="unionType"/>.
     /// </summary>
     /// <exception cref="InvalidOperationException">Two cases share a name, or a <see cref="UnionCaseNameAttribute"/> is invalid.</exception>
-    public static UnionCaseNames For(Type unionType)
+    public static UnionCaseNames For([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type unionType)
     {
         ArgumentNullException.ThrowIfNull(unionType);
 
-        return ByUnion.GetOrAdd(unionType, Create);
+        return ByUnion.TryGetValue(unionType, out var names) ? names : ByUnion.GetOrAdd(unionType, Create(unionType));
     }
 
     /// <summary>
@@ -69,7 +69,7 @@ public sealed class UnionCaseNames
     /// </summary>
     public bool TryGetCaseType(string name, [NotNullWhen(true)] out Type? caseType) => typesByName.TryGetValue(name, out caseType);
 
-    private static UnionCaseNames Create(Type unionType)
+    private static UnionCaseNames Create([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type unionType)
     {
         var caseTypes = unionType.GetConstructors()
             .Select(constructor => constructor.GetParameters())

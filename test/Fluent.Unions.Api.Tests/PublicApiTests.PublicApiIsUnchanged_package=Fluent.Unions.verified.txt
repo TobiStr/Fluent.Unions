@@ -535,6 +535,12 @@ class Fluent.Unions.Serialization.OptionJsonConverter : class System.Text.Json.S
   public override System.Text.Json.Serialization.JsonConverter CreateConverter(System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
   public override bool CanConvert(System.Type typeToConvert)
 
+class Fluent.Unions.Serialization.OptionJsonConverter<T> : class System.Text.Json.Serialization.JsonConverter<Fluent.Unions.Option<T>>
+  public OptionJsonConverter()
+  public override Fluent.Unions.Option<T> Read(ref System.Text.Json.Utf8JsonReader reader, System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+  public override bool HandleNull { get; }
+  public override void Write(System.Text.Json.Utf8JsonWriter writer, Fluent.Unions.Option<T> value, System.Text.Json.JsonSerializerOptions options)
+
 class Fluent.Unions.Serialization.ResultJsonConverter : class System.Text.Json.Serialization.JsonConverterFactory
   public ResultJsonConverter()
   public override System.Text.Json.Serialization.JsonConverter CreateConverter(System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
@@ -558,6 +564,12 @@ class Fluent.Unions.Serialization.UnionJsonConverter : class System.Text.Json.Se
   public const string ValueProperty = "$value"
   public override System.Text.Json.Serialization.JsonConverter CreateConverter(System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
   public override bool CanConvert(System.Type typeToConvert)
+
+class Fluent.Unions.Serialization.UnionJsonConverter<TUnion> where TUnion : struct, System.Runtime.CompilerServices.IUnion : class System.Text.Json.Serialization.JsonConverter<TUnion> where TUnion : struct, System.Runtime.CompilerServices.IUnion
+  public UnionJsonConverter()
+  public override TUnion Read(ref System.Text.Json.Utf8JsonReader reader, System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+  public override bool HandleNull { get; }
+  public override void Write(System.Text.Json.Utf8JsonWriter writer, TUnion value, System.Text.Json.JsonSerializerOptions options)
 
 class Fluent.Unions.UnionExtensions
   public static Fluent.Unions.Option<TCase> As<TCase>(this System.Runtime.CompilerServices.IUnion union)
