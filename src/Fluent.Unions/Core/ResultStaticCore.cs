@@ -36,7 +36,7 @@ public static class ResultStaticCore
         {
             return TSelf.FromValue(body());
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -56,7 +56,7 @@ public static class ResultStaticCore
         {
             return body();
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -77,7 +77,7 @@ public static class ResultStaticCore
             body();
             return TSelf.Success;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -97,7 +97,7 @@ public static class ResultStaticCore
         {
             return body();
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -121,7 +121,7 @@ public static class ResultStaticCore
             {
                 return TSelf.FromValue(await body().ConfigureAwait(false));
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
             {
                 return Flow.Thrown<TSelf, TError>(exception);
             }
@@ -160,7 +160,7 @@ public static class ResultStaticCore
                 await body().ConfigureAwait(false);
                 return TSelf.Success;
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
             {
                 return Flow.Thrown<TSelf, TError>(exception);
             }
@@ -240,7 +240,7 @@ public static class ResultStaticCore
                 {
                     result = operation();
                 }
-                catch (Exception exception) when (exception is not OperationCanceledException)
+                catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
                 {
                     result = Flow.Thrown<TSelf, TError>(exception);
                 }
@@ -249,7 +249,7 @@ public static class ResultStaticCore
                     return result;
             }
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -291,7 +291,7 @@ public static class ResultStaticCore
                     {
                         result = await operation(cancellationToken).ConfigureAwait(false);
                     }
-                    catch (Exception exception) when (!IsCancellation(exception, cancellationToken))
+                    catch (Exception exception) when (!IsCancellation(exception, cancellationToken) && TSelf.Captures(exception))
                     {
                         result = Flow.Thrown<TSelf, TError>(exception);
                     }
@@ -305,7 +305,7 @@ public static class ResultStaticCore
                         await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                 }
             }
-            catch (Exception exception) when (!IsCancellation(exception, cancellationToken))
+            catch (Exception exception) when (!IsCancellation(exception, cancellationToken) && TSelf.Captures(exception))
             {
                 return Flow.Thrown<TSelf, TError>(exception);
             }
@@ -481,7 +481,7 @@ public static class ResultStaticCore
         {
             return await body().ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TResult, TError>(exception))
         {
             return Flow.Thrown<TResult, TError>(exception);
         }

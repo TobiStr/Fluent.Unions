@@ -27,7 +27,7 @@ public static class ResultEnsureCore
         {
             return predicate(value) ? result : TSelf.FromError(error(value));
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -51,7 +51,7 @@ public static class ResultEnsureCore
         {
             return predicate(value) ? result : Flow.Thrown<TSelf, TError>(new ValidationError(message));
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }

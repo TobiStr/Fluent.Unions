@@ -28,6 +28,15 @@ internal static class Flow
         result.TryGetError(out var error) ? error : throw new UnreachableException();
 
     /// <summary>
+    /// Indicates whether an exception thrown by user code becomes an error of <typeparamref name="TResult"/>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool Captured<TResult, TError>(Exception exception)
+        where TResult : struct, IErrorResult<TResult, TError>
+        where TError : notnull =>
+        exception is not OperationCanceledException && TResult.Captures(exception);
+
+    /// <summary>
     /// Turns an exception thrown by user code into a failed result.
     /// </summary>
     internal static TResult Thrown<TResult, TError>(Exception exception)
@@ -46,7 +55,7 @@ internal static class Flow
         {
             return await task.ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TResult, TError>(exception))
         {
             return Thrown<TResult, TError>(exception);
         }

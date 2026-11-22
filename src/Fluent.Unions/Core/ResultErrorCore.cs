@@ -92,7 +92,7 @@ public static class ResultErrorCore
         {
             return handler(error);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }

@@ -32,7 +32,7 @@ public static class ResultCollectionCore
 
             return TOutResult.FromValue(values);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -57,7 +57,7 @@ public static class ResultCollectionCore
                 ? TOutResult.FromValue(values)
                 : TOutResult.FromError(Flow.Combine<TOutResult, TError>(errors));
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }

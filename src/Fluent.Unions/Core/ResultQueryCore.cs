@@ -26,7 +26,7 @@ public static class ResultQueryCore
         {
             return TOutResult.FromValue(selector(value));
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -49,7 +49,7 @@ public static class ResultQueryCore
         {
             return TOutResult.FromValue(selector());
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -73,7 +73,7 @@ public static class ResultQueryCore
         {
             return selector(value);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -103,7 +103,7 @@ public static class ResultQueryCore
         {
             middle = selector(value);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -115,7 +115,7 @@ public static class ResultQueryCore
         {
             return TOutResult.FromValue(resultSelector(value, mid));
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -139,7 +139,7 @@ public static class ResultQueryCore
         {
             return selector(value);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TUnit, TError>(exception))
         {
             return Flow.Thrown<TUnit, TError>(exception);
         }
@@ -162,7 +162,7 @@ public static class ResultQueryCore
         {
             return selector();
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -186,7 +186,7 @@ public static class ResultQueryCore
         {
             return selector();
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -261,7 +261,7 @@ public static class ResultQueryCore
         {
             return TOutResult.FromValue(resultSelector(a, b));
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }

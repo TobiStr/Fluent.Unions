@@ -1,4 +1,4 @@
-﻿using Fluent.Unions.Abstractions;
+using Fluent.Unions.Abstractions;
 
 namespace Fluent.Unions;
 
@@ -63,7 +63,7 @@ internal static class Capture
         {
             return body();
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (Core.Flow.Captured<TResult, TError>(ex))
         {
             return TResult.FromError(ToError<TResult, TError>(ex));
         }
@@ -77,7 +77,7 @@ internal static class Capture
         {
             return await body().ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (Core.Flow.Captured<TResult, TError>(ex))
         {
             return TResult.FromError(ToError<TResult, TError>(ex));
         }

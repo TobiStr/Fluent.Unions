@@ -35,7 +35,7 @@ public static partial class ResultTaskCore
             {
                 middle = await Flow.Settle<TMidResult, TError>(selector(value)).ConfigureAwait(false);
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
             {
                 return Flow.Thrown<TOutResult, TError>(exception);
             }
@@ -47,7 +47,7 @@ public static partial class ResultTaskCore
             {
                 return TOutResult.FromValue(resultSelector(value, mid));
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
             {
                 return Flow.Thrown<TOutResult, TError>(exception);
             }

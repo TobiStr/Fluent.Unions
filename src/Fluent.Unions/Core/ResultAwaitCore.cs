@@ -30,7 +30,7 @@ public static partial class ResultAwaitCore
             {
                 return TOutResult.FromValue(await selector(value).ConfigureAwait(false));
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
             {
                 return Flow.Thrown<TOutResult, TError>(exception);
             }
@@ -58,7 +58,7 @@ public static partial class ResultAwaitCore
             {
                 return TOutResult.FromValue(await selector().ConfigureAwait(false));
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
             {
                 return Flow.Thrown<TOutResult, TError>(exception);
             }
@@ -145,7 +145,7 @@ public static partial class ResultAwaitCore
             {
                 return await predicate(value).ConfigureAwait(false) ? result : TSelf.FromError(error(value));
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
             {
                 return Flow.Thrown<TSelf, TError>(exception);
             }
@@ -176,7 +176,7 @@ public static partial class ResultAwaitCore
                     ? result
                     : Flow.Thrown<TSelf, TError>(new ValidationError(message));
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
             {
                 return Flow.Thrown<TSelf, TError>(exception);
             }
@@ -236,7 +236,7 @@ public static partial class ResultAwaitCore
             {
                 outcome = await selector(value.Item1, value.Item2).ConfigureAwait(false);
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
             {
                 return Flow.Thrown<TOutResult, TError>(exception);
             }
@@ -272,7 +272,7 @@ public static partial class ResultAwaitCore
             {
                 outcome = await selector(value.Item1, value.Item2, value.Item3).ConfigureAwait(false);
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
             {
                 return Flow.Thrown<TOutResult, TError>(exception);
             }
@@ -304,7 +304,7 @@ public static partial class ResultAwaitCore
                 await onSuccess(value).ConfigureAwait(false);
                 return result;
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
             {
                 return Flow.Thrown<TSelf, TError>(exception);
             }
@@ -414,7 +414,7 @@ public static partial class ResultAwaitCore
         {
             return await step(argument).ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TResult, TError>(exception))
         {
             return Flow.Thrown<TResult, TError>(exception);
         }
@@ -428,7 +428,7 @@ public static partial class ResultAwaitCore
         {
             return await step().ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TResult, TError>(exception))
         {
             return Flow.Thrown<TResult, TError>(exception);
         }
@@ -443,7 +443,7 @@ public static partial class ResultAwaitCore
             await action().ConfigureAwait(false);
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TResult, TError>(exception))
         {
             return Flow.Thrown<TResult, TError>(exception);
         }

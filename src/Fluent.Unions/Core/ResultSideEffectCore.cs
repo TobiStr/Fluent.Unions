@@ -26,7 +26,7 @@ public static class ResultSideEffectCore
             onSuccess(value);
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -51,7 +51,7 @@ public static class ResultSideEffectCore
 
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -74,7 +74,7 @@ public static class ResultSideEffectCore
             onSuccess();
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -99,7 +99,7 @@ public static class ResultSideEffectCore
 
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -122,7 +122,7 @@ public static class ResultSideEffectCore
             onError(Flow.ErrorOf<TSelf, T, TError>(result));
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -145,7 +145,7 @@ public static class ResultSideEffectCore
             onError(error);
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -180,7 +180,7 @@ public static class ResultSideEffectCore
             action();
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
@@ -200,7 +200,7 @@ public static class ResultSideEffectCore
             action();
             return result;
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }

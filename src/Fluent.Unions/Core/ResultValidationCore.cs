@@ -34,7 +34,7 @@ public static class ResultValidationCore
             {
                 outcome = rule(value);
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (Flow.Captured<TRule, TError>(exception))
             {
                 outcome = Flow.Thrown<TRule, TError>(exception);
             }

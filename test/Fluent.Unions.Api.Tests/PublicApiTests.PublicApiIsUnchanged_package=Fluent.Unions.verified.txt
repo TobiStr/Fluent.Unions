@@ -850,6 +850,7 @@ interface Fluent.Unions.Abstractions.IErrorResult
 interface Fluent.Unions.Abstractions.IErrorResult<TSelf, TError> where TSelf : struct, Fluent.Unions.Abstractions.IErrorResult<TSelf, TError> where TError : notnull : interface Fluent.Unions.Abstractions.IErrorResult
   TError FromException(System.Exception exception)
   TSelf FromError(TError error)
+  bool Captures(System.Exception exception)
   bool TryGetError(out TError error)
 
 interface Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull : interface Fluent.Unions.Abstractions.IErrorResult, interface Fluent.Unions.Abstractions.IErrorResult<TSelf, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull, interface Fluent.Unions.Abstractions.IResult<TSelf, T, TError> where TSelf : struct, Fluent.Unions.Abstractions.IFluentResult<TSelf, T, TError> where TError : notnull

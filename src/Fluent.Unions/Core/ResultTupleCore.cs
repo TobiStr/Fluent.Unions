@@ -29,7 +29,7 @@ public static class ResultTupleCore
         {
             outcome = selector(value);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -61,7 +61,7 @@ public static class ResultTupleCore
         {
             outcome = selector(value.Item1, value.Item2);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }
@@ -93,7 +93,7 @@ public static class ResultTupleCore
         {
             outcome = selector(value.Item1, value.Item2, value.Item3);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TOutResult, TError>(exception))
         {
             return Flow.Thrown<TOutResult, TError>(exception);
         }

@@ -46,6 +46,12 @@ public interface IErrorResult<TSelf, TError> : IErrorResult
     /// Converts an unexpected exception thrown inside an operator into an error. Must not return <c>null</c> or throw.
     /// </summary>
     static abstract TError FromException(Exception exception);
+
+    /// <summary>
+    /// Indicates whether operators turn <paramref name="exception"/> into an error. Any other exception propagates.
+    /// Every exception except <see cref="OperationCanceledException"/> by default.
+    /// </summary>
+    static virtual bool Captures(Exception exception) => true;
 }
 
 /// <summary>

@@ -35,7 +35,7 @@ public static class ResultAnnotationCore
                 ? result
                 : Flow.Thrown<TSelf, TError>(new ValidationErrors(failures.SelectMany(ToErrors)));
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (Flow.Captured<TSelf, TError>(exception))
         {
             return Flow.Thrown<TSelf, TError>(exception);
         }
