@@ -14,7 +14,15 @@
 
 `Result`, `Result<T>` and `Option<T>` for .NET, built on the C# 15 `union` keyword. A method returns either its value or an error, and the compiler checks that callers handle both. Fluent operators are named after LINQ and Rx.NET, so a whole flow reads as one expression.
 
-- **Your own Result in one line.** `[FluentResult<TError>]` on a `partial struct` lets the source generator build a complete `Result<T>` around your error type, with every operator and `Task` overload. Make the error a union and the compiler checks that every case is handled.
+**Your error type, your `Result<T>`.** Declare one struct, and the source generator writes a complete result type around your custom error or error union:
+
+```csharp
+[FluentResult<DomainException>]
+public readonly partial struct Result<T>;
+```
+
+That one line gives you the union cases and conversions, the value-less `Result` with `Result.Try` and `Result.WhenAll`, and every operator: `Select`, `Chain`, `Ensure`, `Catch`, `Tap`, `MapError`, query syntax and every `Task` and `...Await` overload. The generated operators forward to one shared implementation, so your type behaves exactly like the built-in one, never boxes its value and works in native AOT. Make the error a union and the compiler checks that every case is handled. Choose which exceptions become errors with `Capture` and `Propagate`. See [Choose your Result](#choose-your-result).
+
 - **Built for hot paths.** Results store their value without boxing, and a chain of operators with static lambdas allocates nothing.
 - **Every outcome in the signature.** `Option<T>` replaces `null`, and failures are typed values instead of hidden exceptions. What a method can return is visible in its type and checked by the compiler, so flows stay flat, readable and free of `null` checks and `try`/`catch`.
 

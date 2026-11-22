@@ -28,7 +28,7 @@ Start with the default `Result<T>` from `using Fluent.Unions;`. When you want er
 public readonly partial struct Result<T>;
 ```
 
-Every operator below works on both. See [Your own Result type](../errors/custom-error-types.md).
+The source generator turns this line into a complete result type: the union cases and conversions, the value-less `Result`, and every operator with every `Task` overload. The operators forward to the library, so every operator below works on both, with the same behavior and the same performance. See [Your own Result type](../errors/custom-error-types.md).
 
 ## In this section
 

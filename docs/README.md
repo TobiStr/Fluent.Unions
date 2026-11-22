@@ -1,11 +1,29 @@
 # Fluent.Unions documentation
 
-Fluent.Unions brings `Result`, `Result<T>`, `Option<T>` and `Loadable<T>` to C# 15, built on the `union` keyword. Use the default `Result<T>`, whose error is any `Exception`, or declare your own with `[FluentResult<TError>]` and get every operator for your error type. Fluent operators are named after LINQ and Rx.NET. An analyzer and an ASP.NET Core package help you use results safely from the first method to the HTTP response.
+Fluent.Unions brings `Result`, `Result<T>`, `Option<T>` and `Loadable<T>` to C# 15, built on the `union` keyword. Fluent operators are named after LINQ and Rx.NET. An analyzer and an ASP.NET Core package help you use results safely from the first method to the HTTP response.
+
+## Your error type, your Result
+
+Use the default `Result<T>`, whose error is any `Exception`, or declare your own. One struct is enough, and the source generator writes the rest:
+
+```csharp
+[FluentResult<DomainException>]
+public readonly partial struct Result<T>;
+```
+
+| The generator writes | What it means for you |
+| --- | --- |
+| The union cases, constructors and implicit conversions | Return a value or a `DomainException` and it becomes a result |
+| The value-less `Result` next to it | `Result.Ok`, `Result.Try`, `Result.From`, `Result.WhenAll` for your error type |
+| Every operator and every `Task` and `...Await` overload | `Select`, `Chain`, `Ensure`, `Catch`, `Tap`, `MapError`, `Match`, query syntax, ... |
+| One-line forwarders to the library | Your type behaves exactly like the built-in one, never boxes its value, and works in native AOT |
+
+Make the error type a union and the compiler checks that every case is handled. `Capture` and `Propagate` on the attribute choose which exceptions become errors, so a bug does not pass as an expected failure. See [Your own Result type](errors/custom-error-types.md).
 
 ## Start here
 
 - [Getting started](getting-started/README.md): what the library is, installation, and a quick start.
-- [Your own Result type](errors/custom-error-types.md): one declaration for a `Result<T>` with your own error type.
+- [Your own Result type](errors/custom-error-types.md): the declaration, what the generator writes, the capture policy, and how to choose the shape of your errors.
 - [Reference](reference.md): every type and operator on one page, with links to the detailed docs.
 
 ## Concepts and operators
