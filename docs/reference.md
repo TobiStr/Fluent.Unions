@@ -68,6 +68,7 @@ using Fluent.Unions.AspNetCore;    // ToHttpResult, WithResultMapping, ResultHtt
 | --- | --- | --- |
 | `Catch(e => ...)`, `Catch((IOException e) => ...)`, `Catch(fallback)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
 | `OnErrorDo(e => ...)`, `Do(v => ..., e => ...)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md) |
+| `TapError(e => ...)`, `Tap(v => ..., e => ...)` | results, `Task` of results, custom types | [Error handling](result/error-handling.md#do-or-tap) |
 | `Validate(rules...)` | `Result<T>`, `Task<Result<T>>`, your own result types | [Validation](validation/README.md), [Your own Result type](errors/custom-error-types.md) |
 | `ValidateAnnotations()` | `Result<T>`, `Task<Result<T>>` | [Validation](validation/README.md#dataannotations) |
 
@@ -118,6 +119,7 @@ Namespace `Fluent.Unions.Validation`.
 | Operator | Docs |
 | --- | --- |
 | `Do(v => ...)`, `Finally(() => ...)` | [Result operations](result/operations.md) |
+| `Tap(v => ...)`, `TapAwait(async v => ...)` | [Result operations](result/operations.md#tap) |
 | `OnNoneDo(() => ...)`, `Do(v => ..., () => ...)` | [Option operations](option/operations.md) |
 
 ## Leaving the chain

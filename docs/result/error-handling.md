@@ -20,6 +20,16 @@ Result<Order> throwing = GetCustomer(id)
 
 You never need a `try`/`catch` around a chain. Only [`Check()`](#check) throws, on purpose.
 
+### What is captured
+
+| Thrown | Becomes |
+| --- | --- |
+| Any exception inside a lambda, including `OutOfMemoryException` | the error |
+| A faulted task passed into a chain, such as `task.Select(...)` | the error |
+| `OperationCanceledException` | nothing: it propagates. Only `RetryAsync` treats one as a failure while its own token is not cancelled. |
+
+Every operator that takes a lambda follows these rules. With your own result type, the error is what `FromException` makes of the exception, unless the exception already is your error type. Your type can also capture fewer exceptions, so that a bug such as a `NullReferenceException` escapes instead of becoming an ordinary error. See [Capture policy](../errors/custom-error-types.md#capture-policy). The default `Result<T>` captures every exception.
+
 ## Catch
 
 `Catch` runs only for an error. Ok results pass through. Because the union converts both values and exceptions implicitly, one operator does two jobs: recover with a value, or translate the error into another exception.
@@ -67,7 +77,7 @@ An exception thrown inside the handler becomes the new error. For asynchronous h
 
 ## OnErrorDo
 
-Runs an action with the error and returns the same result. Use it to log and keep the error moving.
+Runs an action with the error and returns the same result. Use it to log and keep the error moving. When the callback may throw, prefer [`TapError`](#do-or-tap), which keeps the original error.
 
 ```csharp
 Result<Customer> logged = GetCustomer(id)
@@ -85,6 +95,29 @@ Result<Customer> both = GetCustomer(id).Do(
 ```
 
 `OnErrorDo` and `Do(onSuccess, onError)` count as handling the error for analyzer FLU0001. A chain ending in `Do(onSuccess)` does not.
+
+## When a callback throws
+
+`Do`, `OnErrorDo` and `Finally` treat their callback as part of the chain. When it throws, its exception becomes the result, and the last failure wins:
+
+| Result before | Callback throws | Result after |
+| --- | --- | --- |
+| ok | in `Do` or `Finally` | error: the callback's exception |
+| error | in `OnErrorDo`, `Do(onSuccess, onError)` or `Finally` | error: the callback's exception. The original error is gone. |
+
+A chain is not a transaction. A step that already wrote to a database stays written when a later step fails, and nothing is rolled back. Use a transaction or a compensating step for writes that must succeed together.
+
+## Do or Tap
+
+Use `Do` for a side effect that must succeed, such as publishing an event the caller relies on. Use `Tap` for an observer, such as logging or metrics, whose failure must not change the business outcome:
+
+```csharp
+Result<Order> placed = PlaceOrder(cart)
+    .Tap(order => metrics.OrderPlaced(order.Total))
+    .TapError(e => log.LogWarning(e, "Order failed"));
+```
+
+`Tap`, `TapError` and `TapAwait` return the same result and never capture. When the observer throws, the exception propagates with its original stack trace, so a logging failure shows up as a logging failure instead of turning a saved order into an error. `TapError` keeps the original error. Wrap the observer in its own `try`/`catch` if its failure should be ignored.
 
 ## Check
 
@@ -158,13 +191,18 @@ An error that `shouldRetry` rejects ends the loop after one attempt. Cancellatio
 | `Result<T>.Ok(null)` | `ArgumentNullException` |
 | `switch` expression over a `default` result | `SwitchExpressionException`, see [The default result](core-concepts.md#the-default-result) |
 | Any operator whose lambda is cancelled | `OperationCanceledException` |
+| `Tap`, `TapError` and `TapAwait` callbacks | whatever your callback throws |
+| An exception your result type does not capture | that exception, see [Capture policy](../errors/custom-error-types.md#capture-policy) |
+| `FromException` that returns `null` | `InvalidOperationException`, with the original exception as `InnerException` |
+| `FromException` that throws | `InvalidOperationException`, with an `AggregateException` of the original exception and the failure of `FromException` |
 
-Operators that leave the chain, `Match` and the `GetValueOrDefault` factory, do not catch because there is no result left to hold the error.
+Operators that leave the chain, `Match` and the `GetValueOrDefault` factory, do not catch because there is no result left to hold the error. `Tap` does not catch on purpose.
 
 ## Pitfalls
 
 - `Catch` with an exception type needs the type on the lambda parameter: `(KeyNotFoundException e) => ...`.
 - Translating to a general `Exception` hides the cause for callers that match on type. Keep the original as the inner exception.
+- Logging in `Do` turns a successful result into an error when the logger throws. Log with `Tap` instead.
 
 ## See also
 

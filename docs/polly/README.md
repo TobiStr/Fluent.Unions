@@ -80,7 +80,7 @@ CallResult<Payment> payment = await pipeline
 | `ExecuteResultAsync<TResult, TError>(operation, cancellationToken)` | `ResiliencePipeline<TResult>` and `ResiliencePipeline` |
 | `ToResult<TResult, TError>()` | `Outcome<TResult>` |
 
-`TResult` must be a struct that implements `IErrorResult<TResult, TError>`, which `IResult<TSelf, T, TError>` extends. Empty is never handled. An exception that escapes the pipeline, including `OperationCanceledException`, becomes `TResult.FromError(TResult.FromException(exception))`. The overloads for `Result<T>` stay in use for `Result<T>` and need no type arguments.
+`TResult` must be a struct that implements `IErrorResult<TResult, TError>`, which `IResult<TSelf, T, TError>` extends. Empty is never handled. An exception that escapes the pipeline, including `OperationCanceledException`, becomes `TResult.FromError(TResult.FromException(exception))`. An exception that the [capture policy](../errors/custom-error-types.md#capture-policy) of `TResult` excludes is rethrown with its original stack trace. The overloads for `Result<T>` stay in use for `Result<T>` and need no type arguments.
 
 ## When to use
 

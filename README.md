@@ -243,7 +243,7 @@ Both versions are tested side by side in [`CheckoutSample.cs`](https://github.co
   - **Analyzers:** warn when a result is ignored, an async lambda escapes a result, a union cannot tell its cases apart, a result is serialized, and more.
 - **LINQ and Rx operators:**
   - **On the value:** `Select`, `Chain`, `Ensure`, `Zip`, `ChainAppend`, `Out`.
-  - **On the error and side effects:** `Catch`, `Do`, `OnErrorDo`, `Finally`.
+  - **On the error and side effects:** `Catch`, `Do`, `OnErrorDo`, `Finally`, and `Tap`/`TapError` for observers whose failure must not change the result.
   - **Leaving the chain:** `Match`, `TryGetValue`, `GetValueOrDefault`.
   - **Query syntax** works too.
 - **`Option<T>`** for missing values: `TryParse`, `FirstOrNone`, `GetValueOrNone`, `Or`, and conversions to and from results.
@@ -286,7 +286,7 @@ The [docs](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/README.md) ex
 | Result                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/README.md)                                      | `Result` and `Result<T>` in short                                                                                  |
 |                       | [Core concepts](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/core-concepts.md)                          | The two states, creating results, members, matching, deconstruction, `Check()`                                     |
 |                       | [Operations](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/operations.md)                                | `Select`, `Chain`, `Ensure`, `Zip`, `CombineAll`, `ChainAppend`, `Do`, `Out`, `Finally`, `Unwrap`, `Match` and more |
-|                       | [Error handling](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/error-handling.md)                        | `Catch`, `OnErrorDo`, `Try`, `Retry`, and what still throws                                                        |
+|                       | [Error handling](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/error-handling.md)                        | `Catch`, `OnErrorDo`, `Tap`, `Try`, `Retry`, what is captured and what still throws                                |
 |                       | [Collections](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/collections.md)                              | `Combine`, `CombineAll`, `Partition`, `Values`, `Errors`                                                           |
 |                       | [Patterns](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/result/patterns.md)                                    | Pipelines, query syntax, using earlier values, early returns, service layers                                       |
 | Option                | [Overview](https://github.com/TobiStr/Fluent.Unions/blob/main/docs/option/README.md)                                      | `Option<T>` in short                                                                                               |

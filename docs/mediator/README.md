@@ -113,7 +113,7 @@ Register it instead of `ValidationToResultBehavior<,>`. For MediatR the signatur
 ## Rules
 
 - **Order matters.** The first behavior in the list is the outermost. Put `ExceptionToResultBehavior` first, so it also catches an exception from validation or from another behavior.
-- **Cancellation is not an error.** `OperationCanceledException` is thrown as usual.
+- **Cancellation is not an error.** `OperationCanceledException` is thrown as usual. An exception that the response type's [capture policy](../errors/custom-error-types.md#capture-policy) excludes is not caught and propagates.
 - **Only requests with a response.** A notification has no response to fail with, so the behaviors do not apply to it.
 - **The error stays an `Exception`.** Map it to a status code at the edge, for example with the [ASP.NET Core](../aspnetcore/README.md) package.
 

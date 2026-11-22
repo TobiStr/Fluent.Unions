@@ -46,7 +46,7 @@ An endpoint that returns the first result with `ToHttpResult()` answers 400 with
 | --- | --- |
 | valid instance | the instance as `Result<T>` |
 | one or more failures | error: a `ValidationErrors` with one `ValidationError` per failure, `MemberName` set to the property name |
-| the validator throws | error: the thrown exception (cancellation propagates) |
+| the validator throws | error: the thrown exception (cancellation, and an exception that the [capture policy](../errors/custom-error-types.md#capture-policy) of your result type excludes, propagate) |
 | `Result<T>` with an error | the same error, the validator is not called |
 | `null` instance | `ArgumentNullException` |
 

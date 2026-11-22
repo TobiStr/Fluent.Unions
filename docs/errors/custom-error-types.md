@@ -74,6 +74,8 @@ The operators are one-line forwarders to the library. Behaviour lives in one pla
 | Property | Default | Effect |
 | --- | --- | --- |
 | `CaseConversions` | `true` | When the error type is a union, each case converts straight to the result. See [Errors as data](errors-as-data.md). |
+| `Capture` | `ExceptionCapture.All` | Which exceptions thrown inside an operator become an error. See [Capture policy](#capture-policy). |
+| `Propagate` | none | Exception types that operators never capture. See [Capture policy](#capture-policy). |
 
 ### The value-less companion
 
@@ -113,9 +115,36 @@ The text is safe to log or to return in a response. An error union with an excep
 - An exception thrown inside a step that already is a `DomainException` is kept as it is.
 - Any other exception goes through `FromException`. That includes the `ValidationError` from `Ensure(predicate, "message")` and the `ValidationErrors` from `Validate`, so `FromException` is the place to map them to your own validation type.
 - An `OperationCanceledException` is never turned into an error. It propagates.
+- With a [capture policy](#capture-policy), exceptions that the policy excludes propagate as well.
 - A `default` result counts as an error: `FromException` receives an `InvalidOperationException` that says the result is empty. Native pattern matching sees no case, as with the default type; see [The default result](../result/core-concepts.md#the-default-result).
 
-`FromException` must not throw and must not return `null`. Test it with an exception that is not yours.
+`FromException` must not throw and must not return `null`. Test it with an exception that is not yours. When it returns `null`, the operator throws an `InvalidOperationException` with the original exception as `InnerException`. When it throws, the operator throws an `InvalidOperationException` whose `InnerException` is an `AggregateException` of the original exception and the failure of `FromException`. Analyzer [FLU0009](../analyzer/README.md#flu0009) reports a `FromException` that throws or returns `null`.
+
+## Capture policy
+
+By default every exception thrown inside an operator becomes an error. That keeps a chain from throwing, but a bug such as a `NullReferenceException` then looks like any other failure. Two options on the attribute let such exceptions escape instead:
+
+```csharp
+[FluentResult<DomainException>(Capture = ExceptionCapture.Declared)]
+public readonly partial struct Result<T>;
+
+[FluentResult<DomainException>(Propagate = [typeof(NullReferenceException), typeof(ArgumentException)])]
+public readonly partial struct Result<T>;
+```
+
+| Setting | Captured | Propagates |
+| --- | --- | --- |
+| default | every exception | `OperationCanceledException` |
+| `Capture = ExceptionCapture.Declared` | the error type and its subtypes, and each case of an error union that is an exception | everything else |
+| `Propagate = [...]` | every other exception | the listed types and their subtypes |
+
+The two combine: `Declared` with `Propagate` captures declared exceptions that are not listed. An error union whose cases are all data, such as records, declares no exception, so `Declared` captures nothing and every thrown exception escapes.
+
+An exception that is not captured is never caught. It propagates from the operator with its original stack trace, and an asynchronous operator returns a faulted task. Errors that the library creates itself, such as the `ValidationError` from `Ensure(predicate, "message")` or the error of a `default` result, are not thrown and still go through `FromException`.
+
+Use `Declared` when your error type lists every failure you expect, so that anything else is a bug that should crash loudly. Use `Propagate` when you capture almost everything but want certain programming errors to escape.
+
+The setting applies to every operator, to `Try`, `TryAsync`, `Retry` and `RetryAsync`, and to the MediatR, Mediator, Polly and FluentValidation integrations. A declared companion without a value must use the same settings as `Result<T>`, otherwise `FLU0101` is reported. `Declared` on a type whose error type is `Exception` captures everything anyway and gives warning [FLU0104](../analyzer/README.md#flu0104). A type in `Propagate` that is not an exception gives error [FLU0105](../analyzer/README.md#flu0105).
 
 Give `UnexpectedDomainException` a fixed message and keep the original as `InnerException`. Responses and logs often show the message of the error, and the message of an unexpected exception can hold connection strings or other internals. The ASP.NET Core integration also recognizes a `ValidationError` or `ValidationErrors` as the inner exception, as in `InvalidInputException`, and still writes a validation problem.
 

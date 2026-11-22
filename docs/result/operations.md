@@ -174,7 +174,19 @@ Result<Customer> logged = GetCustomer(id).Do(
     e => log.LogWarning(e, "Customer {Id} failed", id));
 ```
 
-An exception thrown by the action becomes the error.
+An exception thrown by the action becomes the error, even when the result was ok before. For logging and metrics, whose failure must not turn a success into an error, use `Tap`.
+
+## Tap
+
+`Tap`, `TapError` and `TapAwait` run an observer and return the same result, like `Do`, but never capture. An exception thrown by the observer propagates instead of replacing the result:
+
+```csharp
+Result<Customer> observed = GetCustomer(id)
+    .Tap(c => log.LogInformation("Loaded {Name}", c.Name))
+    .TapError(e => log.LogWarning(e, "Customer {Id} failed", id));
+```
+
+See [Do or Tap](error-handling.md#do-or-tap) for when to use which.
 
 ## Out
 
@@ -253,7 +265,7 @@ On a `Result`, the first callback takes no argument. `Match` also works on `Task
 
 - `Select` with a function that returns a result nests. Use `Chain`.
 - A `default` result is an error, not a value. Initialize every result you return.
-- `Do` does not run for errors. Use `OnErrorDo` or `Do(onSuccess, onError)`.
+- `Do` does not run for errors. Use `OnErrorDo`, `TapError` or `Do(onSuccess, onError)`.
 
 ## See also
 
